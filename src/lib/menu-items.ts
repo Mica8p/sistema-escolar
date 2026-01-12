@@ -8,6 +8,12 @@ export const menuItems = [
     roles: ["ADMIN", "DOCENTE", "ALUMNO", "PADRE"],
   },
   {
+  title: "Personas",
+  href: "/dashboard/personas",
+  icon: Users,
+  roles: ["ADMIN"],
+  },
+  {
     title: "Alumnos",
     href: "/dashboard/alumnos",
     icon: Users,

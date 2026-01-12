@@ -3,6 +3,7 @@
 
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
+import { signOut } from "@/auth";
 
 // Agregamos 'prevState' como primer argumento
 export async function authenticate(
@@ -35,4 +36,8 @@ export async function authenticate(
     // Si no es un error de Auth, lo relanzamos (para que el redirect funcione)
     throw error;
   }
+}
+
+export async function logout() {
+  await signOut({ redirectTo: "/login" });
 }
