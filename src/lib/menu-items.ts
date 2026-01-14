@@ -26,6 +26,18 @@ export const menuItems = [
     roles: ["ADMIN", "DOCENTE"],
   },
   {
+    title: "Cursos",
+    href: "/dashboard/cursos",
+    icon: BookOpen,
+    roles: ["ADMIN"],
+  },
+  {
+    title: "Materias",
+    href: "/dashboard/materias",
+    icon: BookOpen,
+    roles: ["ADMIN"],
+  },
+  {
     title: "Pagos y Cuotas",
     href: "/dashboard/finanzas",
     icon: Wallet,
