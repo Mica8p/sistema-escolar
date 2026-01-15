@@ -241,6 +241,7 @@ model AsignacionAcademica {
   idCurso      Int
   idCiclo      Int
   cargaHoraria Int
+  estado       Boolean @default(true)
 
   profesor Profesor @relation(fields: [idProfesor], references: [idProfesor])
   materia  Materia  @relation(fields: [idMateria], references: [idMateria])
@@ -250,7 +251,6 @@ model AsignacionAcademica {
   horarios Horario[]
   notas    Nota[]
 
-  @@unique([idMateria, idCurso, idCiclo])
   @@map("ASIGNACION_ACADEMICA")
 }
 
