@@ -1,0 +1,22 @@
+-- RedefineTables
+PRAGMA defer_foreign_keys=ON;
+PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_ASIGNACION_ACADEMICA" (
+    "idAsignacion" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "idProfesor" INTEGER NOT NULL,
+    "idMateria" INTEGER NOT NULL,
+    "idCurso" INTEGER NOT NULL,
+    "idCiclo" INTEGER NOT NULL,
+    "cargaHoraria" INTEGER NOT NULL,
+    "estado" BOOLEAN NOT NULL DEFAULT true,
+    CONSTRAINT "ASIGNACION_ACADEMICA_idProfesor_fkey" FOREIGN KEY ("idProfesor") REFERENCES "PROFESOR" ("idProfesor") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "ASIGNACION_ACADEMICA_idMateria_fkey" FOREIGN KEY ("idMateria") REFERENCES "MATERIA" ("idMateria") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "ASIGNACION_ACADEMICA_idCurso_fkey" FOREIGN KEY ("idCurso") REFERENCES "CURSO" ("idCurso") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "ASIGNACION_ACADEMICA_idCiclo_fkey" FOREIGN KEY ("idCiclo") REFERENCES "CICLO_LECTIVO" ("idCiclo") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+INSERT INTO "new_ASIGNACION_ACADEMICA" ("cargaHoraria", "idAsignacion", "idCiclo", "idCurso", "idMateria", "idProfesor") SELECT "cargaHoraria", "idAsignacion", "idCiclo", "idCurso", "idMateria", "idProfesor" FROM "ASIGNACION_ACADEMICA";
+DROP TABLE "ASIGNACION_ACADEMICA";
+ALTER TABLE "new_ASIGNACION_ACADEMICA" RENAME TO "ASIGNACION_ACADEMICA";
+CREATE UNIQUE INDEX "ASIGNACION_ACADEMICA_idMateria_idCurso_idCiclo_key" ON "ASIGNACION_ACADEMICA"("idMateria", "idCurso", "idCiclo");
+PRAGMA foreign_keys=ON;
+PRAGMA defer_foreign_keys=OFF;
