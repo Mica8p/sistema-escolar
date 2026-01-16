@@ -1,4 +1,13 @@
-import { LayoutDashboard, Users, BookOpen, Wallet, Package, Megaphone, Briefcase } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  BookOpen,
+  Wallet,
+  Package,
+  Megaphone,
+  ClipboardList, // Ahora se usará abajo
+  UserCheck      // Ahora se usará abajo
+} from "lucide-react";
 
 export const menuItems = [
   {
@@ -24,6 +33,19 @@ export const menuItems = [
       { title: "Gestión de Cursos", href: "/dashboard/cursos", roles: ["ADMIN"] },
       { title: "Gestión de Materias", href: "/dashboard/materias", roles: ["ADMIN"] },
       { title: "Asignación Docente", href: "/dashboard/profesores", roles: ["ADMIN"] },
+      // Al usar el nombre aquí, el import dejará de estar en gris
+      {
+        title: "Calificaciones",
+        href: "/dashboard/calificaciones",
+        icon: ClipboardList,
+        roles: ["ADMIN", "DOCENTE"]
+      },
+      {
+        title: "Asistencias",
+        href: "/dashboard/asistencias",
+        icon: UserCheck,
+        roles: ["ADMIN", "DOCENTE"]
+      },
     ],
   },
   {

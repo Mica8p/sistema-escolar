@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { TipoEvaluacion } from "@prisma/client";
+import { BookOpen, Calendar, GraduationCap, ClipboardCheck } from "lucide-react";
 import {
   getAsignacionesParaUsuario,
   getPeriodosByCiclo,
@@ -13,8 +14,10 @@ const TIPOS: TipoEvaluacion[] = ["Parcial", "Final", "Recuperatorio"];
 export default async function CalificacionesPage({
   searchParams,
 }: {
-  searchParams?: { asig?: string; periodo?: string; tipo?: string };
+  searchParams: Promise<{ asig?: string; periodo?: string; tipo?: string }>;
 }) {
+  const params = await searchParams; // Unwrapping para Next.js 16
+
   const session = await auth();
   if (!session?.user) throw new Error("No autorizado");
 
@@ -23,126 +26,146 @@ export default async function CalificacionesPage({
 
   const asignaciones = await getAsignacionesParaUsuario({ isAdmin, idPersona });
 
-  // defaults “inteligentes”
-  const defaultAsig = asignaciones[0]?.idAsignacion;
-  const idAsignacion = Number(searchParams?.asig ?? defaultAsig);
-
+  // Lógica de IDs para filtros
+  const idAsignacion = params.asig ? Number(params.asig) : (asignaciones[0]?.idAsignacion || 0);
   const asigElegida = asignaciones.find((a) => a.idAsignacion === idAsignacion);
 
   const periodos = asigElegida ? await getPeriodosByCiclo(asigElegida.idCiclo) : [];
-  const defaultPeriodo = periodos[0]?.idPeriodo;
-  const idPeriodo = Number(searchParams?.periodo ?? defaultPeriodo);
+  const idPeriodo = params.periodo ? Number(params.periodo) : (periodos[0]?.idPeriodo || 0);
 
-  const tipo = (searchParams?.tipo as TipoEvaluacion) ?? "Parcial";
+  const tipo = (params.tipo as TipoEvaluacion) ?? "Parcial";
   const tipoValido = TIPOS.includes(tipo) ? tipo : "Parcial";
 
-  const planilla =
-    asigElegida && idPeriodo
+  const planilla = (idAsignacion > 0 && idPeriodo > 0)
       ? await getPlanilla({ idAsignacion, idPeriodo, tipo: tipoValido })
       : null;
 
-  // helper para armar links con querystring
-  const qs = (next: Partial<{ asig: number; periodo: number; tipo: TipoEvaluacion }>) => {
+  // Helper para construir la URL de los botones
+  const qs = (next: { asig?: number; periodo?: number; tipo?: TipoEvaluacion }) => {
     const p = new URLSearchParams();
-    p.set("asig", String(next.asig ?? idAsignacion));
-    p.set("periodo", String(next.periodo ?? idPeriodo));
-    p.set("tipo", String(next.tipo ?? tipoValido));
+    const finalAsig = next.asig ?? idAsignacion;
+    const finalPeriodo = next.asig ? undefined : (next.periodo ?? idPeriodo);
+    const finalTipo = next.tipo ?? tipoValido;
+
+    if (finalAsig) p.set("asig", String(finalAsig));
+    if (finalPeriodo) p.set("periodo", String(finalPeriodo));
+    p.set("tipo", String(finalTipo));
     return `?${p.toString()}`;
   };
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Calificaciones</h1>
-        <div className="text-sm text-gray-600">
-          Rol: <span className="font-medium">{isAdmin ? "ADMIN" : "DOCENTE"}</span>
+    <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">
+      {/* HEADER PRINCIPAL */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Carga de Calificaciones</h1>
+          <p className="text-slate-500 text-sm">Gestioná las notas de tus alumnos por materia y trimestre.</p>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm">
+          <div className={`w-2 h-2 rounded-full ${isAdmin ? 'bg-indigo-500' : 'bg-emerald-500'}`} />
+          <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+            Modo {isAdmin ? "Administrador" : "Docente"}
+          </span>
         </div>
       </div>
 
-      {/* Filtros (MVP): botones/link para evitar client state */}
-      <div className="border rounded p-4 space-y-3">
-        <div className="grid md:grid-cols-3 gap-3">
-          {/* ASIGNACIÓN */}
-          <div>
-            <div className="text-sm font-medium mb-1">Asignación (Curso + Materia + Ciclo)</div>
-            <div className="flex flex-col gap-2">
-              {asignaciones.length === 0 ? (
-                <p className="text-sm text-gray-500">No tenés asignaciones.</p>
-              ) : (
-                asignaciones.map((a) => (
-                  <Link
-                    key={a.idAsignacion}
-                    href={qs({ asig: a.idAsignacion, periodo: undefined })}
-                    className={`px-3 py-2 rounded border text-sm hover:bg-gray-50 ${
-                      a.idAsignacion === idAsignacion ? "bg-gray-100 border-gray-400" : ""
-                    }`}
-                  >
-                    <div className="font-medium">
-                      {a.curso.grado} {a.curso.seccion} • {a.materia.nombre}
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      Ciclo {a.ciclo.anio} • Asig #{a.idAsignacion}
-                    </div>
-                  </Link>
-                ))
-              )}
-            </div>
+      {/* FILTROS SUPERIORES (1, 2, 3) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 1. ASIGNACIÓN */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+            <GraduationCap size={16} className="text-indigo-500" />
+            <span className="text-xs font-bold text-slate-700 uppercase">1. Materia y Curso</span>
           </div>
-
-          {/* PERIODO */}
-          <div>
-            <div className="text-sm font-medium mb-1">Periodo</div>
-            <div className="flex flex-col gap-2">
-              {periodos.length === 0 ? (
-                <p className="text-sm text-gray-500">Elegí una asignación.</p>
-              ) : (
-                periodos.map((p) => (
-                  <Link
-                    key={p.idPeriodo}
-                    href={qs({ periodo: p.idPeriodo })}
-                    className={`px-3 py-2 rounded border text-sm hover:bg-gray-50 ${
-                      p.idPeriodo === idPeriodo ? "bg-gray-100 border-gray-400" : ""
-                    }`}
-                  >
-                    <div className="font-medium">{p.nombre}</div>
-                    <div className="text-xs text-gray-600">
-                      {new Date(p.fechaInicio).toLocaleDateString()} —{" "}
-                      {new Date(p.fechaFin).toLocaleDateString()}
-                    </div>
-                  </Link>
-                ))
-              )}
-            </div>
+          <div className="p-3 flex flex-col gap-2 max-h-[320px overflow-y-auto">
+            {asignaciones.map((a) => (
+              <Link
+                key={a.idAsignacion}
+                href={qs({ asig: a.idAsignacion })}
+                className={`px-4 py-3 rounded-xl border transition-all ${
+                  a.idAsignacion === idAsignacion
+                    ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100"
+                    : "bg-white border-slate-100 hover:border-indigo-200 text-slate-600 hover:bg-indigo-50/30"
+                }`}
+              >
+                <div className={`font-bold text-sm ${a.idAsignacion === idAsignacion ? 'text-white' : 'text-slate-800'}`}>
+                  {a.materia.nombre}
+                </div>
+                <div className={`text-[11px] font-medium ${a.idAsignacion === idAsignacion ? 'text-indigo-100' : 'text-slate-400'}`}>
+                  {a.curso.grado}° {a.curso.seccion} • {a.curso.nivel}
+                </div>
+              </Link>
+            ))}
           </div>
+        </div>
 
-          {/* TIPO */}
-          <div>
-            <div className="text-sm font-medium mb-1">Tipo de evaluación</div>
+        {/* 2. PERIODO */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+            <Calendar size={16} className="text-indigo-500" />
+            <span className="text-xs font-bold text-slate-700 uppercase">2. Periodo Lectivo</span>
+          </div>
+          <div className="p-3 flex flex-col gap-2">
+            {periodos.length === 0 ? (
+              <div className="py-12 text-center text-slate-400 italic text-xs">
+                Seleccioná una materia primero.
+              </div>
+            ) : (
+              periodos.map((p) => (
+                <Link
+                  key={p.idPeriodo}
+                  href={qs({ periodo: p.idPeriodo })}
+                  className={`px-4 py-3 rounded-xl border transition-all ${
+                    p.idPeriodo === idPeriodo
+                      ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100"
+                      : "bg-white border-slate-100 hover:border-indigo-200 text-slate-600 hover:bg-indigo-50/30"
+                  }`}
+                >
+                  <div className="font-bold text-sm">{p.nombre.replace('_', ' ')}</div>
+                  <div className={`text-[11px] font-medium ${p.idPeriodo === idPeriodo ? 'text-indigo-100' : 'text-slate-400'}`}>
+                    {new Date(p.fechaInicio).toLocaleDateString()} al {new Date(p.fechaFin).toLocaleDateString()}
+                  </div>
+                </Link>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* 3. EVALUACIÓN */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+            <ClipboardCheck size={16} className="text-indigo-500" />
+            <span className="text-xs font-bold text-slate-700 uppercase">3. Evaluación</span>
+          </div>
+          <div className="p-5 space-y-6">
             <div className="flex gap-2 flex-wrap">
               {TIPOS.map((t) => (
                 <Link
                   key={t}
                   href={qs({ tipo: t })}
-                  className={`px-3 py-2 rounded border text-sm hover:bg-gray-50 ${
-                    t === tipoValido ? "bg-gray-100 border-gray-400" : ""
+                  className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${
+                    t === tipoValido
+                      ? "bg-slate-800 border-slate-800 text-white shadow-lg scale-105"
+                      : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
                   }`}
                 >
-                  {t}
+                  {t.toUpperCase()}
                 </Link>
               ))}
             </div>
-
             {asigElegida && (
-              <div className="mt-3 text-sm text-gray-700">
-                <div>
-                  <span className="font-medium">Curso:</span> {asigElegida.curso.grado}{" "}
-                  {asigElegida.curso.seccion} ({asigElegida.curso.nivel})
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-slate-400 font-bold uppercase">Materia:</span>
+                  <span className="text-slate-700 font-bold">{asigElegida.materia.nombre}</span>
                 </div>
-                <div>
-                  <span className="font-medium">Materia:</span> {asigElegida.materia.nombre}
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-slate-400 font-bold uppercase">Curso:</span>
+                  <span className="text-slate-700 font-bold">{asigElegida.curso.grado}° {asigElegida.curso.seccion}</span>
                 </div>
-                <div>
-                  <span className="font-medium">Ciclo:</span> {asigElegida.ciclo.anio}
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-slate-400 font-bold uppercase">Ciclo:</span>
+                  <span className="text-slate-700 font-bold">{asigElegida.ciclo.anio}</span>
                 </div>
               </div>
             )}
@@ -150,20 +173,49 @@ export default async function CalificacionesPage({
         </div>
       </div>
 
-      {/* Tabla */}
-      {planilla ? (
-        <CalificacionesTable
-          idAsignacion={idAsignacion}
-          idPeriodo={idPeriodo}
-          tipo={tipoValido}
-          matriculas={planilla.matriculas}
-          notaByMatricula={Array.from(planilla.notaByMatricula.entries())}
-        />
-      ) : (
-        <div className="text-sm text-gray-600">
-          Seleccioná una asignación y un periodo para ver la planilla.
+      {/* SECCIÓN DE LA PLANILLA (CORREGIDA PARA MEJOR CONTRASTE) */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/50 overflow-hidden">
+        {/* CABECERA DE LA PLANILLA */}
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BookOpen size={18} className="text-indigo-600" />
+            <span className="text-sm font-black text-slate-700 uppercase tracking-tight">
+              {planilla ? `Carga de Notas: ${asigElegida?.materia.nombre}` : "Planilla de Calificaciones"}
+            </span>
+          </div>
+          {planilla && (
+            <div className="text-[10px] font-bold px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full border border-indigo-200">
+              {planilla.matriculas.length} ALUMNOS INSCRIPTOS
+            </div>
+          )}
         </div>
-      )}
+
+        {/* CONTENIDO DE LA PLANILLA */}
+        <div className="min-h-[450px relative">
+          {planilla ? (
+            <div className="p-4 animate-in fade-in duration-500 text-gray-600">
+              <CalificacionesTable
+                idAsignacion={idAsignacion}
+                idPeriodo={idPeriodo}
+                tipo={tipoValido}
+                matriculas={planilla.matriculas}
+                notaByMatricula={Array.from(planilla.notaByMatricula.entries())}
+                readOnly={isAdmin}
+              />
+            </div>
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300 gap-4 bg-slate-50/10">
+              <div className="p-6 bg-white rounded-full border border-slate-100 shadow-inner">
+                <ClipboardCheck size={48} className="text-slate-100" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-bold text-slate-400 tracking-tight">Esperando selección académica</p>
+                <p className="text-xs text-slate-300">Seleccioná una materia y un periodo para cargar alumnos.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
