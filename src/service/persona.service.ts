@@ -6,20 +6,20 @@ export const PersonaService = {
   async getAll() {
     return await db.persona.findMany({
       where: {
-      usuario: {
-        estado: true // <-- SOLO TRAER LOS ACTIVOS
-      }
-    },
+        usuario: {
+          estado: true, // <-- SOLO TRAER LOS ACTIVOS
+        },
+      },
       include: {
         usuario: {
           include: {
             roles: {
-              include: { rol: true }
-            }
-          }
-        }
+              include: { rol: true },
+            },
+          },
+        },
       },
-      orderBy: { apellido: "asc" }
+      orderBy: { apellido: "asc" },
     });
   },
   async create(data: {
@@ -27,8 +27,10 @@ export const PersonaService = {
     apellido: string;
     dni: string;
     email: string;
+    telefono?: string;
+    direccion?: string;
     password?: string;
-    idRol: number
+    idRol: number;
   }) {
     const passwordHash = await bcrypt.hash(data.password || "escuela123", 10);
 
@@ -40,6 +42,8 @@ export const PersonaService = {
           apellido: data.apellido,
           dni: data.dni,
           email: data.email,
+          telefono: data.telefono,
+          direccion: data.direccion,
           // 2. Creamos el Usuario relacionado
           usuario: {
             create: {
@@ -47,11 +51,11 @@ export const PersonaService = {
               estado: true,
               // 3. Asignamos el Rol
               roles: {
-                create: { idRol: data.idRol }
-              }
-            }
-          }
-        }
+                create: { idRol: data.idRol },
+              },
+            },
+          },
+        },
       });
       return nuevaPersona;
     });
@@ -64,14 +68,14 @@ export const PersonaService = {
   async delete(idPersona: number) {
     // Buscamos el usuario asociado a esa persona
     const usuario = await db.usuario.findFirst({
-      where: { idPersona: idPersona }
+      where: { idPersona: idPersona },
     });
 
     if (usuario) {
       // Borrado lógico: cambiamos el estado a false
       return await db.usuario.update({
         where: { idUsuario: usuario.idUsuario },
-        data: { estado: false }
+        data: { estado: false },
       });
     }
   },
@@ -81,9 +85,9 @@ export const PersonaService = {
       where: { idPersona: id },
       include: {
         usuario: {
-          include: { roles: { include: { rol: true } } }
-        }
-      }
+          include: { roles: { include: { rol: true } } },
+        },
+      },
     });
   },
 
@@ -95,9 +99,10 @@ export const PersonaService = {
         apellido: data.apellido,
         dni: data.dni,
         email: data.email,
+        telefono: data.telefono,
+        direccion: data.direccion,
         // Aquí podrías actualizar el rol también si fuera necesario
-      }
+      },
     });
-  }
-
+  },
 };

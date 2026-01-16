@@ -1,8 +1,20 @@
 "use client";
 
 import { useActionState } from "react";
-import { createPersonaAction, updatePersonaAction } from "@/lib/actions/persona-actions";
-import { User, Fingerprint, Mail, Shield, Save, X } from "lucide-react";
+import {
+  createPersonaAction,
+  updatePersonaAction,
+} from "@/lib/actions/persona-actions";
+import {
+  User,
+  Fingerprint,
+  Mail,
+  Shield,
+  Save,
+  X,
+  Phone,
+  Home,
+} from "lucide-react";
 
 interface PersonaFormProps {
   roles: any[];
@@ -12,10 +24,16 @@ interface PersonaFormProps {
 export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
   // 1. Configuramos la acción dinámica
   // Si estamos editando, usamos 'bind' para pasarle el ID a la Server Action automáticamente
-  const updateActionWithId = updatePersonaAction.bind(null, initialData?.idPersona);
+  const updateActionWithId = updatePersonaAction.bind(
+    null,
+    initialData?.idPersona
+  );
   const formHandler = initialData ? updateActionWithId : createPersonaAction;
 
-  const [errorMessage, formAction, isPending] = useActionState(formHandler, null);
+  const [errorMessage, formAction, isPending] = useActionState(
+    formHandler,
+    null
+  );
 
   return (
     <form action={formAction} className="space-y-6">
@@ -80,6 +98,34 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
           />
         </div>
       </div>
+      {/* Sección: Dirección y Teléfono */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+            <Phone size={16} /> Teléfono
+          </label>
+          <input
+            name="telefono"
+            type="text"
+            defaultValue={initialData?.telefono}
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            placeholder="Ej: 1122334455"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+            <Home size={16} /> Dirección
+          </label>
+          <input
+            name="direccion"
+            type="text"
+            defaultValue={initialData?.direccion}
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            placeholder="Ej: Av. Corrientes 1234"
+          />
+        </div>
+      </div>
 
       {/* Sección: Rol (Solo se muestra al Crear para evitar errores de permisos al editar) */}
       {!initialData && (
@@ -126,7 +172,11 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
           className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-all shadow-md"
         >
           <Save size={18} />
-          {isPending ? "Procesando..." : initialData ? "Actualizar Datos" : "Registrar Persona"}
+          {isPending
+            ? "Procesando..."
+            : initialData
+            ? "Actualizar Datos"
+            : "Registrar Persona"}
         </button>
       </div>
     </form>
