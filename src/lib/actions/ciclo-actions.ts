@@ -121,3 +121,17 @@ export async function deleteCiclo(id: number) {
     return { success: false, message: "Error al eliminar el ciclo lectivo." };
   }
 }
+
+export async function getAllCiclos() {
+  try {
+    const ciclos = await db.cicloLectivo.findMany({
+      orderBy: {
+        anio: "desc",
+      },
+    });
+    return ciclos;
+  } catch (error) {
+    console.error("Error al obtener todos los ciclos lectivos:", error);
+    return [];
+  }
+}

@@ -17,5 +17,13 @@ export const CicloService = {
     return await db.cicloLectivo.findFirst({
       where: { estado: true }
     });
+  },
+
+  // Obtener los periodos (trimestres) de un ciclo específico
+  async getPeriodos(idCiclo: number) {
+    return await db.periodoAcademico.findMany({
+      where: { idCiclo },
+      orderBy: { fechaInicio: "asc" }
+    });
   }
 };
