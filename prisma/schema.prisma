@@ -294,7 +294,7 @@ model Matricula {
   asistencias Asistencia[]
   cuotas      Cuota[]
 
-  @@unique([idAlumno, idCiclo])
+  @@unique([idAlumno, idCurso, idCiclo])
   @@map("MATRICULA")
 }
 

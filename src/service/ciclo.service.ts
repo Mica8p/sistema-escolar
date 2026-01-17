@@ -11,5 +11,11 @@ export const CicloService = {
     return await db.cicloLectivo.findUnique({
       where: { idCiclo: id }
     });
+  },
+
+  async getActive() {
+    return await db.cicloLectivo.findFirst({
+      where: { estado: true }
+    });
   }
 };

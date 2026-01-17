@@ -29,18 +29,25 @@ export const AlumnoService = {
     });
   },
 
-  // 2. Para el SELECT del formulario: Personas con rol ALUMNO que aún NO están inscritas
-  async getPersonasDisponibles() {
+  // 2. Para el SELECT del formulario: Personas con rol ALUMNO que aún NO están inscritas en el CICLO ACTUAL
+  async getPersonasDisponibles(idCiclo: number) {
     return await db.persona.findMany({
       where: {
         usuario: {
-          roles: { some: { rol: { nombre: "ALUMNO" } } },
-          estado: true
+          roles: { some: { rol: { nombre: 'ALUMNO' } } },
+          estado: true,
         },
-        // Este filtro es clave: solo trae a los que NO tienen ficha de alumno todavía
-        alumno: { is: null }
+        NOT: {
+          alumno: {
+            matriculas: {
+              some: {
+                idCiclo: idCiclo,
+              },
+            },
+          },
+        },
       },
-      orderBy: { apellido: "asc" }
+      orderBy: { apellido: 'asc' },
     });
   },
 
