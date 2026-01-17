@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createPersonaAction, updatePersonaAction } from "@/lib/actions/persona-actions";
 import { User, Fingerprint, Mail, Shield, Save, X } from "lucide-react";
 
@@ -14,7 +14,9 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
   // Si estamos editando, usamos 'bind' para pasarle el ID a la Server Action automáticamente
   const updateActionWithId = updatePersonaAction.bind(null, initialData?.idPersona);
   const formHandler = initialData ? updateActionWithId : createPersonaAction;
-
+  const [nombre, setNombre] = useState(initialData?.nombre ?? "");
+  const [apellido, setApellido] = useState(initialData?.apellido ?? "");
+  const [dni, setDni] = useState(initialData?.dni ?? "");
   const [errorMessage, formAction, isPending] = useActionState(formHandler, null);
 
   return (
@@ -29,7 +31,13 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
             name="nombre"
             type="text"
             required
-            defaultValue={initialData?.nombre}
+            value={nombre}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(value)) {
+                setNombre(value);
+              }
+            }}
             className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             placeholder="Ej: Juan"
           />
@@ -43,7 +51,13 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
             name="apellido"
             type="text"
             required
-            defaultValue={initialData?.apellido}
+            value={apellido}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(value)) {
+                setApellido(value);
+              }
+            }}
             className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             placeholder="Ej: Pérez"
           />
@@ -51,35 +65,45 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
       </div>
 
       {/* Sección: Identificación y Contacto */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-            <Fingerprint size={16} /> DNI
-          </label>
-          <input
-            name="dni"
-            type="text"
-            required
-            defaultValue={initialData?.dni}
-            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-            placeholder="Solo números"
-          />
+          <Fingerprint size={16} /> DNI
+        </label>
+        <input
+          name="dni"
+          type="text"
+          required
+          value={dni}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (/^\d*$/.test(value) && value.length <= 8) {
+              setDni(value);
+            }
+          }}
+          maxLength={8}
+          inputMode="numeric"
+          className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+          placeholder="Solo números"
+        />
         </div>
+
 
         <div className="space-y-2">
           <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-            <Mail size={16} /> Correo Electrónico
+          <Mail size={16} /> Correo Electrónico
           </label>
-          <input
-            name="email"
-            type="email"
-            required
-            defaultValue={initialData?.email}
-            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-            placeholder="correo@ejemplo.com"
-          />
+        <input
+          name="email"
+          type="email"
+          required
+          defaultValue={initialData?.email}
+          className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+          placeholder="correo@ejemplo.com"
+        />
         </div>
-      </div>
+        </div>
+      
 
       {/* Sección: Rol (Solo se muestra al Crear para evitar errores de permisos al editar) */}
       {!initialData && (
