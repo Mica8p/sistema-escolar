@@ -14,7 +14,6 @@ const prisma = new PrismaClient({
 async function main() {
   console.log("🚀 Iniciando el sembrado de datos...");
 
-  // Hashes de contraseñas iniciales
   const hashedAdminPassword = await bcrypt.hash("admin123", 10);
   const hashedDocentePassword = await bcrypt.hash("docente123", 10);
 
@@ -33,7 +32,7 @@ async function main() {
 
   if (!rolAdmin || !rolDocente) throw new Error("No se encontraron los roles necesarios");
 
-  // 2. SEMBRAR CICLO LECTIVO 2026 (Lo movemos aquí para que su ID esté disponible)
+  // 2. SEMBRAR CICLO LECTIVO 2026
   const ciclo2026 = await prisma.cicloLectivo.upsert({
     where: { anio: 2026 },
     update: {},
@@ -109,9 +108,10 @@ async function main() {
     create: { grado: "2", seccion: "B", nivel: "Secundario" }
   });
 
-  // ASIGNACIÓN (Ahora idCiclo ya existe en la variable ciclo2026)
-  const asignacionJuan = await prisma.asignacionAcademica.create({
-    data: {
+  const asignacionJuan = await prisma.asignacionAcademica.upsert({
+    where: { idAsignacion: 1 },
+    update: {},
+    create: {
       idProfesor: profeJuan!.idProfesor,
       idMateria: materiaLengua.idMateria,
       idCurso: curso2B.idCurso,
@@ -121,9 +121,10 @@ async function main() {
     }
   });
 
-  // HORARIO (Clave para que Juan pueda pasar asistencia hoy)
-  await prisma.horario.create({
-    data: {
+  await prisma.horario.upsert({
+    where: { idHorario: 1 },
+    update: {},
+    create: {
       idAsignacion: asignacionJuan.idAsignacion,
       diaSemana: "Lunes",
       horaInicio: new Date("2026-01-15T08:00:00Z"),
@@ -132,32 +133,33 @@ async function main() {
     }
   });
 
-  // 6. SEMBRAR PERIODOS ACADÉMICOS
+  // 6. SEMBRAR PERIODOS ACADÉMICOS (ACTUALIZADO PARA EL MODELO ARGENTINO)
   const periodos = [
     { nombre: PeriodoNombre.TRIMESTRE_1, inicio: "2026-03-01", fin: "2026-05-31" },
     { nombre: PeriodoNombre.TRIMESTRE_2, inicio: "2026-06-01", fin: "2026-08-31" },
     { nombre: PeriodoNombre.TRIMESTRE_3, inicio: "2026-09-01", fin: "2026-12-20" },
+    // Mesas de Examen Final del Ciclo 2026
+    { nombre: PeriodoNombre.DICIEMBRE,   inicio: "2026-12-21", fin: "2026-12-30" },
+    { nombre: PeriodoNombre.FEBRERO,     inicio: "2027-02-01", fin: "2027-02-28" },
   ];
 
   for (const p of periodos) {
-    const existe = await prisma.periodoAcademico.findFirst({
+    await prisma.periodoAcademico.upsert({
       where: {
-        nombre: p.nombre,
-        idCiclo: ciclo2026.idCiclo
-      }
-    });
-
-    if (!existe) {
-      await prisma.periodoAcademico.create({
-        data: {
-          nombre: p.nombre,
-          fechaInicio: new Date(p.inicio),
-          fechaFin: new Date(p.fin),
+        idCiclo_nombre: {
           idCiclo: ciclo2026.idCiclo,
+          nombre: p.nombre,
         },
-      });
-      console.log(`✅ Creado: ${p.nombre}`);
-    }
+      },
+      update: {},
+      create: {
+        nombre: p.nombre,
+        fechaInicio: new Date(p.inicio),
+        fechaFin: new Date(p.fin),
+        idCiclo: ciclo2026.idCiclo,
+      },
+    });
+    console.log(`✅ Periodo preparado: ${p.nombre}`);
   }
 
   console.log("✅ Seed completado con éxito.");

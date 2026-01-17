@@ -45,25 +45,35 @@ export const AlumnoService = {
   // 4. La transacción de inscripción (que ya arreglamos antes)
   async enroll(idPersona: number, idCurso: number) {
     return await db.$transaction(async (tx) => {
-      const nuevoAlumno = await tx.alumno.create({
-        data: {
-          idPersona: idPersona,
-          legajo: `LEG-${idPersona}-${new Date().getFullYear()}`,
-          fechaNacimiento: new Date(),
-        }
+      // CAMBIO 1: Buscamos si la persona ya existe en la tabla 'alumno'
+      let alumno = await tx.alumno.findUnique({
+        where: { idPersona }
       });
 
-      await tx.matricula.create({
+      // CAMBIO 2: Si NO existe, lo creamos. Si existe, usamos el que ya está.
+      if (!alumno) {
+        alumno = await tx.alumno.create({
+          data: {
+            idPersona: idPersona,
+            legajo: `LEG-${idPersona}-${new Date().getFullYear()}`,
+            fechaNacimiento: new Date(), // Esto luego lo traeremos de la Persona
+          }
+        });
+        console.log("✅ Ficha de Alumno creada exitosamente.");
+      }
+
+      // CAMBIO 3: Creamos la Matrícula vinculando el Alumno con el Curso
+      const matricula = await tx.matricula.create({
         data: {
-          idAlumno: nuevoAlumno.idAlumno,
+          idAlumno: alumno.idAlumno,
           idCurso: idCurso,
-          idCiclo: 1, // Asumimos Ciclo ID 1 por ahora
+          idCiclo: 1, // ID del Ciclo 2026 definido en el seed
           fechaInscripcion: new Date(),
           estadoAcademico: EstadoAcademico.Activo,
         }
       });
 
-      return nuevoAlumno;
+      return { alumno, matricula };
     });
   }
 };

@@ -10,7 +10,7 @@ datasource db {
 }
 
 /* =======================
-   ENUMS
+    ENUMS MODIFICADOS
 ======================= */
 
 enum Nivel {
@@ -22,9 +22,11 @@ enum PeriodoNombre {
   TRIMESTRE_1
   TRIMESTRE_2
   TRIMESTRE_3
+  // CAMBIO: Agregamos las instancias de cierre de ciclo argentino
+  DICIEMBRE
+  FEBRERO
+  JULIO_PREVIAS // Para alumnos que rinden materias de años anteriores
   ANUAL
-  CUATRIMESTRE_1
-  CUATRIMESTRE_2
 }
 
 enum Turno {
@@ -43,6 +45,7 @@ enum TipoEvaluacion {
   Parcial
   Final
   Recuperatorio
+  EXAMEN_MESA
 }
 
 enum EstadoAsistencia {
@@ -66,6 +69,7 @@ enum TipoMovimientoStock {
 }
 
 enum CategoriaGasto {
+
   Mantenimiento
   Servicios
   Insumos
@@ -73,7 +77,7 @@ enum CategoriaGasto {
 }
 
 /* =======================
-   PERSONAS / USUARIOS
+    PERSONAS / USUARIOS
 ======================= */
 
 model Persona {
@@ -133,7 +137,7 @@ model UsuarioRol {
 }
 
 /* =======================
-   ACTORES ACADÉMICOS
+    ACTORES ACADÉMICOS
 ======================= */
 
 model Alumno {
@@ -142,9 +146,9 @@ model Alumno {
   fechaNacimiento DateTime
   legajo          String   @unique
 
-  persona    Persona     @relation(fields: [idPersona], references: [idPersona])
+  persona  Persona     @relation(fields: [idPersona], references: [idPersona])
   matriculas Matricula[]
-  padres     AlumnoPadre[]
+  padres      AlumnoPadre[]
 
   @@map("ALUMNO")
 }
@@ -183,7 +187,7 @@ model AlumnoPadre {
 }
 
 /* =======================
-   ESTRUCTURA ACADÉMICA
+    ESTRUCTURA ACADÉMICA
 ======================= */
 
 model CicloLectivo {
@@ -255,13 +259,13 @@ model AsignacionAcademica {
 }
 
 model Horario {
-  idHorario   Int      @id @default(autoincrement())
+  idHorario    Int      @id @default(autoincrement())
   idAsignacion Int
-  diaSemana   String
-  horaInicio  DateTime
-  horaFin     DateTime
-  turno       Turno
-  aula        String?
+  diaSemana    String
+  horaInicio   DateTime
+  horaFin      DateTime
+  turno        Turno
+  aula         String?
 
   asignacion AsignacionAcademica @relation(fields: [idAsignacion], references: [idAsignacion])
   asistencias Asistencia[]
@@ -270,17 +274,17 @@ model Horario {
 }
 
 /* =======================
-   MATRÍCULA / VIDA ACADÉMICA
+    MATRÍCULA / VIDA ACADÉMICA
 ======================= */
 
 model Matricula {
-  idMatricula       Int @id @default(autoincrement())
-  idAlumno          Int
-  idCurso           Int
-  idCiclo           Int
-  fechaInscripcion  DateTime
-  estadoAcademico   EstadoAcademico
-  promedioFinal     Float?
+  idMatricula        Int @id @default(autoincrement())
+  idAlumno           Int
+  idCurso            Int
+  idCiclo            Int
+  fechaInscripcion   DateTime
+  estadoAcademico    EstadoAcademico
+  promedioFinal      Float?
 
   alumno Alumno @relation(fields: [idAlumno], references: [idAlumno])
   curso  Curso  @relation(fields: [idCurso], references: [idCurso])
@@ -295,20 +299,20 @@ model Matricula {
 }
 
 model Nota {
-  idNota       Int @id @default(autoincrement())
-  idMatricula  Int
-  idAsignacion Int
-  idPeriodo    Int
-  tipo         TipoEvaluacion
-  nota         Float
-  observacion  String?
+  idNota        Int @id @default(autoincrement())
+  idMatricula   Int
+  idAsignacion  Int
+  idPeriodo     Int
+  tipo          TipoEvaluacion
+  nota          Float
+  observacion   String?
   fechaRegistro DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  matricula  Matricula @relation(fields: [idMatricula], references: [idMatricula])
+  matricula   Matricula @relation(fields: [idMatricula], references: [idMatricula])
   asignacion AsignacionAcademica @relation(fields: [idAsignacion], references: [idAsignacion])
-  periodo    PeriodoAcademico @relation(fields: [idPeriodo], references: [idPeriodo])
+  periodo     PeriodoAcademico @relation(fields: [idPeriodo], references: [idPeriodo])
 
   @@map("NOTA")
 }
@@ -323,15 +327,11 @@ model Asistencia {
   fechaRegistro DateTime
 
   matricula Matricula @relation(fields: [idMatricula], references: [idMatricula])
-  horario   Horario   @relation(fields: [idHorario], references: [idHorario])
-  usuario   Usuario   @relation(fields: [idUsuario], references: [idUsuario])
+  horario    Horario   @relation(fields: [idHorario], references: [idHorario])
+  usuario    Usuario   @relation(fields: [idUsuario], references: [idUsuario])
 
   @@map("ASISTENCIA")
 }
-
-/* =======================
-   FINANZAS
-======================= */
 
 model Cuota {
   idCuota        Int @id @default(autoincrement())
@@ -340,7 +340,7 @@ model Cuota {
   montoOriginal  Float
   saldo          Float
   fechaVencimiento DateTime
-  estado         EstadoCuota
+  estado           EstadoCuota
 
   matricula Matricula @relation(fields: [idMatricula], references: [idMatricula])
   pagos     Pago[]
@@ -359,15 +359,11 @@ model Pago {
   idUsuario   Int
   createdAt   DateTime @default(now())
 
-  cuota   Cuota   @relation(fields: [idCuota], references: [idCuota])
+  cuota  Cuota   @relation(fields: [idCuota], references: [idCuota])
   usuario Usuario @relation(fields: [idUsuario], references: [idUsuario])
 
   @@map("PAGO")
 }
-
-/* =======================
-   COMUNICACIÓN
-======================= */
 
 model Comunicado {
   idComunicado Int @id @default(autoincrement())
@@ -380,10 +376,6 @@ model Comunicado {
 
   @@map("COMUNICADO")
 }
-
-/* =======================
-   INVENTARIO / GASTOS
-======================= */
 
 model Inventario {
   idInsumo      Int @id @default(autoincrement())
@@ -421,9 +413,8 @@ model GastoInstitucional {
   categoria    CategoriaGasto
   idMovimiento Int?
 
-  usuario    Usuario @relation(fields: [idUsuario], references: [idUsuario])
+  usuario   Usuario @relation(fields: [idUsuario], references: [idUsuario])
   movimiento MovimientoStock? @relation(fields: [idMovimiento], references: [idMovimiento])
 
   @@map("GASTO_INSTITUCIONAL")
 }
-
