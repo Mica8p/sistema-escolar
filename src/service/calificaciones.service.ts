@@ -1,5 +1,6 @@
 import db from "@/lib/db";
 import { TipoEvaluacion } from "@prisma/client";
+import { getCicloActual } from "@/lib/ciclo-session";
 
 /**
  * Trae las materias y cursos según el rol.
@@ -9,8 +10,11 @@ export async function getAsignacionesParaUsuario(params: {
   isAdmin: boolean;
   idPersona: number;
 }) {
+  const idCiclo = await getCicloActual(); // <--- DINÁMICO
+
   if (params.isAdmin) {
     return db.asignacionAcademica.findMany({
+      where: { idCiclo }, // <--- FILTRO ADMIN
       include: { curso: true, materia: true, ciclo: true },
       orderBy: [{ idCiclo: "desc" }, { idCurso: "asc" }],
     });
@@ -24,7 +28,11 @@ export async function getAsignacionesParaUsuario(params: {
   if (!prof) return [];
 
   return db.asignacionAcademica.findMany({
-    where: { idProfesor: prof.idProfesor, estado: true }, // Solo traemos las activas para el docente
+    where: { 
+      idProfesor: prof.idProfesor, 
+      idCiclo: idCiclo // <--- FILTRO PROFE: Solo ve lo del año seleccionado
+      // NOTA: Quitamos 'estado: true' para que pueda ver materias viejas si selecciona 2025
+    }, 
     include: { curso: true, materia: true, ciclo: true },
     orderBy: [{ idCiclo: "desc" }, { idCurso: "asc" }],
   });

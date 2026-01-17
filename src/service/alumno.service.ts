@@ -1,5 +1,6 @@
 import db from "@/lib/db";
 import { EstadoAcademico } from "@prisma/client";
+import { getCicloActual } from "@/lib/ciclo-session";
 
 export const AlumnoService = {
   // 1. Obtener alumnos para la tabla (incluyendo su curso actual)
@@ -44,6 +45,8 @@ export const AlumnoService = {
 
   // 4. La transacción de inscripción (que ya arreglamos antes)
   async enroll(idPersona: number, idCurso: number) {
+    const idCiclo = await getCicloActual(); // <--- DINÁMICO
+
     return await db.$transaction(async (tx) => {
       // CAMBIO 1: Buscamos si la persona ya existe en la tabla 'alumno'
       let alumno = await tx.alumno.findUnique({
@@ -67,7 +70,7 @@ export const AlumnoService = {
         data: {
           idAlumno: alumno.idAlumno,
           idCurso: idCurso,
-          idCiclo: 1, // ID del Ciclo 2026 definido en el seed
+          idCiclo: idCiclo, // <--- USAMOS EL SELECCIONADO
           fechaInscripcion: new Date(),
           estadoAcademico: EstadoAcademico.Activo,
         }

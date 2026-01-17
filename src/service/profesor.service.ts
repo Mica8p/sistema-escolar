@@ -1,4 +1,5 @@
 import db from "@/lib/db";
+import { getCicloActual } from "@/lib/ciclo-session";
 
 export const ProfesorService = {
   // 1. Obtener profesores e incluir SOLO las asignaciones que están ACTIVAS
@@ -42,6 +43,8 @@ async getAll() {
 
   // Crear profesor y asignar su primera materia/curso
 async asignarProfesor(idPersona: number, idMateria: number, idCurso: number) {
+  const idCiclo = await getCicloActual(); // <--- DINÁMICO
+
   return await db.$transaction(async (tx) => {
     // 1. REGLA PRO: ¿Ya hay un docente dando esta materia HOY?
     // Buscamos si existe alguna asignación para este curso/materia que esté ACTIVA
@@ -49,7 +52,7 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number) {
       where: {
         idMateria,
         idCurso,
-        idCiclo: 1, // Ciclo 2026
+        idCiclo: idCiclo, // <--- USAMOS EL SELECCIONADO
         estado: true
       }
     });
@@ -71,7 +74,7 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number) {
         idProfesor: profesor.idProfesor,
         idMateria,
         idCurso,
-        idCiclo: 1,
+        idCiclo: idCiclo, // <--- USAMOS EL SELECCIONADO
         cargaHoraria: 4,
         estado: true
       }
@@ -104,10 +107,11 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number) {
 
   //Historial de asignaciones (bajas) de todos los profesores
   async getHistorialAsignaciones() {
+  const idCiclo = await getCicloActual(); // <--- DINÁMICO
   return await db.asignacionAcademica.findMany({
     where: {
       estado: false, // Solo las que fueron dadas de baja
-      idCiclo: 1     // Del año actual
+      idCiclo: idCiclo // <--- FILTRADO POR AÑO
     },
     include: {
       profesor: {
