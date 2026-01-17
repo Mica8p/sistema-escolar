@@ -4,16 +4,24 @@ import { getCicloActual } from "@/lib/ciclo-session";
 
 export const AlumnoService = {
   // 1. Obtener alumnos para la tabla (incluyendo su curso actual)
-  async getAll() {
+  async getAll(idCiclo: number) {
     return await db.alumno.findMany({
-      include: {
-        persona: true, // Traemos datos personales (nombre, dni)
+      where: {
+        // Solo alumnos que tienen matricula en el ciclo actual
         matriculas: {
-          // Traemos la última matrícula para saber su curso actual
-          orderBy: { fechaInscripcion: 'desc' },
-          take: 1,
+          some: {
+            idCiclo: idCiclo
+          }
+        }
+      },
+      include: {
+        persona: true,
+        matriculas: {
+          where: {
+            idCiclo: idCiclo // Nos aseguramos de traer la matrícula del ciclo correcto
+          },
           include: {
-            curso: true // Incluimos los datos del curso (grado, sección)
+            curso: true
           }
         }
       },

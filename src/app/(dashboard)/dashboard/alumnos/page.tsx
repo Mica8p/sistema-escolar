@@ -1,11 +1,13 @@
 import { inscribirAlumnoAction } from "@/lib/actions/alumno-actions";
 import { AlumnoService } from "@/service/alumno.service";
 import { UserPlus, GraduationCap } from "lucide-react"; // Iconos bonitos
+import { getCicloActual } from "@/lib/ciclo-session";
 
 export default async function AlumnosPage() {
+  const cicloId = await getCicloActual();
   // 1. Obtenemos todos los datos necesarios al mismo tiempo (en paralelo)
   const [alumnos, personasSinInscribir, cursos] = await Promise.all([
-    AlumnoService.getAll(),
+    AlumnoService.getAll(cicloId),
     AlumnoService.getPersonasDisponibles(),
     AlumnoService.getCursosDisponibles(),
   ]);
