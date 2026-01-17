@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, CalendarDays, ChevronDown, Check, Edit } from "lucide-react";
+import { Settings, CalendarDays, ChevronDown, Check, Edit, School, Book } from "lucide-react";
 import { cambiarCiclo } from "@/lib/actions/ciclo-actions";
 import type { CicloLectivo } from "@prisma/client";
 import Link from "next/link";
@@ -67,8 +67,11 @@ export function ConfiguracionesButton({ ciclos, cicloActual }: Props) {
               ))}
 
               <div className="border-t border-gray-100 my-2"></div>
+              
+              <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Configuración General
+              </div>
 
-              {/* Link para administrar los ciclos (Entrar a la gestión) */}
               <Link
                 href="/dashboard/ciclos"
                 className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -76,6 +79,24 @@ export function ConfiguracionesButton({ ciclos, cicloActual }: Props) {
               >
                 <Edit className="w-4 h-4 mr-3 text-gray-400" />
                 <span>Administrar Ciclos</span>
+              </Link>
+              
+              <Link
+                href="/dashboard/cursos"
+                className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                <School className="w-4 h-4 mr-3 text-gray-400" />
+                <span>Administrar Cursos</span>
+              </Link>
+
+              <Link
+                href="/dashboard/materias"
+                className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                <Book className="w-4 h-4 mr-3 text-gray-400" />
+                <span>Administrar Materias</span>
               </Link>
             </div>
           </div>
