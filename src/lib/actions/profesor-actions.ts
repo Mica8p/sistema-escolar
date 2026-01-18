@@ -11,25 +11,27 @@ export type FormState = {
 };
 
 export async function asignarDocenteAction(prevState: FormState, formData: FormData): Promise<FormState> {
+  const idCiclo = Number(formData.get("idCiclo")); // <--- Viene del input hidden que pusimos
   const idPersona = Number(formData.get("idPersona"));
   const idMateria = Number(formData.get("idMateria"));
   const idCurso = Number(formData.get("idCurso"));
 
-  if (!idPersona || !idMateria || !idCurso) {
+  // Verificamos que tengamos el ciclo también
+  if (!idPersona || !idMateria || !idCurso || !idCiclo) {
     return { error: "Todos los campos son obligatorios." };
   }
 
   try {
-    await ProfesorService.asignarProfesor(idPersona, idMateria, idCurso);
+    // LLAMADA CORREGIDA: Pasamos los 4 parámetros
+    await ProfesorService.asignarProfesor(idPersona, idMateria, idCurso, idCiclo);
+
     revalidatePath("/dashboard/profesores");
-    return { success: true }; // Si sale bien, devolvemos éxito
+    return { success: true };
   } catch (error: any) {
-    // P2002 es el código de Prisma para "Unique constraint failed"
-    // Según tu schema, no puede repetirse la combinación Materia-Curso-Ciclo
     if (error.code === 'P2002') {
       return { error: "Error: Ya hay un profesor asignado a esta materia en este curso." };
     }
-    return { error: "Ocurrió un error inesperado al guardar." };
+    return { error: error.message || "Ocurrió un error inesperado al guardar." };
   }
 }
 

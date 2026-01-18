@@ -278,23 +278,24 @@ model Horario {
 ======================= */
 
 model Matricula {
-  idMatricula        Int @id @default(autoincrement())
-  idAlumno           Int
-  idCurso            Int
-  idCiclo            Int
-  fechaInscripcion   DateTime
-  estadoAcademico    EstadoAcademico
-  promedioFinal      Float?
+  idMatricula       Int @id @default(autoincrement())
+  idAlumno          Int
+  idCurso           Int
+  idCiclo           Int
+  fechaInscripcion  DateTime
+  estadoAcademico   EstadoAcademico
+  promedioFinal     Float?
 
   alumno Alumno @relation(fields: [idAlumno], references: [idAlumno])
   curso  Curso  @relation(fields: [idCurso], references: [idCurso])
   ciclo  CicloLectivo @relation(fields: [idCiclo], references: [idCiclo])
 
-  notas       Nota[]
+  notas        Nota[]
   asistencias Asistencia[]
-  cuotas      Cuota[]
+  cuotas       Cuota[]
 
-  @@unique([idAlumno, idCurso, idCiclo])
+  // CORRECCIÓN: El alumno solo puede tener UNA matrícula por CICLO
+  @@unique([idAlumno, idCiclo])
   @@map("MATRICULA")
 }
 

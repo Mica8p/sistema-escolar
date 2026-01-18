@@ -9,9 +9,10 @@ import Link from "next/link";
 interface Props {
   ciclos: CicloLectivo[];
   cicloActual: number;
+  isAdmin: boolean;
 }
 
-export function ConfiguracionesButton({ ciclos, cicloActual }: Props) {
+export function ConfiguracionesButton({ ciclos, cicloActual, isAdmin }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -38,13 +39,13 @@ export function ConfiguracionesButton({ ciclos, cicloActual }: Props) {
         <>
           {/* Overlay invisible para cerrar al hacer click fuera */}
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-          
+
           <div className="absolute right-0 z-20 w-64 mt-2 origin-top-right bg-white rounded-xl shadow-xl ring-1 ring-black/5 focus:outline-none animate-in fade-in zoom-in-95 duration-100">
             <div className="py-2">
               <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Ciclo Lectivo
               </div>
-              
+
               {ciclos.map((ciclo) => (
                 <button
                   key={ciclo.idCiclo}
@@ -59,15 +60,19 @@ export function ConfiguracionesButton({ ciclos, cicloActual }: Props) {
                   <CalendarDays className={`w-4 h-4 mr-3 ${ciclo.idCiclo === cicloActual ? "text-indigo-600" : "text-gray-400"}`} />
                   <span>{ciclo.anio}</span>
                   {ciclo.estado && <span className="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">Actual</span>}
-                  
+
                   {ciclo.idCiclo === cicloActual && (
                     <Check className="w-4 h-4 ml-auto text-indigo-600" />
                   )}
                 </button>
               ))}
 
+              {/* 2. PROTECCIÓN DE ROL: Solo el admin ve lo siguiente */}
+              {isAdmin && (
+                <>
+
               <div className="border-t border-gray-100 my-2"></div>
-              
+
               <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Configuración General
               </div>
@@ -80,7 +85,7 @@ export function ConfiguracionesButton({ ciclos, cicloActual }: Props) {
                 <Edit className="w-4 h-4 mr-3 text-gray-400" />
                 <span>Administrar Ciclos</span>
               </Link>
-              
+
               <Link
                 href="/dashboard/cursos"
                 className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -107,6 +112,8 @@ export function ConfiguracionesButton({ ciclos, cicloActual }: Props) {
                 <Calendar className="w-4 h-4 mr-3 text-gray-400" />
                 <span>Administrar Periodos</span>
               </Link>
+              </>
+              )}
             </div>
           </div>
         </>

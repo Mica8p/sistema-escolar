@@ -10,22 +10,21 @@ import {
 import { getAsignacionesParaUsuario } from "@/service/calificaciones.service";
 import { getHorariosByAsignacion, getPlanillaAsistencia } from "@/service/asistencias.service";
 import AsistenciasTable from "@/components/modules/asistencias/AsistenciasTable";
+import { getCicloActual } from "@/lib/ciclo-session";
 
-export default async function AsistenciasPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ asig?: string; horario?: string; fecha?: string }>;
-}) {
-  const params = await searchParams; // Unwrapping para Next.js 16
-
+export default async function AsistenciasPage({ searchParams }: { searchParams: Promise<{ asig?: string; horario?: string; fecha?: string }> }) {
+  const params = await searchParams;
   const session = await auth();
   if (!session?.user) throw new Error("No autorizado");
+
+  // 1. OBTENER EL CICLO DESDE LA COOKIE
+  const idCiclo = await getCicloActual();
 
   const isAdmin = session.user.roles.includes("ADMIN");
   const idPersona = session.user.idPersona ?? 0;
 
-  // 1. Traer materias asignadas
-  const asignaciones = await getAsignacionesParaUsuario({ isAdmin, idPersona });
+  // 2. PASAR EL ID DEL CICLO AL SERVICIO
+  const asignaciones = await getAsignacionesParaUsuario({ isAdmin, idPersona, idCiclo });
 
   // Lógica de Selección
   const idAsignacion = params.asig ? Number(params.asig) : (asignaciones[0]?.idAsignacion || 0);

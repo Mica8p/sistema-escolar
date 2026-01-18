@@ -2,19 +2,19 @@ import db from "@/lib/db";
 import { TipoEvaluacion } from "@prisma/client";
 import { getCicloActual } from "@/lib/ciclo-session";
 
-/**
- * Trae las materias y cursos según el rol.
- * Si es ADMIN, trae todo. Si es PROFESOR, solo lo suyo.
- */
 export async function getAsignacionesParaUsuario(params: {
   isAdmin: boolean;
   idPersona: number;
+  idCiclo: number; // <--- PASO 1: Agregamos el idCiclo como parámetro obligatorio
 }) {
-  const idCiclo = await getCicloActual(); // <--- DINÁMICO
+  // PASO 2: Borramos la línea "const idCiclo = await getCicloActual()"
+  // porque ahora el ID nos llega por el parámetro 'params.idCiclo'
 
   if (params.isAdmin) {
     return db.asignacionAcademica.findMany({
-      where: { idCiclo }, // <--- FILTRO ADMIN
+      where: {
+        idCiclo: params.idCiclo // <--- PASO 3: Filtramos usando el parámetro
+      },
       include: { curso: true, materia: true, ciclo: true },
       orderBy: [{ idCiclo: "desc" }, { idCurso: "asc" }],
     });
@@ -28,11 +28,10 @@ export async function getAsignacionesParaUsuario(params: {
   if (!prof) return [];
 
   return db.asignacionAcademica.findMany({
-    where: { 
-      idProfesor: prof.idProfesor, 
-      idCiclo: idCiclo // <--- FILTRO PROFE: Solo ve lo del año seleccionado
-      // NOTA: Quitamos 'estado: true' para que pueda ver materias viejas si selecciona 2025
-    }, 
+    where: {
+      idProfesor: prof.idProfesor,
+      idCiclo: params.idCiclo // <--- PASO 4: Filtramos usando el parámetro
+    },
     include: { curso: true, materia: true, ciclo: true },
     orderBy: [{ idCiclo: "desc" }, { idCurso: "asc" }],
   });
@@ -48,62 +47,52 @@ export async function getPeriodosByCiclo(idCiclo: number) {
   });
 }
 
-/**
- * Genera la planilla de alumnos y sus notas existentes.
- * CORRECCIÓN: Ahora busca notas por contexto académico (Materia/Curso)
- * para que el nuevo profesor vea lo que puso el anterior.
- */
+
 export async function getPlanilla(params: {
   idAsignacion: number;
   idPeriodo: number;
-  tipo: TipoEvaluacion;
+  tipo: string;
 }) {
+  // 1. Buscamos la asignación para conocer el Curso y el Ciclo
   const asig = await db.asignacionAcademica.findUnique({
     where: { idAsignacion: params.idAsignacion },
-    include: { curso: true, ciclo: true, materia: true },
+    include: { curso: true, ciclo: true, materia: true }
   });
-  if (!asig) throw new Error("Asignación no encontrada.");
 
-  // Buscamos los alumnos inscritos en este curso y año
+  if (!asig) throw new Error("Asignación no encontrada");
+
+  // 2. Buscamos las matrículas filtrando por Curso Y Ciclo
   const matriculas = await db.matricula.findMany({
     where: {
       idCurso: asig.idCurso,
-      idCiclo: asig.idCiclo,
-      estadoAcademico: "Activo",
+      idCiclo: asig.idCiclo, // <--- ESTE ES EL FILTRO MAESTRO
+      estadoAcademico: "Activo"
     },
     include: {
-      alumno: { include: { persona: true } },
-    },
-    orderBy: [{ alumno: { persona: { apellido: "asc" } } }],
-  });
-
-  // Buscamos notas por contexto de Materia/Curso/Ciclo (Herencia)
-  const notas = await db.nota.findMany({
-    where: {
-      idPeriodo: params.idPeriodo,
-      tipo: params.tipo,
-      asignacion: {
-        idMateria: asig.idMateria,
-        idCurso: asig.idCurso,
-        idCiclo: asig.idCiclo
+      alumno: {
+        include: { persona: true }
       }
     },
-    orderBy: { updatedAt: "desc" },
+    orderBy: { alumno: { persona: { apellido: "asc" } } }
   });
 
-  const notaByMatricula = new Map<number, (typeof notas)[number]>();
-  for (const n of notas) {
-    if (!notaByMatricula.has(n.idMatricula)) notaByMatricula.set(n.idMatricula, n);
-  }
+  // 3. Traemos las notas ya cargadas para esa instancia
+  const notas = await db.nota.findMany({
+    where: {
+      idAsignacion: params.idAsignacion,
+      idPeriodo: params.idPeriodo,
+      tipo: params.tipo as any,
+    },
+  });
+
+  // Mapeo para que la tabla lo procese rápido
+  const notaByMatricula = new Map<number, number>();
+  notas.forEach((n) => notaByMatricula.set(n.idMatricula, n.nota));
 
   return { asig, matriculas, notaByMatricula };
 }
 
-/**
- * Guarda o actualiza una calificación.
- * CORRECCIÓN: Si el profe nuevo edita una nota del profe viejo,
- * se actualiza la misma en lugar de crear una duplicada.
- */
+
 export async function guardarNota(params: {
   idMatricula: number;
   idAsignacion: number;

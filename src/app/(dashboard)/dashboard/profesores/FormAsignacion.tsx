@@ -10,11 +10,12 @@ interface Props {
   materias: any[];
   cursos: any[];
   editData?: any; // Recibe la asignación a editar si existe
+  idCiclo: number;
 }
 
 const initialState: FormState = {};
 
-export default function FormAsignacion({ personas, materias, cursos, editData }: Props) {
+export default function FormAsignacion({ personas, materias, cursos, editData, idCiclo }: Props) {
   const router = useRouter();
 
   // Si hay editData, usamos la acción de editar; si no, la de asignar
@@ -48,6 +49,8 @@ export default function FormAsignacion({ personas, materias, cursos, editData }:
       )}
 
       <form action={formAction} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        {/* CAMPO OCULTO PARA EL CICLO */}
+        <input type="hidden" name="idCiclo" value={idCiclo} />
         {/* Campo oculto para saber qué ID estamos editando */}
         {editData && <input type="hidden" name="idAsignacion" value={editData.idAsignacion} />}
 

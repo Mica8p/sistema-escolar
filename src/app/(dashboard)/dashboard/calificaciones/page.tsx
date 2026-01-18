@@ -8,23 +8,23 @@ import {
   getPlanilla,
 } from "@/service/calificaciones.service";
 import CalificacionesTable from "@/components/modules/calificaciones/CalificacionesForm";
+import { getCicloActual } from "@/lib/ciclo-session";
 
 const TIPOS: TipoEvaluacion[] = ["Parcial", "Final", "Recuperatorio"];
 
-export default async function CalificacionesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ asig?: string; periodo?: string; tipo?: string }>;
-}) {
-  const params = await searchParams; // Unwrapping para Next.js 16
-
+export default async function CalificacionesPage({ searchParams }: { searchParams: Promise<{ asig?: string; periodo?: string; tipo?: string }> }) {
+  const params = await searchParams;
   const session = await auth();
   if (!session?.user) throw new Error("No autorizado");
+
+  // 1. OBTENER EL CICLO DESDE LA COOKIE
+  const idCiclo = await getCicloActual();
 
   const isAdmin = session.user.roles.includes("ADMIN");
   const idPersona = session.user.idPersona ?? 0;
 
-  const asignaciones = await getAsignacionesParaUsuario({ isAdmin, idPersona });
+  // 2. PASAR EL ID DEL CICLO AL SERVICIO
+  const asignaciones = await getAsignacionesParaUsuario({ isAdmin, idPersona, idCiclo });
 
   // Lógica de IDs para filtros
   const idAsignacion = params.asig ? Number(params.asig) : (asignaciones[0]?.idAsignacion || 0);

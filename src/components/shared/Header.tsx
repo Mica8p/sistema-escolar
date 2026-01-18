@@ -3,16 +3,20 @@ import { getCicloActual } from "@/lib/ciclo-session";
 import { CicloService } from "@/service/ciclo.service";
 import { LogOut, User } from "lucide-react";
 import { ConfiguracionesButton } from "../configuraciones-button";
+import { auth } from "@/auth";
 
 interface HeaderProps {
   userName?: string | null;
 }
 
 export default async function Header({ userName }: HeaderProps) {
-  const [ciclos, cicloActual] = await Promise.all([
+  const session = await auth();
+  const isAdmin = session?.user.roles.includes("ADMIN") ?? false;
+  const [ciclos, cicloActual, ] = await Promise.all([
     CicloService.getAll(),
     getCicloActual(),
   ]);
+
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 shadow-sm">
@@ -31,7 +35,7 @@ export default async function Header({ userName }: HeaderProps) {
           </span>
         </div>
 
-        <ConfiguracionesButton ciclos={ciclos} cicloActual={cicloActual} />
+        <ConfiguracionesButton ciclos={ciclos} cicloActual={cicloActual} isAdmin={isAdmin} />
 
         {/* Botón de Salir (como Server Action) */}
         <form action={logout}>

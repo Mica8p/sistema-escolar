@@ -3,23 +3,35 @@ import { AlumnoService } from "@/service/alumno.service";
 import { Briefcase, BookOpen, UserX, Pencil, History, Clock } from "lucide-react";
 import FormAsignacion from "./FormAsignacion";
 import { revalidatePath } from "next/cache";
+import { getCicloActual } from "@/lib/ciclo-session";
+import db from "@/lib/db";
+import { ImportarAsignaciones } from "@/components/modules/profesores/ImportarAsignaciones";
 
 interface PageProps {
   searchParams: Promise<{ editId?: string }>; // Next.js 15 maneja searchParams como Promise
 }
 
 export default async function DocentesPage({ searchParams }: PageProps) {
-  const { editId } = await searchParams; // Obtenemos el ID de la URL si existe
+ const { editId } = await searchParams;
 
+  // 1. OBTENER EL CICLO ACTUAL DE LA SESIÓN
+  const idCicloActual = await getCicloActual();
+
+  // 2. BUSCAR EL CICLO ANTERIOR (para el botón de importar)
+  const cicloActualInfo = await db.cicloLectivo.findUnique({ where: { idCiclo: idCicloActual } });
+  const cicloAnterior = await db.cicloLectivo.findFirst({
+    where: { anio: (cicloActualInfo?.anio ?? 0) - 1 },
+  });
+
+  // 3. PASAR EL idCicloActual AL SERVICE
   const [profesores, personas, materias, cursos, historial] = await Promise.all([
-    ProfesorService.getAll(), // Trae solo activos
+    ProfesorService.getAll(idCicloActual), // <--- AHORA FILTRA POR AÑO
     ProfesorService.getPersonasDisponibles(),
     ProfesorService.getMaterias(),
     AlumnoService.getCursosDisponibles(),
-    ProfesorService.getHistorialAsignaciones(), // Trae solo inactivos
+    ProfesorService.getHistorialAsignaciones(),
   ]);
 
-  // Si estamos editando, buscamos la asignación específica para pasarla al form
   const asignacionAEditar = editId
     ? profesores.flatMap(p => p.asignaciones).find(a => a.idAsignacion === Number(editId))
     : null;
@@ -28,15 +40,24 @@ export default async function DocentesPage({ searchParams }: PageProps) {
     <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
         <Briefcase className="h-8 w-8 text-indigo-600" />
-        Gestión de Docentes
+        Gestión de Docentes {cicloActualInfo?.anio}
       </h1>
 
-      {/* Formulario Dual */}
+      {/* 4. MOSTRAR BOTÓN DE IMPORTAR SI NO HAY ASIGNACIONES */}
+      {profesores.length === 0 && cicloAnterior && (
+        <ImportarAsignaciones
+          cicloActualId={idCicloActual}
+          cicloAnteriorId={cicloAnterior.idCiclo}
+          anioAnterior={cicloAnterior.anio}
+        />
+      )}
+
       <FormAsignacion
         editData={asignacionAEditar}
         personas={personas}
         materias={materias}
         cursos={cursos}
+        idCiclo={idCicloActual} // <--- PASAMOS EL ID AL FORMULARIO
       />
 
       {/* TABLA DE ASIGNACIONES ACTIVAS */}
