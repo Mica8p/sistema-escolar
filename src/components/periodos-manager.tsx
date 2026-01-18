@@ -1,10 +1,10 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
 import { createPeriodoAction, getPeriodosByCiclo, deletePeriodoAction } from '@/lib/actions/periodo-actions';
 import { getAllCiclos } from '@/lib/actions/ciclo-actions';
 import { PeriodoNombre } from '@prisma/client';
-import { useEffect, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { PeriodoAcademico, CicloLectivo } from '@prisma/client';
 
 // Sub-component for the submit button to show loading state
@@ -39,7 +39,7 @@ function DeletePeriodoButton({ idPeriodo }: { idPeriodo: number }) {
 }
 
 export default function PeriodosManager() {
-  const [state, formAction] = useFormState(createPeriodoAction, {
+  const [state, formAction] = useActionState(createPeriodoAction, {
     success: false,
     message: '',
   });
