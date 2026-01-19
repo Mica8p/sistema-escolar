@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import db from "@/lib/db";
 
+/* =========================
+   Utils
+========================= */
+
 function toInt(value: unknown, fallback = 0) {
   const n = typeof value === "string" ? Number(value) : Number(value);
   return Number.isFinite(n) ? Math.trunc(n) : fallback;
@@ -13,10 +17,11 @@ function normalizeText(value: unknown) {
   return String(value ?? "").trim();
 }
 
-// Normaliza para comparar nombres (sin tocar BD):
+// Normaliza texto para comparación:
 // - trim
-// - colapsa espacios múltiples
+// - espacios simples
 // - lowercase
+// - sin tildes
 function normalizeKey(value: unknown) {
   return normalizeText(value)
     .replace(/\s+/g, " ")
@@ -25,14 +30,25 @@ function normalizeKey(value: unknown) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+function requireAdmin(session: any) {
+  const roles = session?.user?.roles ?? [];
+  const isAdmin = roles.includes("ADMIN");
+  if (!isAdmin) {
+    return { success: false, message: "Solo ADMIN." } as const;
+  }
+  return null;
+}
+
+/* =========================
+   Crear insumo
+========================= */
 
 export async function createInsumo(formData: FormData) {
   const session = await auth();
   if (!session?.user) return { success: false, message: "No autorizado" };
 
-  const roles = session.user.roles ?? [];
-  const isAdmin = roles.includes("ADMIN");
-  if (!isAdmin) return { success: false, message: "Solo ADMIN puede crear insumos." };
+  const adminError = requireAdmin(session);
+  if (adminError) return adminError;
 
   const nombre = normalizeText(formData.get("nombre"));
   const unidadMedida = normalizeText(formData.get("unidadMedida"));
@@ -44,22 +60,18 @@ export async function createInsumo(formData: FormData) {
   if (stockActual < 0) return { success: false, message: "El stock actual no puede ser negativo." };
   if (stockMinimo < 0) return { success: false, message: "El stock mínimo no puede ser negativo." };
 
-  // Anti-duplicados (case-insensitive + espacios)
+  // Anti-duplicados
   const key = normalizeKey(nombre);
 
-  // Primero una búsqueda rápida case-insensitive por "contains" (reduce filas),
-  // luego verificamos exactitud con normalizeKey para cubrir espacios.
   const existentes = await db.inventario.findMany({
-  select: { nombre: true },
-});
+    select: { nombre: true },
+  });
 
-const existe = existentes.some(
-  (i) => normalizeKey(i.nombre) === key
-);
+  const existe = existentes.some((i) => normalizeKey(i.nombre) === key);
 
-if (existe) {
-  return { success: false, message: "Ya existe un insumo con ese nombre." };
-}
+  if (existe) {
+    return { success: false, message: "Ya existe un insumo con ese nombre." };
+  }
 
   await db.inventario.create({
     data: {
@@ -74,13 +86,16 @@ if (existe) {
   return { success: true, message: "Insumo creado." };
 }
 
+/* =========================
+   Actualizar insumo
+========================= */
+
 export async function updateInsumo(formData: FormData) {
   const session = await auth();
   if (!session?.user) return { success: false, message: "No autorizado" };
 
-  const roles = session.user.roles ?? [];
-  const isAdmin = roles.includes("ADMIN");
-  if (!isAdmin) return { success: false, message: "Solo ADMIN puede editar insumos." };
+  const adminError = requireAdmin(session);
+  if (adminError) return adminError;
 
   const idInsumo = toInt(formData.get("idInsumo"));
   const nombre = normalizeText(formData.get("nombre"));
@@ -92,21 +107,19 @@ export async function updateInsumo(formData: FormData) {
   if (!unidadMedida) return { success: false, message: "La unidad de medida es obligatoria." };
   if (stockMinimo < 0) return { success: false, message: "El stock mínimo no puede ser negativo." };
 
-  // Anti-duplicados en edición (excluye este mismo insumo)
+  // Anti-duplicados (excluye el actual)
   const key = normalizeKey(nombre);
 
   const existentes = await db.inventario.findMany({
-  where: { NOT: { idInsumo } },
-  select: { nombre: true },
-});
+    where: { NOT: { idInsumo } },
+    select: { nombre: true },
+  });
 
-const existe = existentes.some(
-  (i) => normalizeKey(i.nombre) === key
-);
+  const existe = existentes.some((i) => normalizeKey(i.nombre) === key);
 
-if (existe) {
-  return { success: false, message: "Ya existe otro insumo con ese nombre." };
-}
+  if (existe) {
+    return { success: false, message: "Ya existe otro insumo con ese nombre." };
+  }
 
   await db.inventario.update({
     where: { idInsumo },

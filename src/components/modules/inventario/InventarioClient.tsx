@@ -22,16 +22,11 @@ type Movimiento = {
   gastos: { monto: number; concepto: string; categoria: string }[];
 };
 
-
 export default function InventarioClient({
   insumos,
-  isAdmin,
-  isDocente,
   movimientos,
 }: {
   insumos: Insumo[];
-  isAdmin: boolean;
-  isDocente: boolean;
   movimientos: Movimiento[];
 }) {
   /* ---------- Insumos (alta / edición) ---------- */
@@ -42,13 +37,9 @@ export default function InventarioClient({
   /* ---------- Movimientos de stock ---------- */
   const [movOpen, setMovOpen] = useState(false);
   const [movInsumo, setMovInsumo] = useState<Insumo | null>(null);
-  const [movTipo, setMovTipo] =
-    useState<"Entrada" | "Salida" | "Ajuste">("Salida");
+  const [movTipo, setMovTipo] = useState<"Entrada" | "Salida" | "Ajuste">("Salida");
 
-  const openMovimiento = (
-    i: Insumo,
-    tipo: "Entrada" | "Salida" | "Ajuste"
-  ) => {
+  const openMovimiento = (i: Insumo, tipo: "Entrada" | "Salida" | "Ajuste") => {
     setMovInsumo(i);
     setMovTipo(tipo);
     setMovOpen(true);
@@ -77,14 +68,12 @@ export default function InventarioClient({
           <p className="text-slate-600">Listado de insumos y stock.</p>
         </div>
 
-        {isAdmin && (
-          <button
-            onClick={onNew}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-          >
-            + Nuevo insumo
-          </button>
-        )}
+        <button
+          onClick={onNew}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+        >
+          + Nuevo insumo
+        </button>
       </div>
 
       {/* ---------- Tabla principal: INVENTARIO ---------- */}
@@ -122,57 +111,38 @@ export default function InventarioClient({
                           : "bg-emerald-50 text-emerald-700"
                       }`}
                     >
-                      {sinStock
-                        ? "Sin stock"
-                        : bajoStock
-                        ? "Bajo stock"
-                        : "OK"}
+                      {sinStock ? "Sin stock" : bajoStock ? "Bajo stock" : "OK"}
                     </span>
                   </td>
 
                   <td className="px-4 py-3 text-right space-x-2">
-                    {isAdmin && (
-                      <>
-                        <button
-                          onClick={() => openMovimiento(i, "Entrada")}
-                          className="rounded-lg border px-3 py-1.5 text-xs hover:bg-slate-50"
-                        >
-                          Entrada
-                        </button>
+                    <button
+                      onClick={() => openMovimiento(i, "Entrada")}
+                      className="rounded-lg border px-3 py-1.5 text-xs hover:bg-slate-50"
+                    >
+                      Entrada
+                    </button>
 
-                        <button
-                          onClick={() => openMovimiento(i, "Salida")}
-                          className="rounded-lg border px-3 py-1.5 text-xs hover:bg-slate-50"
-                        >
-                          Salida
-                        </button>
+                    <button
+                      onClick={() => openMovimiento(i, "Salida")}
+                      className="rounded-lg border px-3 py-1.5 text-xs hover:bg-slate-50"
+                    >
+                      Salida
+                    </button>
 
-                        <button
-                          onClick={() => openMovimiento(i, "Ajuste")}
-                          className="rounded-lg border px-3 py-1.5 text-xs hover:bg-slate-50"
-                        >
-                          Ajuste
-                        </button>
-                      </>
-                    )}
+                    <button
+                      onClick={() => openMovimiento(i, "Ajuste")}
+                      className="rounded-lg border px-3 py-1.5 text-xs hover:bg-slate-50"
+                    >
+                      Ajuste
+                    </button>
 
-                    {!isAdmin && isDocente && (
-                      <button
-                        onClick={() => openMovimiento(i, "Salida")}
-                        className="rounded-lg border px-3 py-1.5 text-xs hover:bg-slate-50"
-                      >
-                        Salida
-                      </button>
-                    )}
-
-                    {isAdmin && (
-                      <button
-                        onClick={() => onEdit(i)}
-                        className="rounded-lg border px-3 py-1.5 text-xs hover:bg-slate-50"
-                      >
-                        Editar
-                      </button>
-                    )}
+                    <button
+                      onClick={() => onEdit(i)}
+                      className="rounded-lg border px-3 py-1.5 text-xs hover:bg-slate-50"
+                    >
+                      Editar
+                    </button>
                   </td>
                 </tr>
               );
@@ -193,9 +163,7 @@ export default function InventarioClient({
       <div className="overflow-hidden rounded-xl border bg-white">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h2 className="text-sm font-semibold">Últimos movimientos</h2>
-          <span className="text-xs text-slate-500">
-            Mostrando {movimientos.length}
-          </span>
+          <span className="text-xs text-slate-500">Mostrando {movimientos.length}</span>
         </div>
 
         <table className="w-full text-sm">
@@ -207,7 +175,6 @@ export default function InventarioClient({
               <th className="px-4 py-3 text-right">Cantidad</th>
               <th className="px-4 py-3 text-left">Usuario</th>
               <th className="px-4 py-3 text-left">Gasto</th>
-
             </tr>
           </thead>
 
@@ -229,29 +196,20 @@ export default function InventarioClient({
                   <td className="px-4 py-3">{fecha}</td>
                   <td className="px-4 py-3">
                     {m.insumo.nombre}
-                    <span className="ml-2 text-xs text-slate-500">
-                      ({m.insumo.unidadMedida})
-                    </span>
+                    <span className="ml-2 text-xs text-slate-500">({m.insumo.unidadMedida})</span>
                   </td>
                   <td className="px-4 py-3">{m.tipo}</td>
-                  <td
-                    className={`px-4 py-3 text-right ${
-                      isNeg ? "text-red-700" : "text-emerald-700"
-                    }`}
-                  >
+                  <td className={`px-4 py-3 text-right ${isNeg ? "text-red-700" : "text-emerald-700"}`}>
                     {isNeg ? "-" : "+"}
                     {abs}
                   </td>
                   <td className="px-4 py-3">
-                    {m.usuario.persona.apellido},{" "}
-                    {m.usuario.persona.nombre}
+                    {m.usuario.persona.apellido}, {m.usuario.persona.nombre}
                   </td>
                   <td className="px-4 py-3">
                     {m.gastos?.length ? (
                       <div className="text-xs">
-                        <div className="font-medium">
-                          ${m.gastos[0].monto}
-                        </div>
+                        <div className="font-medium">${m.gastos[0].monto}</div>
                         <div className="text-slate-500">
                           {m.gastos[0].categoria} • {m.gastos[0].concepto}
                         </div>
@@ -260,7 +218,6 @@ export default function InventarioClient({
                       <span className="text-xs text-slate-400">—</span>
                     )}
                   </td>
-
                 </tr>
               );
             })}
@@ -289,9 +246,6 @@ export default function InventarioClient({
         onClose={() => setMovOpen(false)}
         insumo={movInsumo}
         tipoInicial={movTipo}
-        canEntrada={isAdmin}
-        canSalida={true}
-        canAjuste={isAdmin}
       />
     </div>
   );

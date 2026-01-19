@@ -58,7 +58,7 @@ export const menuItems = [
     title: "Inventario",
     href: "/dashboard/inventario",
     icon: Package,
-    roles: ["ADMIN", "DOCENTE"],
+    roles: ["ADMIN"],
   },
   {
     title: "Comunicados",

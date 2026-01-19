@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import db from "@/lib/db";
 
+/* =========================
+   Utils
+========================= */
+
 function toInt(value: unknown, fallback = 0) {
   const n = typeof value === "string" ? Number(value) : Number(value);
   return Number.isFinite(n) ? Math.trunc(n) : fallback;
@@ -13,13 +17,25 @@ function normalizeText(value: unknown) {
   return String(value ?? "").trim();
 }
 
+function requireAdmin(session: any) {
+  const roles = session?.user?.roles ?? [];
+  const isAdmin = roles.includes("ADMIN");
+  if (!isAdmin) {
+    return { success: false, message: "Solo ADMIN." } as const;
+  }
+  return null;
+}
+
+/* =========================
+   Crear movimiento de stock
+========================= */
+
 export async function createMovimientoStock(formData: FormData) {
   const session = await auth();
   if (!session?.user) return { success: false, message: "No autorizado" };
 
-  const roles = session.user.roles ?? [];
-  const isAdmin = roles.includes("ADMIN");
-  const isDocente = roles.includes("DOCENTE");
+  const adminError = requireAdmin(session);
+  if (adminError) return adminError;
 
   const idUsuario = session.user.idUsuario;
   if (!idUsuario) return { success: false, message: "Usuario inválido." };
@@ -34,18 +50,11 @@ export async function createMovimientoStock(formData: FormData) {
     return { success: false, message: "Tipo de movimiento inválido." };
   }
 
-  // Permisos
-  if (!isAdmin) {
-    if (!(isDocente && tipo === "Salida")) {
-      return { success: false, message: "No tenés permisos para este movimiento." };
-    }
-  }
-
   if (cantidadRaw <= 0) {
     return { success: false, message: "La cantidad debe ser mayor a 0." };
   }
 
-  // Delta según tipo
+  /* ---------- Delta según tipo ---------- */
   let delta = 0;
   if (tipo === "Entrada") delta = cantidadRaw;
   if (tipo === "Salida") delta = -cantidadRaw;
@@ -57,7 +66,7 @@ export async function createMovimientoStock(formData: FormData) {
     delta = ajusteSign === "sumar" ? cantidadRaw : -cantidadRaw;
   }
 
-  // Datos de gasto (opcionales)
+  /* ---------- Datos de gasto (opcionales) ---------- */
   const crearGasto = normalizeText(formData.get("crearGasto")) === "1";
   const monto = Number(formData.get("monto") ?? 0);
   const concepto = normalizeText(formData.get("concepto"));
