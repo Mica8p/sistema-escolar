@@ -9,7 +9,7 @@ import { ImportarAsignaciones } from "@/components/modules/profesores/ImportarAs
 import { AsignacionesList } from "./AsignacionesList";
 
 interface PageProps {
-  searchParams: { editId?: string }; 
+  searchParams: { editId?: string };
 }
 
 export default async function DocentesPage({ searchParams }: PageProps) {
@@ -88,7 +88,7 @@ export default async function DocentesPage({ searchParams }: PageProps) {
                   <td className="p-4 text-gray-500 text-sm">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {reg.materia.nombre} — {reg.curso.grado}° {reg.curso.seccion}
+                      {reg.materia.nombre} — {reg.curso.grado}° {reg.curso.seccion} ({reg.curso.turno})
                     </span>
                   </td>
                   <td className="p-4 text-center">
