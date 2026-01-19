@@ -57,6 +57,32 @@ export async function editarDocenteAction(prevState: FormState, formData: FormDa
   } catch (error: any) {
     if (error.message === 'NEXT_REDIRECT') throw error;
 
-    return { error: "Error al actualizar la asignación." };
-  }
-}
+        return { error: "Error al actualizar la asignación." };
+
+      }
+
+    }
+
+    
+
+    export async function desactivarAsignacionAction(idAsignacion: number) {
+
+      try {
+
+        await ProfesorService.desactivarAsignacion(idAsignacion);
+
+        revalidatePath('/dashboard/profesores');
+
+        return { success: true };
+
+      } catch (error) {
+
+        console.error(error);
+
+        return { success: false, message: 'Error al desactivar la asignación' };
+
+      }
+
+    }
+
+    
