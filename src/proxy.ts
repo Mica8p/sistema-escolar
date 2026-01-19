@@ -2,26 +2,35 @@ import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 import { NextResponse } from "next/server";
 
-// 1. Definimos las rutas que solo el ADMIN puede gestionar
-const ADMIN_ROUTES = [
-  "/dashboard/ciclos",
-  "/dashboard/cursos",
-  "/dashboard/materias",
-  "/dashboard/periodos",
-];
+// 1. Rutas exclusivas de configuración (Solo Admin)
+const ADMIN_ONLY = ["/dashboard/ciclos", "/dashboard/cursos", "/dashboard/materias", "/dashboard/periodos"];
+
+// 2. Rutas de gestión académica (Admin y Docentes)
+const ACADEMIC_ROUTES = ["/dashboard/asistencias", "/dashboard/calificaciones", "/dashboard/alumnos", "/dashboard/profesores"];
 
 export default NextAuth(authConfig).auth((req) => {
   const { nextUrl } = req;
   const userRoles = req.auth?.user?.roles || [];
+
   const isAdmin = userRoles.includes("ADMIN");
+  const isDocente = userRoles.includes("DOCENTE");
 
-  // 2. Verificamos si el usuario intenta acceder a una ruta de administración
-  const isTargetingAdminRoute = ADMIN_ROUTES.some((route) =>
-    nextUrl.pathname.startsWith(route)
-  );
+  const path = nextUrl.pathname;
 
-  // 3. Lógica de Redirección: Si es docente y entra a zona admin, vuelve al panel principal
-  if (isTargetingAdminRoute && !isAdmin) {
+  // REGLA DE ORO: Si es ADMIN, tiene paso libre a TODO
+  if (isAdmin) {
+    return NextResponse.next();
+  }
+
+  // 3. Protección para rutas de configuración
+  // Si no es admin e intenta entrar a ciclos, cursos, etc., vuelve al inicio.
+  if (ADMIN_ONLY.some(route => path.startsWith(route))) {
+    return NextResponse.redirect(new URL("/dashboard", nextUrl));
+  }
+
+  // 4. Protección para rutas académicas
+  // Solo permitimos entrar si es DOCENTE. (El Admin ya pasó arriba)
+  if (ACADEMIC_ROUTES.some(route => path.startsWith(route)) && !isDocente) {
     return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 
@@ -29,6 +38,5 @@ export default NextAuth(authConfig).auth((req) => {
 });
 
 export const config = {
-  // Este matcher asegura que el middleware corra en casi toda la app
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

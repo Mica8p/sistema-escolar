@@ -5,7 +5,8 @@ import { EstadoAsistencia } from "@prisma/client";
 export async function getHorariosByAsignacion(idAsignacion: number) {
   return db.horario.findMany({
     where: { idAsignacion: Number(idAsignacion) },
-    orderBy: { diaSemana: "asc" },
+    // Ordenamos por hora para que la lista sea profesional
+    orderBy: { horaInicio: "asc" },
   });
 }
 
@@ -15,11 +16,10 @@ export async function getPlanillaAsistencia(params: {
   idHorario: number;
   fecha: Date;
 }) {
-  // 1. Normalizamos la fecha (sin horas) para la búsqueda exacta
+  // NORMALIZACIÓN: Usamos el mismo criterio que en la Action
   const fechaBusqueda = new Date(params.fecha);
   fechaBusqueda.setHours(0, 0, 0, 0);
 
-  // 2. Buscamos la asignación para saber curso y ciclo (2026/2027)
   const asig = await db.asignacionAcademica.findUnique({
     where: { idAsignacion: Number(params.idAsignacion) },
     include: { curso: true, ciclo: true, materia: true },
@@ -27,7 +27,7 @@ export async function getPlanillaAsistencia(params: {
 
   if (!asig) throw new Error("Asignación no encontrada");
 
-  // 3. Obtenemos alumnos inscriptos
+  // Alumnos activos en el ciclo 2026
   const matriculas = await db.matricula.findMany({
     where: {
       idCurso: asig.idCurso,
@@ -38,10 +38,10 @@ export async function getPlanillaAsistencia(params: {
     orderBy: { alumno: { persona: { apellido: "asc" } } },
   });
 
-  // 4. Buscamos asistencias usando idHorario (como pide el nuevo schema)
+  // Buscamos asistencias registradas para ese bloque y fecha
   const asistencias = await db.asistencia.findMany({
     where: {
-      idHorario: Number(params.idHorario), // Ahora TypeScript reconocerá este campo
+      idHorario: Number(params.idHorario),
       fecha: fechaBusqueda,
     },
   });

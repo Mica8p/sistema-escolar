@@ -88,10 +88,10 @@ export default function PeriodosManager() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Gestión de Periodos Académicos</h1>
+      <h1 className="text-2xl font-bold mb-4 text-gray-600">Gestión de Periodos Académicos</h1>
 
       <div className="mb-8 p-4 border rounded shadow-sm">
-        <h2 className="text-xl font-semibold mb-2">Crear Nuevo Periodo Académico</h2>
+        <h2 className="text-xl font-semibold mb-2 text-gray-600">Crear Nuevo Periodo Académico</h2>
         <form action={formAction} className="space-y-4">
           <div>
             <label htmlFor="idCiclo" className="block text-sm font-medium text-gray-700">
@@ -100,7 +100,7 @@ export default function PeriodosManager() {
             <select
               id="idCiclo"
               name="idCiclo"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-gray-600"
               value={selectedCiclo}
               onChange={(e) => setSelectedCiclo(Number(e.target.value))}
               required
@@ -120,7 +120,7 @@ export default function PeriodosManager() {
             <select
               id="nombre"
               name="nombre"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-gray-600"
               required
             >
               {Object.values(PeriodoNombre).map((nombre) => (
@@ -139,7 +139,7 @@ export default function PeriodosManager() {
               type="date"
               id="fechaInicio"
               name="fechaInicio"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-gray-600"
               required
             />
           </div>
@@ -152,7 +152,7 @@ export default function PeriodosManager() {
               type="date"
               id="fechaFin"
               name="fechaFin"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-gray-600"
               required
             />
           </div>
@@ -161,12 +161,12 @@ export default function PeriodosManager() {
         </form>
       </div>
 
-      <div className="p-4 border rounded shadow-sm">
-        <h2 className="text-xl font-semibold mb-2">Periodos Existentes para Ciclo: {selectedCiclo ? ciclos.find(c => c.idCiclo === selectedCiclo)?.anio : 'Ninguno'}</h2>
+      <div className="p-4 border rounded shadow-sm border-gray-400">
+        <h2 className="text-xl font-semibold mb-2 text-gray-600">Periodos Existentes para Ciclo: {selectedCiclo ? ciclos.find(c => c.idCiclo === selectedCiclo)?.anio : 'Ninguno'}</h2>
         {periodos.length === 0 ? (
           <p>No hay periodos académicos para este ciclo.</p>
         ) : (
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full divide-y divide-gray-300">
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
