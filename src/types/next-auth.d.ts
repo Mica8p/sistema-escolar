@@ -1,24 +1,32 @@
-import "next-auth";
-import "next-auth/jwt";
+import NextAuth, { DefaultSession } from "next-auth";
+import { JWT } from "next-auth/jwt";
 
 declare module "next-auth" {
   interface Session {
     user: {
-      name?: string | null;
-      email?: string | null;
       roles: string[];
-      idUsuario: number | null;
-      idPersona: number | null;
+      idUsuario: number;
+      idPersona: number;
       idProfesor: number | null;
-    };
+      idPadre: number | null; // Agregamos el ID del padre
+    } & DefaultSession["user"];
+  }
+
+  interface User {
+    roles: string[];
+    idUsuario: number;
+    idPersona: number;
+    idProfesor: number | null;
+    idPadre: number | null;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    roles?: string[];
-    idUsuario?: number | null;
-    idPersona?: number | null;
-    idProfesor?: number | null;
+    roles: string[];
+    idUsuario: number;
+    idPersona: number;
+    idProfesor: number | null;
+    idPadre: number | null;
   }
 }

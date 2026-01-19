@@ -11,6 +11,8 @@ export async function createPersonaAction(prevState: any, formData: FormData) {
       apellido: formData.get("apellido") as string,
       dni: formData.get("dni") as string,
       email: formData.get("email") as string,
+      telefono: formData.get("telefono") as string,
+      direccion: formData.get("direccion") as string,
       idRol: Number(formData.get("idRol")),
     };
 
@@ -35,13 +37,19 @@ export async function deletePersonaAction(formData: FormData) {
   revalidatePath("/dashboard/personas");
 }
 
-export async function updatePersonaAction(idPersona: number, prevState: any, formData: FormData) {
+export async function updatePersonaAction(
+  idPersona: number,
+  prevState: any,
+  formData: FormData
+) {
   try {
     const data = {
       nombre: formData.get("nombre") as string,
       apellido: formData.get("apellido") as string,
       dni: formData.get("dni") as string,
       email: formData.get("email") as string,
+      telefono: formData.get("telefono") as string,
+      direccion: formData.get("direccion") as string,
     };
 
     await PersonaService.update(idPersona, data);

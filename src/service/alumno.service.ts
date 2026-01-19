@@ -1,18 +1,27 @@
 import db from "@/lib/db";
 import { EstadoAcademico } from "@prisma/client";
+import { getCicloActual } from "@/lib/ciclo-session";
 
 export const AlumnoService = {
   // 1. Obtener alumnos para la tabla (incluyendo su curso actual)
-  async getAll() {
+  async getAll(idCiclo: number) {
     return await db.alumno.findMany({
-      include: {
-        persona: true, // Traemos datos personales (nombre, dni)
+      where: {
+        // Solo alumnos que tienen matricula en el ciclo actual
         matriculas: {
-          // Traemos la última matrícula para saber su curso actual
-          orderBy: { fechaInscripcion: 'desc' },
-          take: 1,
+          some: {
+            idCiclo: idCiclo
+          }
+        }
+      },
+      include: {
+        persona: true,
+        matriculas: {
+          where: {
+            idCiclo: idCiclo // Nos aseguramos de traer la matrícula del ciclo correcto
+          },
           include: {
-            curso: true // Incluimos los datos del curso (grado, sección)
+            curso: true
           }
         }
       },
@@ -20,30 +29,44 @@ export const AlumnoService = {
     });
   },
 
-  // 2. Para el SELECT del formulario: Personas con rol ALUMNO que aún NO están inscritas
-  async getPersonasDisponibles() {
+  // 2. Para el SELECT del formulario: Personas con rol ALUMNO que aún NO están inscritas en el CICLO ACTUAL
+  async getPersonasDisponibles(idCiclo: number) {
     return await db.persona.findMany({
       where: {
         usuario: {
-          roles: { some: { rol: { nombre: "ALUMNO" } } },
-          estado: true
+          roles: { some: { rol: { nombre: 'ALUMNO' } } },
+          estado: true,
         },
-        // Este filtro es clave: solo trae a los que NO tienen ficha de alumno todavía
-        alumno: { is: null }
+        NOT: {
+          alumno: {
+            matriculas: {
+              some: {
+                idCiclo: idCiclo,
+              },
+            },
+          },
+        },
       },
-      orderBy: { apellido: "asc" }
+      orderBy: { apellido: 'asc' },
     });
   },
 
   // 3. Para el SELECT del formulario: Cursos disponibles (lo que hace Gabriel)
   async getCursosDisponibles() {
-    return await db.curso.findMany({
-      orderBy: [{ nivel: "asc" }, { grado: "asc" }]
-    });
-  },
+  return await db.curso.findMany({
+    orderBy: [
+      { nivel: "asc" },
+      { grado: "asc" },
+      { seccion: "asc" }, // Agregamos sección para que no aparezcan mezcladas
+      { turno: "asc" }   // Agregamos turno para que el administrativo los vea ordenados
+    ]
+  });
+},
 
   // 4. La transacción de inscripción (que ya arreglamos antes)
   async enroll(idPersona: number, idCurso: number) {
+    const idCiclo = await getCicloActual(); // <--- DINÁMICO
+
     return await db.$transaction(async (tx) => {
       // CAMBIO 1: Buscamos si la persona ya existe en la tabla 'alumno'
       let alumno = await tx.alumno.findUnique({
@@ -67,7 +90,7 @@ export const AlumnoService = {
         data: {
           idAlumno: alumno.idAlumno,
           idCurso: idCurso,
-          idCiclo: 1, // ID del Ciclo 2026 definido en el seed
+          idCiclo: idCiclo, // <--- USAMOS EL SELECCIONADO
           fechaInscripcion: new Date(),
           estadoAcademico: EstadoAcademico.Activo,
         }

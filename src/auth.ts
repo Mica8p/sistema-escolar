@@ -1,25 +1,15 @@
+// src/auth.ts
 import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 import db from "@/lib/db";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import type { JWT } from "next-auth/jwt";
-import type { User } from "next-auth";
-
-// User extendido SOLO para authorize()
-type AppUser = User & {
-  roles: string[];
-  idUsuario: number;
-  idPersona: number;
-  idProfesor?: number | null;
-};
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-
   providers: [
     Credentials({
-      async authorize(credentials): Promise<AppUser | null> {
+      async authorize(credentials) {
         if (!credentials?.dni || !credentials?.password) return null;
 
         const usuario = await db.usuario.findFirst({
@@ -38,47 +28,46 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
         if (!isPasswordValid) return null;
 
-        // Si existe profesor para esa persona, guardamos idProfesor
-        const prof = await db.profesor.findUnique({
-          where: { idPersona: usuario.idPersona },
-          select: { idProfesor: true },
-        });
+        const rolesArray = usuario.roles.map((r) => r.rol.nombre);
+
+        // BUSQUEDA DE PERFILES ESPECIFICOS (Docente y Padre)
+        const [prof, padre] = await Promise.all([
+          db.profesor.findUnique({ where: { idPersona: usuario.idPersona }, select: { idProfesor: true } }),
+          rolesArray.includes("PADRE")
+            ? db.padre.findUnique({ where: { idPersona: usuario.idPersona }, select: { idPadre: true } })
+            : null
+        ]);
 
         return {
-          id: String(usuario.idUsuario), // Auth.js espera string
+          id: String(usuario.idUsuario),
           name: `${usuario.persona.nombre} ${usuario.persona.apellido}`,
           email: usuario.persona.email ?? null,
-
-          roles: usuario.roles.map((r) => r.rol.nombre),
+          roles: rolesArray,
           idUsuario: usuario.idUsuario,
           idPersona: usuario.idPersona,
           idProfesor: prof?.idProfesor ?? null,
+          idPadre: padre?.idPadre ?? null, // Ahora idPadre viaja en la sesión
         };
       },
     }),
   ],
-
   callbacks: {
     async jwt({ token, user }) {
-      // En el primer login, user viene (siempre) desde authorize()
       if (user) {
-        const u = user as AppUser;
-
-        token.roles = u.roles;
-        token.idUsuario = u.idUsuario;
-        token.idPersona = u.idPersona;
-        token.idProfesor = u.idProfesor ?? null;
+        token.roles = user.roles;
+        token.idUsuario = user.idUsuario;
+        token.idPersona = user.idPersona;
+        token.idProfesor = user.idProfesor;
+        token.idPadre = user.idPadre;
       }
       return token;
     },
-
     async session({ session, token }) {
-      
-      session.user.roles = (token.roles as string[]) ?? [];
-      session.user.idUsuario = (token.idUsuario as JWT["idUsuario"]) ?? null;
-      session.user.idPersona = (token.idPersona as JWT["idPersona"]) ?? null;
-      session.user.idProfesor = (token.idProfesor as JWT["idProfesor"]) ?? null;
-
+      session.user.roles = token.roles;
+      session.user.idUsuario = token.idUsuario;
+      session.user.idPersona = token.idPersona;
+      session.user.idProfesor = token.idProfesor;
+      session.user.idPadre = token.idPadre;
       return session;
     },
   },

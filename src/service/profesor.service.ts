@@ -1,32 +1,38 @@
 import db from "@/lib/db";
+import { getCicloActual } from "@/lib/ciclo-session";
 
 export const ProfesorService = {
   // 1. Obtener profesores e incluir SOLO las asignaciones que están ACTIVAS
-async getAll() {
-  return await db.profesor.findMany({
-    where: {
-      asignaciones: { some: { estado: true } }
-    },
-    include: {
-      persona: true,
-      asignaciones: {
-        where: { estado: true },
-        include: {
-          materia: true,
-          curso: true,
-          // AQUÍ ESTÁ EL CAMBIO:
-          // No solo traemos al profesor, sino también su persona
-          profesor: {
-            include: {
-              persona: true
+async getAll(idCiclo: number) { // <--- Agregamos idCiclo como parámetro
+    return await db.profesor.findMany({
+      where: {
+        // Solo profesores que tienen asignaciones ACTIVAS en EL AÑO SELECCIONADO
+        asignaciones: {
+          some: {
+            estado: true,
+            idCiclo: idCiclo // <--- FILTRO DE SEGURIDAD 1
+          }
+        }
+      },
+      include: {
+        persona: true,
+        asignaciones: {
+          where: {
+            estado: true,
+            idCiclo: idCiclo // <--- FILTRO DE SEGURIDAD 2
+          },
+          include: {
+            materia: true,
+            curso: true,
+            profesor: {
+              include: { persona: true }
             }
           }
         }
-      }
-    },
-    orderBy: { persona: { apellido: "asc" } }
-  });
-},
+      },
+      orderBy: { persona: { apellido: "asc" } }
+    });
+  },
 
   // Personas con rol DOCENTE que aún no están dadas de alta como Profesores
   async getPersonasDisponibles() {
@@ -41,43 +47,44 @@ async getAll() {
   },
 
   // Crear profesor y asignar su primera materia/curso
-async asignarProfesor(idPersona: number, idMateria: number, idCurso: number) {
-  return await db.$transaction(async (tx) => {
-    // 1. REGLA PRO: ¿Ya hay un docente dando esta materia HOY?
-    // Buscamos si existe alguna asignación para este curso/materia que esté ACTIVA
-    const asignacionActiva = await tx.asignacionAcademica.findFirst({
-      where: {
-        idMateria,
-        idCurso,
-        idCiclo: 1, // Ciclo 2026
-        estado: true
+async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idCiclo: number) {
+
+    // IMPORTANTE: Ya no llamamos a getCicloActual() aquí adentro.
+    // Usamos el idCiclo que nos llega desde la Action.
+
+    return await db.$transaction(async (tx) => {
+      // Regla de seguridad: ¿Ya hay alguien dando esta materia en ESTE ciclo?
+      const asignacionActiva = await tx.asignacionAcademica.findFirst({
+        where: {
+          idMateria,
+          idCurso,
+          idCiclo: idCiclo, // <--- Usamos el parámetro
+          estado: true
+        }
+      });
+
+      if (asignacionActiva) {
+        throw new Error("Ya existe un docente activo en este ciclo.");
       }
-    });
 
-    if (asignacionActiva) {
-      throw new Error("Ya existe un docente activo. Debes darle de 'Baja' antes de asignar un reemplazo.");
-    }
+      const profesor = await tx.profesor.upsert({
+        where: { idPersona: idPersona },
+        update: {},
+        create: { idPersona, fechaIngreso: new Date() }
+      });
 
-    // 2. Si no hay nadie activo, creamos la ficha del profesor (si no existe)
-    const profesor = await tx.profesor.upsert({
-      where: { idPersona: idPersona },
-      update: {},
-      create: { idPersona, fechaIngreso: new Date() }
+      return await tx.asignacionAcademica.create({
+        data: {
+          idProfesor: profesor.idProfesor,
+          idMateria,
+          idCurso,
+          idCiclo: idCiclo, // <--- Usamos el parámetro
+          cargaHoraria: 4,
+          estado: true
+        }
+      });
     });
-
-    // 3. Creamos la NUEVA asignación. Esta será la "fila nueva" en el historial
-    return await tx.asignacionAcademica.create({
-      data: {
-        idProfesor: profesor.idProfesor,
-        idMateria,
-        idCurso,
-        idCiclo: 1,
-        cargaHoraria: 4,
-        estado: true
-      }
-    });
-  });
-},
+  },
 
   // NUEVA FUNCIÓN: "Borrado Lógico"
   // En lugar de borrar la fila de la base de datos, simplemente "apagamos" el estado
@@ -104,10 +111,11 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number) {
 
   //Historial de asignaciones (bajas) de todos los profesores
   async getHistorialAsignaciones() {
+  const idCiclo = await getCicloActual(); // <--- DINÁMICO
   return await db.asignacionAcademica.findMany({
     where: {
       estado: false, // Solo las que fueron dadas de baja
-      idCiclo: 1     // Del año actual
+      idCiclo: idCiclo // <--- FILTRADO POR AÑO
     },
     include: {
       profesor: {

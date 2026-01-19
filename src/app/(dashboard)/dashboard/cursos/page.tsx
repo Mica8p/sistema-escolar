@@ -13,12 +13,13 @@ export default async function CursosPage() {
           Agregar Curso
         </Link>
       </div>
-      <div className="bg-white shadow-md rounded my-6">
+      <div className="bg-white shadow-md rounded my-6 overflow-hidden">
         <table className="min-w-full table-auto">
           <thead>
             <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
               <th className="py-3 px-6 text-left">Grado</th>
               <th className="py-3 px-6 text-left">Sección</th>
+              <th className="py-3 px-6 text-left">Turno</th>
               <th className="py-3 px-6 text-left">Nivel</th>
               <th className="py-3 px-6 text-center">Acciones</th>
             </tr>
@@ -26,8 +27,20 @@ export default async function CursosPage() {
           <tbody className="text-gray-600 text-sm font-light">
             {cursos.map((curso) => (
               <tr key={curso.idCurso} className="border-b border-gray-200 hover:bg-gray-100">
-                <td className="py-3 px-6 text-left whitespace-nowrap">{curso.grado}</td>
+                <td className="py-3 px-6 text-left whitespace-nowrap font-medium">{curso.grado}</td>
                 <td className="py-3 px-6 text-left">{curso.seccion}</td>
+
+                {/* Agregamos la celda del Turno con un estilo de etiqueta (badge) */}
+                <td className="py-3 px-6 text-left">
+                  <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
+                    curso.turno === 'Mañana' ? 'bg-orange-100 text-orange-700' :
+                    curso.turno === 'Tarde' ? 'bg-blue-100 text-blue-700' :
+                    'bg-purple-100 text-purple-700'
+                  }`}>
+                    {curso.turno}
+                  </span>
+                </td>
+
                 <td className="py-3 px-6 text-left">{curso.nivel}</td>
                 <td className="py-3 px-6 text-center">
                   <div className="flex item-center justify-center">
@@ -43,7 +56,8 @@ export default async function CursosPage() {
             ))}
             {cursos.length === 0 && (
               <tr>
-                <td colSpan={4} className="py-3 px-6 text-center">No hay cursos registrados.</td>
+                {/* Actualizamos colSpan a 5 porque ahora hay 5 columnas */}
+                <td colSpan={5} className="py-3 px-6 text-center">No hay cursos registrados.</td>
               </tr>
             )}
           </tbody>

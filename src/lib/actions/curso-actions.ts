@@ -1,7 +1,7 @@
 'use server';
 
 import { cursoService } from '@/service/curso.service';
-import { Curso } from '@prisma/client';
+import { Curso, Turno, Nivel } from '@prisma/client'; // Importamos los Enums
 import { revalidatePath } from 'next/cache';
 
 export async function getAllCursos() {
@@ -12,24 +12,36 @@ export async function getCursoById(id: number) {
   return await cursoService.getById(id);
 }
 
+/**
+ * Crea un nuevo curso.
+ * El objeto 'data' ahora debe incluir obligatoriamente 'turno' y 'nivel'.
+ */
 export async function createCurso(data: Omit<Curso, 'idCurso'>) {
   try {
+    // Aquí TypeScript te avisará si falta data.turno o data.nivel
     const nuevoCurso = await cursoService.create(data);
-    revalidatePath('/dashboard/cursos'); // Actualiza la lista de cursos en la UI
+
+    revalidatePath('/dashboard/cursos');
     return { success: true, data: nuevoCurso };
   } catch (error) {
-    return { success: false, message: 'Error al crear el curso.' };
+    console.error("Error en createCurso:", error);
+    return { success: false, message: 'Error al crear el curso. Verifique los datos.' };
   }
 }
 
-export async function updateCurso(id: number, data: Omit<Curso, 'idCurso'>) {
+/**
+ * Actualiza un curso existente.
+ */
+export async function updateCurso(id: number, data: Partial<Omit<Curso, 'idCurso'>>) {
   try {
     const cursoActualizado = await cursoService.update(id, data);
+
     revalidatePath('/dashboard/cursos');
     revalidatePath(`/dashboard/cursos/${id}`);
     return { success: true, data: cursoActualizado };
   } catch (error) {
-    return { success: false, message: 'Error al actualizar el curso.' };
+    console.error("Error en updateCurso:", error);
+    return { success: false, message: 'No se pudo actualizar el curso.' };
   }
 }
 
@@ -39,6 +51,6 @@ export async function deleteCurso(id: number) {
     revalidatePath('/dashboard/cursos');
     return { success: true };
   } catch (error) {
-    return { success: false, message: 'Error al eliminar el curso.' };
+    return { success: false, message: 'No se puede eliminar un curso con alumnos o materias asignadas.' };
   }
 }

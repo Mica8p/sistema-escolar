@@ -30,8 +30,6 @@ export const menuItems = [
     icon: BookOpen,
     roles: ["ADMIN", "DOCENTE"],
     subItems: [
-      { title: "Gestión de Cursos", href: "/dashboard/cursos", roles: ["ADMIN"] },
-      { title: "Gestión de Materias", href: "/dashboard/materias", roles: ["ADMIN"] },
       { title: "Asignación Docente", href: "/dashboard/profesores", roles: ["ADMIN"] },
       // Al usar el nombre aquí, el import dejará de estar en gris
       {

@@ -8,23 +8,23 @@ import {
   getPlanilla,
 } from "@/service/calificaciones.service";
 import CalificacionesTable from "@/components/modules/calificaciones/CalificacionesForm";
+import { getCicloActual } from "@/lib/ciclo-session";
 
 const TIPOS: TipoEvaluacion[] = ["Parcial", "Final", "Recuperatorio"];
 
-export default async function CalificacionesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ asig?: string; periodo?: string; tipo?: string }>;
-}) {
-  const params = await searchParams; // Unwrapping para Next.js 16
-
+export default async function CalificacionesPage({ searchParams }: { searchParams: Promise<{ asig?: string; periodo?: string; tipo?: string }> }) {
+  const params = await searchParams;
   const session = await auth();
   if (!session?.user) throw new Error("No autorizado");
+
+  // 1. OBTENER EL CICLO DESDE LA COOKIE
+  const idCiclo = await getCicloActual();
 
   const isAdmin = session.user.roles.includes("ADMIN");
   const idPersona = session.user.idPersona ?? 0;
 
-  const asignaciones = await getAsignacionesParaUsuario({ isAdmin, idPersona });
+  // 2. PASAR EL ID DEL CICLO AL SERVICIO
+  const asignaciones = await getAsignacionesParaUsuario({ isAdmin, idPersona, idCiclo });
 
   // Lógica de IDs para filtros
   const idAsignacion = params.asig ? Number(params.asig) : (asignaciones[0]?.idAsignacion || 0);
@@ -80,19 +80,35 @@ export default async function CalificacionesPage({
           <div className="p-3 flex flex-col gap-2 max-h-[320px overflow-y-auto">
             {asignaciones.map((a) => (
               <Link
-                key={a.idAsignacion}
-                href={qs({ asig: a.idAsignacion })}
-                className={`px-4 py-3 rounded-xl border transition-all ${
-                  a.idAsignacion === idAsignacion
-                    ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100"
-                    : "bg-white border-slate-100 hover:border-indigo-200 text-slate-600 hover:bg-indigo-50/30"
-                }`}
-              >
+              key={a.idAsignacion}
+              href={qs({ asig: a.idAsignacion })}
+              className={`px-4 py-3 rounded-xl border transition-all ${
+                a.idAsignacion === idAsignacion
+                  ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100"
+                  : "bg-white border-slate-100 hover:border-indigo-200 text-slate-600 hover:bg-indigo-50/30"
+              }`}
+            >
+              <div className="flex flex-col gap-1">
                 <div className={`font-bold text-sm ${a.idAsignacion === idAsignacion ? 'text-white' : 'text-slate-800'}`}>
                   {a.materia.nombre}
                 </div>
-                <div className={`text-[11px] font-medium ${a.idAsignacion === idAsignacion ? 'text-indigo-100' : 'text-slate-400'}`}>
-                  {a.curso.grado}° {a.curso.seccion} • {a.curso.nivel}
+
+                <div className="flex items-center gap-2">
+                  {/* Badge de Turno para diferenciar secciones duplicadas */}
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-black uppercase ${
+                    a.idAsignacion === idAsignacion
+                      ? "bg-white/20 text-white" // Estilo cuando la tarjeta está seleccionada
+                      : a.curso.turno === 'Mañana'
+                        ? "bg-orange-100 text-orange-700" // Estilo para Mañana
+                        : "bg-blue-100 text-blue-700"    // Estilo para Tarde
+                  }`}>
+                    {a.curso.turno}
+                  </span>
+
+                    <div className={`text-[11px] font-medium ${a.idAsignacion === idAsignacion ? 'text-indigo-100' : 'text-slate-400'}`}>
+                      {a.curso.grado}° {a.curso.seccion} • {a.curso.nivel}
+                    </div>
+                  </div>
                 </div>
               </Link>
             ))}

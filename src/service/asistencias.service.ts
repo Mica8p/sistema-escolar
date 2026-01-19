@@ -4,8 +4,9 @@ import { EstadoAsistencia } from "@prisma/client";
 // 1. Traer los horarios de una materia elegida
 export async function getHorariosByAsignacion(idAsignacion: number) {
   return db.horario.findMany({
-    where: { idAsignacion },
-    orderBy: { diaSemana: "asc" },
+    where: { idAsignacion: Number(idAsignacion) },
+    // Ordenamos por hora para que la lista sea profesional
+    orderBy: { horaInicio: "asc" },
   });
 }
 
@@ -15,30 +16,36 @@ export async function getPlanillaAsistencia(params: {
   idHorario: number;
   fecha: Date;
 }) {
-  // Buscamos la materia para saber el curso
+  // NORMALIZACIÓN: Usamos el mismo criterio que en la Action
+  const fechaBusqueda = new Date(params.fecha);
+  fechaBusqueda.setHours(0, 0, 0, 0);
+
   const asig = await db.asignacionAcademica.findUnique({
-    where: { idAsignacion: params.idAsignacion },
+    where: { idAsignacion: Number(params.idAsignacion) },
     include: { curso: true, ciclo: true, materia: true },
   });
 
   if (!asig) throw new Error("Asignación no encontrada");
 
-  // Alumnos inscritos
+  // Alumnos activos en el ciclo 2026
   const matriculas = await db.matricula.findMany({
-    where: { idCurso: asig.idCurso, idCiclo: asig.idCiclo, estadoAcademico: "Activo" },
+    where: {
+      idCurso: asig.idCurso,
+      idCiclo: asig.idCiclo,
+      estadoAcademico: "Activo"
+    },
     include: { alumno: { include: { persona: true } } },
     orderBy: { alumno: { persona: { apellido: "asc" } } },
   });
 
-  // Asistencias ya cargadas ese día en ese horario
+  // Buscamos asistencias registradas para ese bloque y fecha
   const asistencias = await db.asistencia.findMany({
     where: {
-      idHorario: params.idHorario,
-      fecha: params.fecha,
+      idHorario: Number(params.idHorario),
+      fecha: fechaBusqueda,
     },
   });
 
-  // Mapeamos para que la tabla lo entienda rápido
   const asistenciaByMatricula = new Map<number, (typeof asistencias)[number]>();
   for (const a of asistencias) {
     asistenciaByMatricula.set(a.idMatricula, a);

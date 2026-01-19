@@ -1,4 +1,4 @@
-import { PrismaClient, PeriodoNombre } from "@prisma/client";
+import { PrismaClient, PeriodoNombre, DiaSemana, Turno, Nivel } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import bcrypt from "bcryptjs";
 import "dotenv/config";
@@ -12,10 +12,11 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  console.log("🚀 Iniciando el sembrado de datos...");
+  console.log("🚀 Iniciando el sembrado de datos (Escuela Pro)...");
 
   const hashedAdminPassword = await bcrypt.hash("admin123", 10);
   const hashedDocentePassword = await bcrypt.hash("docente123", 10);
+  const hashedPadrePassword = await bcrypt.hash("padre123", 10); // Nueva password
 
   // 1. SEMBRAR ROLES
   const rolesADefinir = ["ADMIN", "DOCENTE", "PADRE", "ALUMNO"];
@@ -29,8 +30,9 @@ async function main() {
 
   const rolAdmin = await prisma.rol.findUnique({ where: { nombre: "ADMIN" } });
   const rolDocente = await prisma.rol.findUnique({ where: { nombre: "DOCENTE" } });
+  const rolPadre = await prisma.rol.findUnique({ where: { nombre: "PADRE" } });
 
-  if (!rolAdmin || !rolDocente) throw new Error("No se encontraron los roles necesarios");
+  if (!rolAdmin || !rolDocente || !rolPadre) throw new Error("No se encontraron los roles");
 
   // 2. SEMBRAR CICLO LECTIVO 2026
   const ciclo2026 = await prisma.cicloLectivo.upsert({
@@ -74,9 +76,7 @@ async function main() {
       dni: "99888777",
       email: "docente@escuela.com",
       profesor: {
-        create: {
-          fechaIngreso: new Date("2020-01-01"),
-        }
+        create: { fechaIngreso: new Date("2020-01-01") }
       },
       usuario: {
         create: {
@@ -89,23 +89,53 @@ async function main() {
       },
     },
   });
-  console.log("✅ Docente de prueba creado: docente@escuela.com / docente123");
 
-  // 5. CONFIGURACIÓN ACADÉMICA PARA JUAN
-  const profeJuan = await prisma.profesor.findFirst({
-    where: { persona: { dni: "99888777" } }
+  // 5. NUEVO: SEMBRAR PADRE DE PRUEBA (Para el perfil de familia)
+  await prisma.persona.upsert({
+    where: { dni: "55555444" },
+    update: {},
+    create: {
+      nombre: "Carlos",
+      apellido: "Padre",
+      dni: "55555444",
+      email: "padre@escuela.com",
+      padre: {
+        create: {} // Relacionamos con el modelo Padre
+      },
+      usuario: {
+        create: {
+          passwordHash: hashedPadrePassword,
+          estado: true,
+          roles: {
+            create: { idRol: rolPadre.idRol },
+          },
+        },
+      },
+    },
   });
+  console.log("✅ Padre creado: padre@escuela.com / padre123");
 
+  // 6. CONFIGURACIÓN ACADÉMICA
   const materiaLengua = await prisma.materia.upsert({
     where: { idMateria: 1 },
     update: {},
     create: { nombre: "Lengua", descripcion: "Lengua y Literatura" }
   });
 
+  // CORRECCIÓN: Curso ahora necesita Turno obligatorio
   const curso2B = await prisma.curso.upsert({
     where: { idCurso: 1 },
     update: {},
-    create: { grado: "2", seccion: "B", nivel: "Secundario" }
+    create: {
+      grado: "2",
+      seccion: "B",
+      nivel: Nivel.Secundario,
+      turno: Turno.Mañana // Usamos el Enum
+    }
+  });
+
+  const profeJuan = await prisma.profesor.findFirst({
+    where: { persona: { dni: "99888777" } }
   });
 
   const asignacionJuan = await prisma.asignacionAcademica.upsert({
@@ -121,26 +151,26 @@ async function main() {
     }
   });
 
+  // CORRECCIÓN: Horario usa DiaSemana Enum y String para horas
   await prisma.horario.upsert({
     where: { idHorario: 1 },
     update: {},
     create: {
       idAsignacion: asignacionJuan.idAsignacion,
-      diaSemana: "Lunes",
-      horaInicio: new Date("2026-01-15T08:00:00Z"),
-      horaFin: new Date("2026-01-15T09:20:00Z"),
-      turno: "Mañana"
+      diaSemana: DiaSemana.LUNES, // Usamos Enum
+      horaInicio: "08:00", // String, no DateTime
+      horaFin: "09:20",
+      aula: "Aula 5"
     }
   });
 
-  // 6. SEMBRAR PERIODOS ACADÉMICOS (ACTUALIZADO PARA EL MODELO ARGENTINO)
+  // 7. SEMBRAR PERIODOS ACADÉMICOS 2026
   const periodos = [
     { nombre: PeriodoNombre.TRIMESTRE_1, inicio: "2026-03-01", fin: "2026-05-31" },
     { nombre: PeriodoNombre.TRIMESTRE_2, inicio: "2026-06-01", fin: "2026-08-31" },
     { nombre: PeriodoNombre.TRIMESTRE_3, inicio: "2026-09-01", fin: "2026-12-20" },
-    // Mesas de Examen Final del Ciclo 2026
-    { nombre: PeriodoNombre.DICIEMBRE,   inicio: "2026-12-21", fin: "2026-12-30" },
-    { nombre: PeriodoNombre.FEBRERO,     inicio: "2027-02-01", fin: "2027-02-28" },
+    { nombre: PeriodoNombre.DICIEMBRE,    inicio: "2026-12-21", fin: "2026-12-30" },
+    { nombre: PeriodoNombre.FEBRERO,      inicio: "2027-02-01", fin: "2027-02-28" },
   ];
 
   for (const p of periodos) {
@@ -159,10 +189,71 @@ async function main() {
         idCiclo: ciclo2026.idCiclo,
       },
     });
-    console.log(`✅ Periodo preparado: ${p.nombre}`);
   }
 
   console.log("✅ Seed completado con éxito.");
+  // 8. SEMBRAR ALUMNO DE PRUEBA (Hijo de Carlos)
+  const alumnoPrueba = await prisma.persona.upsert({
+    where: { dni: "44444333" },
+    update: {},
+    create: {
+      nombre: "Mateo",
+      apellido: "Hijo",
+      dni: "44444333",
+      email: "alumno@escuela.com",
+      alumno: {
+        create: {
+          legajo: "LEG-2026-001",
+          fechaNacimiento: new Date("2015-05-20"),
+        }
+      }
+    },
+    include: { alumno: true } // Traemos el ID del alumno creado
+  });
+
+  // 9. VINCULAR ALUMNO CON EL PADRE (Relación familiar)
+  const padreCarlos = await prisma.padre.findFirst({
+    where: { persona: { dni: "55555444" } }
+  });
+
+  if (alumnoPrueba.alumno && padreCarlos) {
+    await prisma.alumnoPadre.upsert({
+      where: {
+        idAlumno_idPadre: {
+          idAlumno: alumnoPrueba.alumno.idAlumno,
+          idPadre: padreCarlos.idPadre,
+        },
+      },
+      update: {},
+      create: {
+        idAlumno: alumnoPrueba.alumno.idAlumno,
+        idPadre: padreCarlos.idPadre,
+        relacion: "PADRE",
+      },
+    });
+    console.log("👨‍👦 Relación Padre-Hijo establecida.");
+  }
+
+  // 10. MATRICULAR AL ALUMNO EN EL CURSO (Inscripción inicial)
+  if (alumnoPrueba.alumno) {
+    await prisma.matricula.upsert({
+      where: {
+        idAlumno_idCiclo: {
+          idAlumno: alumnoPrueba.alumno.idAlumno,
+          idCiclo: ciclo2026.idCiclo,
+        },
+      },
+      update: {},
+      create: {
+        idAlumno: alumnoPrueba.alumno.idAlumno,
+        idCurso: curso2B.idCurso,
+        idCiclo: ciclo2026.idCiclo,
+        fechaInscripcion: new Date(),
+        estadoAcademico: "Activo",
+      },
+    });
+    console.log("📝 Alumno matriculado en 2° B - Mañana.");
+  }
 }
 
 main()

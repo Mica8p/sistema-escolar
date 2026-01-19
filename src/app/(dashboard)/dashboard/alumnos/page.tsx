@@ -1,14 +1,20 @@
-import { inscribirAlumnoAction } from "@/lib/actions/alumno-actions";
 import { AlumnoService } from "@/service/alumno.service";
-import { UserPlus, GraduationCap } from "lucide-react"; // Iconos bonitos
+import { GraduationCap } from "lucide-react";
+import { getCicloActual } from "@/lib/ciclo-session";
+import { CicloService } from "@/service/ciclo.service";
+import { InscripcionForm } from "@/components/modules/alumnos/InscripcionForm";
 
 export default async function AlumnosPage() {
-  // 1. Obtenemos todos los datos necesarios al mismo tiempo (en paralelo)
-  const [alumnos, personasSinInscribir, cursos] = await Promise.all([
-    AlumnoService.getAll(),
-    AlumnoService.getPersonasDisponibles(),
+  const cicloId = await getCicloActual(); // Obtenemos el ciclo del selector de Gabriel
+
+  const [alumnos, personasSinInscribir, cursos, cicloActivo] = await Promise.all([
+    AlumnoService.getAll(cicloId),
+    AlumnoService.getPersonasDisponibles(cicloId),
     AlumnoService.getCursosDisponibles(),
+    CicloService.getActive(),
   ]);
+
+  const puedeInscribir = cicloActivo?.idCiclo === cicloId;
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
@@ -18,123 +24,74 @@ export default async function AlumnosPage() {
       </h1>
 
       {/* === SECCIÓN 1: FORMULARIO DE INSCRIPCIÓN === */}
-      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-700">
-          <UserPlus className="h-5 w-5" />
-          Nueva Inscripción
-        </h2>
+      {puedeInscribir ? (
+        <InscripcionForm
+          personas={personasSinInscribir}
+          cursos={cursos}
+        />
+      ) : (
+        <div className="bg-yellow-100 text-yellow-800 p-4 rounded-lg border border-yellow-200 shadow-sm">
+          <p className="font-semibold">La inscripción solo está permitida en el ciclo lectivo activo.</p>
+          <p className="text-sm">Cambiá el año en el selector superior para ver otros listados.</p>
+        </div>
+      )}
 
-        <form action={inscribirAlumnoAction} className="flex flex-wrap items-end gap-4">
-          {/* Selector de Personas */}
-          <div className="flex-1 min-w-250px">
-            <label htmlFor="idPersona" className="block text-sm font-medium text-gray-700 mb-1">
-              Seleccionar Alumno (Persona)
-            </label>
-            <select
-              name="idPersona"
-              id="idPersona"
-              required
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-black"
-            >
-              <option value="">-- Elegir Persona --</option>
-              {personasSinInscribir.map((p) => (
-                <option key={p.idPersona} value={p.idPersona}>
-                  {p.apellido}, {p.nombre} (DNI: {p.dni})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Selector de Cursos */}
-          <div className="flex-1 min-w-250px">
-            <label htmlFor="idCurso" className="block text-sm font-medium text-gray-700 mb-1">
-              Seleccionar Curso Inicial
-            </label>
-            <select
-              name="idCurso"
-              id="idCurso"
-              required
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-black"
-            >
-              <option value="">-- Elegir Curso --</option>
-              {cursos.map((c) => (
-                <option key={c.idCurso} value={c.idCurso}>
-                  {c.grado}° "{c.seccion}" - {c.nivel}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Botón de Enviar */}
-          <button
-            type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-md transition-colors h-42px"
-          >
-            Inscribir
-          </button>
-        </form>
-
-        {personasSinInscribir.length === 0 && (
-          <p className="text-sm text-orange-600 mt-2">
-            * No hay personas nuevas con rol 'ALUMNO' para inscribir. Cargá más personas primero.
-          </p>
-        )}
-        {cursos.length === 0 && (
-          <p className="text-sm text-red-600 mt-2">
-            * ¡Atención! No hay cursos cargados. Dile a Gabriel que se apure 😄.
-          </p>
-        )}
-      </div>
-
-      {/* === SECCIÓN 2: TABLA DE LISTADO === */}
+      {/* === SECCIÓN 2: TABLA DE LISTADO (AQUÍ ESTÁ DE NUEVO) === */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
-        <div className="p-4 bg-gray-100 border-b">
+        <div className="p-4 bg-gray-100 border-b flex justify-between items-center">
           <h2 className="text-lg font-semibold text-gray-700">Listado de Alumnos Inscriptos</h2>
+          <span className="text-xs font-medium bg-blue-100 text-blue-600 px-2 py-1 rounded">
+            Total: {alumnos.length}
+          </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-gray-200 text-gray-700 uppercase text-sm font-semibold">
+            <thead className="bg-gray-200 text-gray-700 uppercase text-xs font-bold">
               <tr>
                 <th className="p-4">Legajo</th>
                 <th className="p-4">Apellido y Nombre</th>
                 <th className="p-4">DNI</th>
-                <th className="p-4">Curso Actual</th>
+                <th className="p-4">Curso y Turno</th>
                 <th className="p-4 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {alumnos.length > 0 ? (
                 alumnos.map((alumno) => {
-                   // Tomamos la matrícula más reciente (si existe)
                   const matriculaActual = alumno.matriculas[0];
                   return (
-                  <tr key={alumno.idAlumno} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-4 font-mono text-sm text-blue-600">{alumno.legajo}</td>
-                    <td className="p-4 font-medium text-gray-800">
-                      {alumno.persona.apellido}, {alumno.persona.nombre}
-                    </td>
-                    <td className="p-4 text-gray-600">{alumno.persona.dni}</td>
-                    <td className="p-4">
-                      {matriculaActual ? (
-                        <span className="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">
-                          {matriculaActual.curso.grado}° "{matriculaActual.curso.seccion}" ({matriculaActual.curso.nivel})
-                        </span>
-                      ) : (
-                        <span className="text-red-500 text-sm">Sin curso asignado</span>
-                      )}
-                    </td>
-                    <td className="p-4 text-center">
-                      <button className="text-gray-500 hover:text-blue-600 text-sm font-medium">
-                        Ver Ficha
-                      </button>
-                    </td>
-                  </tr>
-                )})
+                    <tr key={alumno.idAlumno} className="hover:bg-gray-50 transition-colors">
+                      <td className="p-4 font-mono text-sm text-blue-600">{alumno.legajo}</td>
+                      <td className="p-4 font-medium text-gray-800 uppercase">
+                        {alumno.persona.apellido}, {alumno.persona.nombre}
+                      </td>
+                      <td className="p-4 text-gray-600">{alumno.persona.dni}</td>
+                      <td className="p-4">
+                        {matriculaActual ? (
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                            matriculaActual.curso.turno === 'Mañana'
+                            ? 'bg-orange-100 text-orange-700'
+                            : 'bg-indigo-100 text-indigo-700'
+                          }`}>
+                            {matriculaActual.curso.grado}° "{matriculaActual.curso.seccion}" - {matriculaActual.curso.turno}
+                          </span>
+                        ) : (
+                          <span className="text-red-500 text-xs italic">Sin matrícula</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-center">
+                        <button className="text-blue-500 hover:text-blue-700 text-xs font-bold">
+                          VER FICHA
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })
               ) : (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-gray-500 italic">
-                    No hay alumnos inscriptos todavía. ¡Usá el formulario de arriba!
+                  <td colSpan={5} className="p-10 text-center text-gray-400 italic">
+                    No hay alumnos inscriptos en este ciclo. ¡Comenzá inscribiendo uno arriba!
                   </td>
                 </tr>
               )}

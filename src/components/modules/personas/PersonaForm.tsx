@@ -1,27 +1,48 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { createPersonaAction, updatePersonaAction } from "@/lib/actions/persona-actions";
-import { User, Fingerprint, Mail, Shield, Save, X } from "lucide-react";
+import {
+  createPersonaAction,
+  updatePersonaAction
+} from "@/lib/actions/persona-actions";
+import {
+  User,
+  Fingerprint,
+  Mail,
+  Shield,
+  Save,
+  X,
+  Phone,
+  Home
+} from "lucide-react";
 
 interface PersonaFormProps {
   roles: any[];
-  initialData?: any; // Si viene este objeto, el formulario entra en modo "Edición"
+  initialData?: any;
 }
 
 export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
-  // 1. Configuramos la acción dinámica
-  // Si estamos editando, usamos 'bind' para pasarle el ID a la Server Action automáticamente
-  const updateActionWithId = updatePersonaAction.bind(null, initialData?.idPersona);
-  const formHandler = initialData ? updateActionWithId : createPersonaAction;
+  // 1. Estados para validación en tiempo real (Rama de Juan)
   const [nombre, setNombre] = useState(initialData?.nombre ?? "");
   const [apellido, setApellido] = useState(initialData?.apellido ?? "");
   const [dni, setDni] = useState(initialData?.dni ?? "");
-  const [errorMessage, formAction, isPending] = useActionState(formHandler, null);
+
+  // 2. Configuración de la Server Action
+  const updateActionWithId = updatePersonaAction.bind(
+    null,
+    initialData?.idPersona
+  );
+  const formHandler = initialData ? updateActionWithId : createPersonaAction;
+
+  const [errorMessage, formAction, isPending] = useActionState(
+    formHandler,
+    null
+  );
 
   return (
     <form action={formAction} className="space-y-6">
-      {/* Sección: Datos Personales */}
+
+      {/* SECCIÓN: DATOS PERSONALES */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -38,7 +59,7 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
                 setNombre(value);
               }
             }}
-            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             placeholder="Ej: Juan"
           />
         </div>
@@ -58,54 +79,81 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
                 setApellido(value);
               }
             }}
-            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             placeholder="Ej: Pérez"
           />
         </div>
       </div>
 
-      {/* Sección: Identificación y Contacto */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* SECCIÓN: IDENTIFICACIÓN Y CONTACTO */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-          <Fingerprint size={16} /> DNI
-        </label>
-        <input
-          name="dni"
-          type="text"
-          required
-          value={dni}
-          onChange={(e) => {
-            const value = e.target.value;
-            if (/^\d*$/.test(value) && value.length <= 8) {
-              setDni(value);
-            }
-          }}
-          maxLength={8}
-          inputMode="numeric"
-          className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-          placeholder="Solo números"
-        />
-        </div>
-
-
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-          <Mail size={16} /> Correo Electrónico
+            <Fingerprint size={16} /> DNI
           </label>
-        <input
-          name="email"
-          type="email"
-          required
-          defaultValue={initialData?.email}
-          className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-          placeholder="correo@ejemplo.com"
-        />
+          <input
+            name="dni"
+            type="text"
+            required
+            value={dni}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (/^\d*$/.test(value) && value.length <= 8) {
+                setDni(value);
+              }
+            }}
+            maxLength={8}
+            inputMode="numeric"
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            placeholder="Solo números"
+          />
         </div>
-        </div>
-      
 
-      {/* Sección: Rol (Solo se muestra al Crear para evitar errores de permisos al editar) */}
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+            <Mail size={16} /> Correo Electrónico
+          </label>
+          <input
+            name="email"
+            type="email"
+            required
+            defaultValue={initialData?.email}
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            placeholder="correo@ejemplo.com"
+          />
+        </div>
+      </div>
+
+      {/* SECCIÓN: DIRECCIÓN Y TELÉFONO (Nuevos campos de main) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+            <Phone size={16} /> Teléfono
+          </label>
+          <input
+            name="telefono"
+            type="text"
+            defaultValue={initialData?.telefono}
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            placeholder="Ej: 1122334455"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+            <Home size={16} /> Dirección
+          </label>
+          <input
+            name="direccion"
+            type="text"
+            defaultValue={initialData?.direccion}
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            placeholder="Ej: Av. Corrientes 1234"
+          />
+        </div>
+      </div>
+
+      {/* SECCIÓN: ROL (Solo en creación) */}
       {!initialData && (
         <div className="space-y-2">
           <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -114,7 +162,7 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
           <select
             name="idRol"
             required
-            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
           >
             <option value="">Seleccioná un rol...</option>
             {roles.map((rol) => (
@@ -126,14 +174,14 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
         </div>
       )}
 
-      {/* Mensaje de Error */}
+      {/* MENSAJE DE ERROR */}
       {errorMessage && (
         <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
           {errorMessage}
         </div>
       )}
 
-      {/* Botones de Acción */}
+      {/* BOTONES DE ACCIÓN */}
       <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-100">
         <button
           type="button"
@@ -150,7 +198,11 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
           className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-all shadow-md"
         >
           <Save size={18} />
-          {isPending ? "Procesando..." : initialData ? "Actualizar Datos" : "Registrar Persona"}
+          {isPending
+            ? "Procesando..."
+            : initialData
+            ? "Actualizar Datos"
+            : "Registrar Persona"}
         </button>
       </div>
     </form>
