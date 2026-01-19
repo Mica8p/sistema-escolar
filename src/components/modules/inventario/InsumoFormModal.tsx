@@ -81,7 +81,7 @@ export default function InsumoFormModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
         <div className="border-b px-5 py-4">
-          <h2 className="text-lg font-semibold">{title}</h2>
+          <h2 className="text-lg font-semibold text-gray-700">{title}</h2>
           <p className="text-sm text-slate-600">
             {mode === "create"
               ? "Cargá el insumo con stock inicial."
@@ -94,22 +94,22 @@ export default function InsumoFormModal({
           {ok && <div className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{ok}</div>}
 
           <div className="space-y-1">
-            <label className="text-sm font-medium">Nombre</label>
+            <label className="text-sm font-medium text-gray-600">Nombre</label>
             <input
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
               placeholder="Ej: Resmas A4"
               required
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-medium">Unidad de medida</label>
+            <label className="text-sm font-medium text-gray-600">Unidad de medida</label>
             <input
               value={unidadMedida}
               onChange={(e) => setUnidadMedida(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
               placeholder="Ej: unidades / cajas / litros"
               required
             />
@@ -118,23 +118,23 @@ export default function InsumoFormModal({
           {mode === "create" && (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-sm font-medium">Stock inicial</label>
+                <label className="text-sm font-medium text-gray-600">Stock inicial</label>
                 <input
                   value={stockActual}
                   onChange={(e) => setStockActual(onlyInt(e.target.value))}
                   inputMode="numeric"
-                  className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
                   placeholder="0"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm font-medium">Stock mínimo</label>
+                <label className="text-sm font-medium text-gray-600">Stock mínimo</label>
                 <input
                   value={stockMinimo}
                   onChange={(e) => setStockMinimo(onlyInt(e.target.value))}
                   inputMode="numeric"
-                  className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
                   placeholder="0"
                 />
               </div>
@@ -158,7 +158,7 @@ export default function InsumoFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border px-4 py-2 text-sm hover:bg-slate-50"
+              className="rounded-lg border px-4 py-2 text-sm  text-red-600 hover:bg-slate-50 disabled:opacity-60"
               disabled={pending}
             >
               Cancelar

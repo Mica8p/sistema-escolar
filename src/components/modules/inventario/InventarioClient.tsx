@@ -64,7 +64,7 @@ export default function InventarioClient({
       {/* ---------- Header ---------- */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Inventario</h1>
+          <h1 className="text-2xl font-semibold text-gray-700">Inventario</h1>
           <p className="text-slate-600">Listado de insumos y stock.</p>
         </div>
 
@@ -162,7 +162,7 @@ export default function InventarioClient({
       {/* ---------- Tabla secundaria: HISTORIAL ---------- */}
       <div className="overflow-hidden rounded-xl border bg-white">
         <div className="flex items-center justify-between border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">Últimos movimientos</h2>
+          <h2 className="text-sm font-semibold text-gray-700">Últimos movimientos</h2>
           <span className="text-xs text-slate-500">Mostrando {movimientos.length}</span>
         </div>
 
