@@ -53,10 +53,15 @@ export const AlumnoService = {
 
   // 3. Para el SELECT del formulario: Cursos disponibles (lo que hace Gabriel)
   async getCursosDisponibles() {
-    return await db.curso.findMany({
-      orderBy: [{ nivel: "asc" }, { grado: "asc" }]
-    });
-  },
+  return await db.curso.findMany({
+    orderBy: [
+      { nivel: "asc" },
+      { grado: "asc" },
+      { seccion: "asc" }, // Agregamos sección para que no aparezcan mezcladas
+      { turno: "asc" }   // Agregamos turno para que el administrativo los vea ordenados
+    ]
+  });
+},
 
   // 4. La transacción de inscripción (que ya arreglamos antes)
   async enroll(idPersona: number, idCurso: number) {

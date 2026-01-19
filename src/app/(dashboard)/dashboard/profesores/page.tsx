@@ -86,7 +86,7 @@ export default async function DocentesPage({ searchParams }: PageProps) {
                     {profe.asignaciones.map(asig => (
                       <span key={asig.idAsignacion} className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-[11px] font-bold px-3 py-1 rounded-full border border-indigo-100">
                         <BookOpen size={12} />
-                        {asig.materia.nombre} ({asig.curso.grado}° {asig.curso.seccion})
+                        {asig.materia.nombre} ({asig.curso.grado}° {asig.curso.seccion} - {asig.curso.turno})
                       </span>
                     ))}
                   </div>
@@ -158,7 +158,7 @@ export default async function DocentesPage({ searchParams }: PageProps) {
                   <td className="p-4 text-gray-500 text-sm">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {reg.materia.nombre} — {reg.curso.grado}° {reg.curso.seccion}
+                      {reg.materia.nombre} — {reg.curso.grado}° {reg.curso.seccion} ({reg.curso.turno})
                     </span>
                   </td>
                   <td className="p-4 text-center">

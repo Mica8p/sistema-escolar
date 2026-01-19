@@ -4,9 +4,9 @@ import { AlumnoService } from "@/service/alumno.service";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-export async function inscribirAlumnoAction(formData: FormData): Promise<{ success?: boolean; error?: string } | void> {
-  const idPersona = Number(formData.get("idPersona"));
-  const idCurso = Number(formData.get("idCurso"));
+export async function inscribirAlumnoAction(fprevState: any, formData: FormData): Promise<{ success?: boolean; error?: string } | void> {
+  const idPersona = Number(formData.get('idPersona'));
+  const idCurso = Number(formData.get('idCurso'));
 
   if (!idPersona || !idCurso) {
     return { error: "Debe seleccionar una persona y un curso válidos." };

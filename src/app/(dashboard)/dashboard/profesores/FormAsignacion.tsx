@@ -100,7 +100,7 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
             className="w-full p-2 border rounded-md bg-white text-gray-600"
           >
             <option value="">Seleccionar...</option>
-            {cursos.map(c => <option key={c.idCurso} value={c.idCurso}>{c.grado}° "{c.seccion}"</option>)}
+            {cursos.map(c => <option key={c.idCurso} value={c.idCurso}>{c.grado}° "{c.seccion}" - {c.turno}</option>)}
           </select>
         </div>
 
