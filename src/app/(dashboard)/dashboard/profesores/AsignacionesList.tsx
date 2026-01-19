@@ -58,8 +58,7 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
                         className='inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-[11px] font-bold px-3 py-1 rounded-full border border-indigo-100'
                       >
                         <BookOpen size={12} />
-                        {asig.materia.nombre} ({asig.curso.grado}°{' '}
-                        {asig.curso.seccion})
+                        {asig.materia.nombre} ({asig.curso.grado}° {asig.curso.seccion} - {asig.curso.turno})
                       </span>
                     ))}
                   </div>
@@ -73,7 +72,7 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
                         className='flex items-center justify-center gap-4 py-1 border-b border-gray-50 last:border-0'
                       >
                         <span className='text-[10px] text-gray-400 font-medium uppercase hidden xl:block'>
-                          {asig.materia.nombre}:
+                          {asig.materia.nombre} ({asig.curso.turno}):
                         </span>
 
                         <a

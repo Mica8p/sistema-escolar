@@ -1,32 +1,32 @@
 import { ProfesorService } from "@/service/profesor.service";
 import { AlumnoService } from "@/service/alumno.service";
-import { Briefcase, BookOpen, UserX, Pencil, History, Clock } from "lucide-react";
+import { Briefcase, History, Clock } from "lucide-react";
 import FormAsignacion from "./FormAsignacion";
-import { revalidatePath } from "next/cache";
 import { getCicloActual } from "@/lib/ciclo-session";
 import db from "@/lib/db";
 import { ImportarAsignaciones } from "@/components/modules/profesores/ImportarAsignaciones";
 import { AsignacionesList } from "./AsignacionesList";
 
 interface PageProps {
-  searchParams: { editId?: string };
+  // Mantenemos tu manejo de Next.js 15 (Promise) que es más moderno
+  searchParams: Promise<{ editId?: string }>;
 }
 
 export default async function DocentesPage({ searchParams }: PageProps) {
- const { editId } = searchParams;
+  const { editId } = await searchParams;
 
-  // 1. OBTENER EL CICLO ACTUAL DE LA SESIÓN
+  // 1. OBTENER EL CICLO ACTUAL
   const idCicloActual = await getCicloActual();
 
-  // 2. BUSCAR EL CICLO ANTERIOR (para el botón de importar)
+  // 2. BUSCAR EL CICLO ANTERIOR (Lógica de Gabi para importación)
   const cicloActualInfo = await db.cicloLectivo.findUnique({ where: { idCiclo: idCicloActual } });
   const cicloAnterior = await db.cicloLectivo.findFirst({
     where: { anio: (cicloActualInfo?.anio ?? 0) - 1 },
   });
 
-  // 3. PASAR EL idCicloActual AL SERVICE
+  // 3. OBTENER DATOS (Filtrados por año 2026/2027)
   const [profesores, personas, materias, cursos, historial] = await Promise.all([
-    ProfesorService.getAll(idCicloActual), // <--- AHORA FILTRA POR AÑO
+    ProfesorService.getAll(idCicloActual),
     ProfesorService.getPersonasDisponibles(),
     ProfesorService.getMaterias(),
     AlumnoService.getCursosDisponibles(),
@@ -44,7 +44,7 @@ export default async function DocentesPage({ searchParams }: PageProps) {
         Gestión de Docentes {cicloActualInfo?.anio}
       </h1>
 
-      {/* 4. MOSTRAR BOTÓN DE IMPORTAR SI NO HAY ASIGNACIONES */}
+      {/* BOTÓN DE IMPORTAR (Nueva función de Gabi) */}
       {profesores.length === 0 && cicloAnterior && (
         <ImportarAsignaciones
           cicloActualId={idCicloActual}
@@ -58,13 +58,13 @@ export default async function DocentesPage({ searchParams }: PageProps) {
         personas={personas}
         materias={materias}
         cursos={cursos}
-        idCiclo={idCicloActual} // <--- PASAMOS EL ID AL FORMULARIO
+        idCiclo={idCicloActual}
       />
 
-      {/* TABLA DE ASIGNACIONES ACTIVAS */}
+      {/* 4. LISTA DE ASIGNACIONES (Usamos el componente separado de Gabi) */}
       <AsignacionesList profesores={profesores} />
 
-      {/* SECCIÓN DE HISTORIAL */}
+      {/* 5. SECCIÓN DE HISTORIAL (Con tu lógica de turnos) */}
       <div className="mt-12 space-y-4">
         <h2 className="text-xl font-bold text-gray-400 flex items-center gap-2 px-2">
           <History className="h-6 w-6" />
@@ -88,6 +88,7 @@ export default async function DocentesPage({ searchParams }: PageProps) {
                   <td className="p-4 text-gray-500 text-sm">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
+                      {/* Agregamos el turno aquí para que el historial sea preciso */}
                       {reg.materia.nombre} — {reg.curso.grado}° {reg.curso.seccion} ({reg.curso.turno})
                     </span>
                   </td>
