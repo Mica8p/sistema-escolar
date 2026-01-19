@@ -96,7 +96,7 @@ export default function InventarioClient({
               const bajoStock = !sinStock && i.stockActual <= i.stockMinimo;
 
               return (
-                <tr key={i.idInsumo} className="border-t">
+                <tr key={i.idInsumo} className="border-t text-gray-700">
                   <td className="px-4 py-3">{i.nombre}</td>
                   <td className="px-4 py-3">{i.unidadMedida}</td>
                   <td className="px-4 py-3 text-right">{i.stockActual}</td>
@@ -150,7 +150,7 @@ export default function InventarioClient({
 
             {rows.length === 0 && (
               <tr className="border-t">
-                <td className="px-4 py-6 text-slate-500" colSpan={6}>
+                <td className="px-4 py-6 text-gray-700" colSpan={6}>
                   No hay insumos cargados todavía.
                 </td>
               </tr>
@@ -162,12 +162,12 @@ export default function InventarioClient({
       {/* ---------- Tabla secundaria: HISTORIAL ---------- */}
       <div className="overflow-hidden rounded-xl border bg-white">
         <div className="flex items-center justify-between border-b px-4 py-3">
-          <h2 className="text-sm font-semibold text-gray-700">Últimos movimientos</h2>
-          <span className="text-xs text-slate-500">Mostrando {movimientos.length}</span>
+          <h2 className="text-sm font-semibold text-gray-900">Últimos movimientos</h2>
+          <span className="text-xs text-gray-600">Mostrando {movimientos.length}</span>
         </div>
 
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-slate-700">
+          <thead className="bg-slate-50 text-gray-900">
             <tr>
               <th className="px-4 py-3 text-left">Fecha</th>
               <th className="px-4 py-3 text-left">Insumo</th>
@@ -192,11 +192,11 @@ export default function InventarioClient({
               });
 
               return (
-                <tr key={m.idMovimiento} className="border-t">
+                <tr key={m.idMovimiento} className="border-t text-gray-900">
                   <td className="px-4 py-3">{fecha}</td>
                   <td className="px-4 py-3">
                     {m.insumo.nombre}
-                    <span className="ml-2 text-xs text-slate-500">({m.insumo.unidadMedida})</span>
+                    <span className="ml-2 text-xs text-gray-600">({m.insumo.unidadMedida})</span>
                   </td>
                   <td className="px-4 py-3">{m.tipo}</td>
                   <td className={`px-4 py-3 text-right ${isNeg ? "text-red-700" : "text-emerald-700"}`}>
@@ -210,12 +210,12 @@ export default function InventarioClient({
                     {m.gastos?.length ? (
                       <div className="text-xs">
                         <div className="font-medium">${m.gastos[0].monto}</div>
-                        <div className="text-slate-500">
+                        <div className="text-gray-600">
                           {m.gastos[0].categoria} • {m.gastos[0].concepto}
                         </div>
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-400">—</span>
+                      <span className="text-xs text-gray-500">—</span>
                     )}
                   </td>
                 </tr>
@@ -224,7 +224,7 @@ export default function InventarioClient({
 
             {movimientos.length === 0 && (
               <tr className="border-t">
-                <td className="px-4 py-6 text-slate-500" colSpan={6}>
+                <td className="px-4 py-6 text-gray-500" colSpan={6}>
                   Todavía no hay movimientos registrados.
                 </td>
               </tr>

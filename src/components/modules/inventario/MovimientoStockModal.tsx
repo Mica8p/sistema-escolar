@@ -78,19 +78,19 @@ export default function MovimientoStockModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
         <div className="border-b px-5 py-4">
-          <h2 className="text-lg font-semibold">Movimiento de stock</h2>
-          <p className="text-sm text-slate-600">
-            {insumo.nombre} • Stock actual: <b>{insumo.stockActual}</b> {insumo.unidadMedida}
+          <h2 className="text-lg font-semibold text-gray-900">Movimiento de stock</h2>
+          <p className="text-sm text-gray-600">
+            {insumo.nombre} • Stock actual: <b className="text-gray-900">{insumo.stockActual}</b> {insumo.unidadMedida}
           </p>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4 px-5 py-4">
           <div className="space-y-1">
-            <label className="text-sm font-medium">Tipo</label>
+            <label className="text-sm font-medium text-gray-700">Tipo</label>
             <select
               value={tipo}
               onChange={(e) => setTipo(e.target.value as any)}
-              className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             >
               {allowedTipos.map((t) => (
                 <option key={t} value={t}>
@@ -106,7 +106,7 @@ export default function MovimientoStockModal({
                 type="button"
                 onClick={() => setAjusteSign("sumar")}
                 className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
-                  ajusteSign === "sumar" ? "bg-slate-900 text-white" : "hover:bg-slate-50"
+                  ajusteSign === "sumar" ? "bg-slate-900 text-white" : "hover:bg-slate-50 text-gray-700"
                 }`}
               >
                 Sumar
@@ -115,7 +115,7 @@ export default function MovimientoStockModal({
                 type="button"
                 onClick={() => setAjusteSign("restar")}
                 className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
-                  ajusteSign === "restar" ? "bg-slate-900 text-white" : "hover:bg-slate-50"
+                  ajusteSign === "restar" ? "bg-slate-900 text-white" : "hover:bg-slate-50 text-gray-700"
                 }`}
               >
                 Restar
@@ -124,19 +124,19 @@ export default function MovimientoStockModal({
           )}
 
           <div className="space-y-1">
-            <label className="text-sm font-medium">Cantidad</label>
+            <label className="text-sm font-medium text-gray-700">Cantidad</label>
             <input
               value={cantidad}
               onChange={(e) => setCantidad(onlyInt(e.target.value))}
               inputMode="numeric"
-              className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               placeholder="0"
             />
           </div>
 
           {tipo === "Entrada" && (
             <div className="space-y-3 rounded-xl border bg-slate-50 p-3">
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-sm text-gray-700">
                 <input
                   type="checkbox"
                   checked={crearGasto}
@@ -149,22 +149,22 @@ export default function MovimientoStockModal({
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-sm font-medium">Monto</label>
+                      <label className="text-sm font-medium text-gray-700">Monto</label>
                       <input
                         value={monto}
                         onChange={(e) => setMonto(e.target.value)}
                         inputMode="decimal"
-                        className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         placeholder="Ej: 15000"
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-sm font-medium">Categoría</label>
+                      <label className="text-sm font-medium text-gray-700">Categoría</label>
                       <select
                         value={categoria}
                         onChange={(e) => setCategoria(e.target.value as any)}
-                        className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       >
                         <option value="Insumos">Insumos</option>
                         <option value="Servicios">Servicios</option>
@@ -175,11 +175,11 @@ export default function MovimientoStockModal({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-sm font-medium">Concepto</label>
+                    <label className="text-sm font-medium text-gray-700">Concepto</label>
                     <input
                       value={concepto}
                       onChange={(e) => setConcepto(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       placeholder="Ej: Compra de insumos librería"
                     />
                   </div>
@@ -192,7 +192,7 @@ export default function MovimientoStockModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border px-4 py-2 text-sm hover:bg-slate-50"
+              className="rounded-lg border px-4 py-2 text-sm hover:bg-slate-50 text-gray-700"
               disabled={pending}
             >
               Cancelar
