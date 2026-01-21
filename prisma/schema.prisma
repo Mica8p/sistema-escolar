@@ -77,6 +77,14 @@ enum CategoriaGasto {
   Sueldos
 }
 
+enum MetodoPago {
+  EFECTIVO
+  TRANSFERENCIA
+  TARJETA_DEBITO
+  TARJETA_CREDITO
+  OTRO
+}
+
 enum DiaSemana {
   LUNES
   MARTES
@@ -117,14 +125,13 @@ model Usuario {
   estado       Boolean
   createdAt    DateTime @default(now())
 
-  persona Persona      @relation(fields: [idPersona], references: [idPersona])
-  roles   UsuarioRol[]
-
-  pagos       Pago[]
-  asistencias Asistencia[]
-  comunicados Comunicado[]
-  movimientos MovimientoStock[]
-  gastos      GastoInstitucional[]
+  persona          Persona              @relation(fields: [idPersona], references: [idPersona])
+  roles            UsuarioRol[]
+  pagosRegistrados Pago[]               @relation("PagosRegistradosPorUsuario")
+  asistencias      Asistencia[]
+  comunicados      Comunicado[]
+  movimientos      MovimientoStock[]
+  gastos           GastoInstitucional[]
 
   @@map("USUARIO")
 }
@@ -164,6 +171,8 @@ model Alumno {
   persona    Persona       @relation(fields: [idPersona], references: [idPersona])
   matriculas Matricula[]
   padres     AlumnoPadre[]
+  cargos     Cargo[]
+  pagos      Pago[]        @relation("PagosDelAlumno")
 
   @@map("ALUMNO")
 }
@@ -215,6 +224,7 @@ model CicloLectivo {
   periodos     PeriodoAcademico[]
   asignaciones AsignacionAcademica[]
   matriculas   Matricula[]
+  cargos       Cargo[]
 
   @@map("CICLO_LECTIVO")
 }
@@ -270,8 +280,8 @@ model AsignacionAcademica {
   curso    Curso        @relation(fields: [idCurso], references: [idCurso])
   ciclo    CicloLectivo @relation(fields: [idCiclo], references: [idCiclo])
 
-  horarios    Horario[]
-  notas       Nota[]
+  horarios Horario[]
+  notas    Nota[]
 
   @@map("ASIGNACION_ACADEMICA")
 }
@@ -287,8 +297,8 @@ model Horario {
   horaFin    String
   aula       String?
 
-  asignacion AsignacionAcademica @relation(fields: [idAsignacion], references: [idAsignacion])
-  asistencias  Asistencia[]
+  asignacion  AsignacionAcademica @relation(fields: [idAsignacion], references: [idAsignacion])
+  asistencias Asistencia[]
   @@map("HORARIO")
 }
 
@@ -313,7 +323,6 @@ model Matricula {
 
   notas       Nota[]
   asistencias Asistencia[]
-  cuotas      Cuota[]
 
   // CORRECCIÓN: El alumno solo puede tener UNA matrícula por CICLO
   @@unique([idAlumno, idCiclo])
@@ -342,51 +351,87 @@ model Nota {
 model Asistencia {
   idAsistencia  Int              @id @default(autoincrement())
   idMatricula   Int
-  idHorario     Int              // <--- Cambiamos asignación por horario
-  fecha         DateTime         // Solo la fecha (ej: 2026-03-15)
+  idHorario     Int // <--- Cambiamos asignación por horario
+  fecha         DateTime // Solo la fecha (ej: 2026-03-15)
   estado        EstadoAsistencia
-  idUsuario     Int              // Quién tomó lista (Preceptor o Docente)
+  idUsuario     Int // Quién tomó lista (Preceptor o Docente)
   fechaRegistro DateTime         @default(now())
 
-  matricula     Matricula        @relation(fields: [idMatricula], references: [idMatricula])
-  horario       Horario          @relation(fields: [idHorario], references: [idHorario])
-  usuario       Usuario          @relation(fields: [idUsuario], references: [idUsuario])
+  matricula Matricula @relation(fields: [idMatricula], references: [idMatricula])
+  horario   Horario   @relation(fields: [idHorario], references: [idHorario])
+  usuario   Usuario   @relation(fields: [idUsuario], references: [idUsuario])
 
   // Esta línea es clave: evita que un alumno tenga dos asistencias en la misma clase el mismo día
   @@unique([idMatricula, idHorario, fecha])
   @@map("ASISTENCIA")
 }
 
-model Cuota {
-  idCuota          Int         @id @default(autoincrement())
-  idMatricula      Int
-  mes              Int
-  montoOriginal    Float
-  saldo            Float
+/**
+ * =======================
+ * FINANZAS
+ * =======================
+ */
+model ConceptoDePago {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @unique
+  descripcion String?
+  montoFijo   Float?
+  cargos      Cargo[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("CONCEPTO_PAGO")
+}
+
+model Cargo {
+  id               Int            @id @default(autoincrement())
+  alumnoId         Int
+  alumno           Alumno         @relation(fields: [alumnoId], references: [idAlumno])
+  conceptoId       Int
+  concepto         ConceptoDePago @relation(fields: [conceptoId], references: [id])
+  monto            Float
   fechaVencimiento DateTime
-  estado           EstadoCuota
+  estado           EstadoCuota    @default(Pendiente)
 
-  matricula Matricula @relation(fields: [idMatricula], references: [idMatricula])
-  pagos     Pago[]
+  cicloId Int?
+  ciclo   CicloLectivo? @relation(fields: [cicloId], references: [idCiclo])
 
-  @@unique([idMatricula, mes])
-  @@map("CUOTA")
+  pagoDetalles PagoDetalle[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("CARGO")
 }
 
 model Pago {
-  idPago      Int      @id @default(autoincrement())
-  idCuota     Int
-  fechaPago   DateTime
-  monto       Float
-  medioPago   String
-  comprobante String?
-  idUsuario   Int
-  createdAt   DateTime @default(now())
+  id         Int        @id @default(autoincrement())
+  alumnoId   Int
+  alumno     Alumno     @relation("PagosDelAlumno", fields: [alumnoId], references: [idAlumno])
+  montoTotal Float
+  fechaPago  DateTime
+  metodoPago MetodoPago
+  referencia String?
 
-  cuota   Cuota   @relation(fields: [idCuota], references: [idCuota])
-  usuario Usuario @relation(fields: [idUsuario], references: [idUsuario])
+  usuarioId Int // Who registered the payment
+  usuario   Usuario @relation("PagosRegistradosPorUsuario", fields: [usuarioId], references: [idUsuario])
+
+  detalles  PagoDetalle[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   @@map("PAGO")
+}
+
+model PagoDetalle {
+  id      Int   @id @default(autoincrement())
+  pagoId  Int
+  pago    Pago  @relation(fields: [pagoId], references: [id])
+  cargoId Int
+  cargo   Cargo @relation(fields: [cargoId], references: [id])
+  monto   Float // Amount of the payment applied to this specific cargo
+
+  @@unique([pagoId, cargoId])
+  @@map("PAGO_DETALLE")
 }
 
 model Comunicado {

@@ -48,9 +48,12 @@ export const menuItems = [
   },
   {
     title: "Pagos y Cuotas",
-    href: "/dashboard/finanzas",
     icon: Wallet,
     roles: ["ADMIN", "PADRE"],
+    subItems: [
+      { title: "Estado de Cuentas", href: "/dashboard/finanzas", roles: ["ADMIN", "PADRE"]},
+      { title: "Conceptos de Pago", href: "/dashboard/finanzas/conceptos", roles: ["ADMIN"] },
+    ]
   },
   {
     title: "Inventario",
