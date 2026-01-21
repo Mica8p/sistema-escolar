@@ -1,4 +1,4 @@
-import { PrismaClient, PeriodoNombre, DiaSemana, Turno, Nivel } from "@prisma/client";
+import { PrismaClient, PeriodoNombre, DiaSemana, Turno, Nivel, EstadoCuota } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import bcrypt from "bcryptjs";
 import "dotenv/config";
@@ -191,7 +191,6 @@ async function main() {
     });
   }
 
-  console.log("✅ Seed completado con éxito.");
   // 8. SEMBRAR ALUMNO DE PRUEBA (Hijo de Carlos)
   const alumnoPrueba = await prisma.persona.upsert({
     where: { dni: "44444333" },
@@ -294,6 +293,26 @@ async function main() {
   });
   console.log("✅ Conceptos de pago creados.");
 
+  // 12. GENERAR CARGO DE PRUEBA (Para probar finanzas)
+  if (alumnoPrueba.alumno) {
+    const conceptoInscripcion = await prisma.conceptoDePago.findUnique({ 
+      where: { nombre: "Inscripción Anual" } 
+    });
+    
+    if (conceptoInscripcion) {
+      await prisma.cargo.create({
+        data: {
+          alumnoId: alumnoPrueba.alumno.idAlumno,
+          conceptoId: conceptoInscripcion.id,
+          monto: conceptoInscripcion.montoFijo || 5000,
+          fechaVencimiento: new Date("2026-03-15"),
+          estado: EstadoCuota.Pendiente,
+          cicloId: ciclo2026.idCiclo
+        }
+      });
+      console.log("💸 Cargo de prueba (Inscripción) asignado al alumno.");
+    }
+  }
 
   console.log("✅ Seed completado con éxito.");
 }
