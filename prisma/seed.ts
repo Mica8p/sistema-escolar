@@ -254,6 +254,48 @@ async function main() {
     });
     console.log("📝 Alumno matriculado en 2° B - Mañana.");
   }
+
+  // 11. SEMBRAR CONCEPTOS DE PAGO
+  console.log("💰 Sembrando conceptos de pago...");
+  await prisma.conceptoDePago.upsert({
+    where: { nombre: "Inscripción Anual" },
+    update: {},
+    create: {
+      nombre: "Inscripción Anual",
+      descripcion: "Cargo anual por inscripción al ciclo lectivo.",
+      montoFijo: 5000,
+    },
+  });
+  await prisma.conceptoDePago.upsert({
+    where: { nombre: "Cuota Mensual - Nivel Secundario" },
+    update: {},
+    create: {
+      nombre: "Cuota Mensual - Nivel Secundario",
+      descripcion: "Cuota mensual para alumnos de nivel secundario.",
+      montoFijo: 2500,
+    },
+  });
+  await prisma.conceptoDePago.upsert({
+    where: { nombre: "Cuota Mensual - Nivel Primario" },
+    update: {},
+    create: {
+      nombre: "Cuota Mensual - Nivel Primario",
+      descripcion: "Cuota mensual para alumnos de nivel primario.",
+      montoFijo: 2000,
+    },
+  });
+  await prisma.conceptoDePago.upsert({
+    where: { nombre: "Material Didáctico" },
+    update: {},
+    create: {
+      nombre: "Material Didáctico",
+      descripcion: "Libros y materiales para el año.",
+    },
+  });
+  console.log("✅ Conceptos de pago creados.");
+
+
+  console.log("✅ Seed completado con éxito.");
 }
 
 main()
