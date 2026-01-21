@@ -76,3 +76,26 @@ export async function getHijosConAsistenciaCompleta(idPersona: number, idCiclo: 
 
   return hijosProcesados;
 }
+
+export async function getAsistenciaDetallada(idAlumno: number, idCiclo: number) {
+  return await db.asistencia.findMany({
+    where: {
+      matricula: {
+        idAlumno,
+        idCiclo
+      }
+    },
+    include: {
+      horario: {
+        include: {
+          asignacion: {
+            include: {
+              materia: true // Para saber si faltó a "Matemática"
+            }
+          }
+        }
+      }
+    },
+    orderBy: { fecha: 'desc' }
+  });
+}

@@ -25,12 +25,19 @@ export default NextAuth(authConfig).auth((req) => {
 
   const isAdmin = userRoles.includes("ADMIN");
   const isDocente = userRoles.includes("DOCENTE");
+  const esPadre = userRoles.includes("PADRE");
 
   const path = nextUrl.pathname;
 
   // REGLA DE ORO: El Administrador tiene acceso total a Escuela Pro
   if (isAdmin) {
     return NextResponse.next();
+  }
+
+  const esRutaDetalleAsistencia = path.startsWith("/dashboard/asistencias/") && path.length > "/dashboard/asistencias/".length;
+
+  if (esRutaDetalleAsistencia && esPadre) {
+    return NextResponse.next(); // ✅ Deja pasar al padre al detalle de su hijo
   }
 
   // Protección de rutas de configuración e inventario

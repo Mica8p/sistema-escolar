@@ -5,15 +5,13 @@ import { getCicloActual } from "@/lib/ciclo-session";
 export async function getAsignacionesParaUsuario(params: {
   isAdmin: boolean;
   idPersona: number;
-  idCiclo: number; // <--- PASO 1: Agregamos el idCiclo como parámetro obligatorio
+  idCiclo: number;
 }) {
-  // PASO 2: Borramos la línea "const idCiclo = await getCicloActual()"
-  // porque ahora el ID nos llega por el parámetro 'params.idCiclo'
 
   if (params.isAdmin) {
     return db.asignacionAcademica.findMany({
       where: {
-        idCiclo: params.idCiclo // <--- PASO 3: Filtramos usando el parámetro
+        idCiclo: params.idCiclo
       },
       include: { curso: true, materia: true, ciclo: true },
       orderBy: [{ idCiclo: "desc" }, { idCurso: "asc" }],
@@ -30,7 +28,7 @@ export async function getAsignacionesParaUsuario(params: {
   return db.asignacionAcademica.findMany({
     where: {
       idProfesor: prof.idProfesor,
-      idCiclo: params.idCiclo // <--- PASO 4: Filtramos usando el parámetro
+      idCiclo: params.idCiclo
     },
     include: { curso: true, materia: true, ciclo: true },
     orderBy: [{ idCiclo: "desc" }, { idCurso: "asc" }],
@@ -53,7 +51,6 @@ export async function getPlanilla(params: {
   idPeriodo: number;
   tipo: string;
 }) {
-  // 1. Buscamos la asignación para conocer el Curso y el Ciclo
   const asig = await db.asignacionAcademica.findUnique({
     where: { idAsignacion: params.idAsignacion },
     include: { curso: true, ciclo: true, materia: true }
@@ -61,11 +58,10 @@ export async function getPlanilla(params: {
 
   if (!asig) throw new Error("Asignación no encontrada");
 
-  // 2. Buscamos las matrículas filtrando por Curso Y Ciclo
   const matriculas = await db.matricula.findMany({
     where: {
       idCurso: asig.idCurso,
-      idCiclo: asig.idCiclo, // <--- ESTE ES EL FILTRO MAESTRO
+      idCiclo: asig.idCiclo,
       estadoAcademico: "Activo"
     },
     include: {
@@ -76,7 +72,6 @@ export async function getPlanilla(params: {
     orderBy: { alumno: { persona: { apellido: "asc" } } }
   });
 
-  // 3. Traemos las notas ya cargadas para esa instancia
   const notas = await db.nota.findMany({
     where: {
       idAsignacion: params.idAsignacion,
@@ -149,5 +144,29 @@ export async function guardarNota(params: {
       observacion: params.observacion ?? null,
       fechaRegistro,
     },
+  });
+}
+
+export async function getCalificacionesHijo(idAlumno: number, idCiclo: number) {
+  return await db.nota.findMany({
+    where: {
+      matricula: {
+        idAlumno: idAlumno,
+        idCiclo: idCiclo
+      }
+    },
+    include: {
+      asignacion: {
+        include: {
+          materia: true // Para mostrar "Matemática", "Lengua", etc.
+        }
+      },
+      periodo: true // Para saber si es "1° Trimestre", "Examen Final", etc.
+    },
+    orderBy: [
+      { asignacion: { materia: { nombre: 'asc' } } },
+      { periodo: { fechaInicio: 'asc' } },
+      { fechaRegistro: 'desc' }
+    ]
   });
 }

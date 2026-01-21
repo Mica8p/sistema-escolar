@@ -1,111 +1,69 @@
-import { CalendarCheck, CalendarX, User } from "lucide-react";
+"use client";
 
-// Definimos qué datos espera recibir este componente
+import { Activity, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
+import Link from "next/link";
+
+// 1. Corregimos la Interfaz para que acepte showHeader
 interface Props {
   hijoData: {
+    idAlumno: number;
     nombreCompleto: string;
-    curso: string;
     stats: { presentismo: number; ausentismo: number };
-    asistencias: Array<{
-      id: number;
-      fecha: string;
-      estado: string;
-      materia: string;
-      horaInicio: string;
-    }>;
   };
+  showHeader?: boolean;
 }
 
 export default function CardAsistenciaHijo({ hijoData }: Props) {
-  // Función auxiliar para dar color según el estado
-  const getStatusColor = (estado: string) => {
-    switch (estado) {
-      case "PRESENTE": return "bg-emerald-100 text-emerald-700 border-emerald-200";
-      case "TARDE": return "bg-amber-100 text-amber-700 border-amber-200";
-      case "AUSENTE": return "bg-rose-100 text-rose-700 border-rose-200";
-      case "JUSTIFICADA": return "bg-blue-100 text-blue-700 border-blue-200";
-      default: return "bg-gray-100 text-gray-700 border-gray-200";
-    }
-  };
+  const { stats, idAlumno } = hijoData;
+  const total = (stats?.presentismo || 0) + (stats?.ausentismo || 0);
+  const porcentaje = total > 0 ? Math.round((stats.presentismo / total) * 100) : 0;
+
+  // Debug rápido: si ves esto en la consola del navegador, el ID no está llegando
+  if (!idAlumno) {
+    console.error("Error: idAlumno no definido para", hijoData.nombreCompleto);
+  }
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden">
-      {/* HEADER DEL HIJO */}
-      <div className="px-6 py-5 bg-slate-800 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-slate-700 rounded-full border border-slate-600">
-            <User className="text-indigo-300" size={20} />
+    <div className="bg-white rounded-[2rem border border-slate-200 p-8 shadow-sm h-full flex flex-col justify-between">
+      <div className="space-y-6">
+        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+          <Activity size={14} className="text-indigo-500" /> Resumen de Asistencia
+        </h3>
+
+        <div className="flex items-center gap-6 bg-slate-50 p-6 rounded-3xl">
+          <div className="relative w-20 h-20 flex items-center justify-center">
+             <svg className="w-full h-full transform -rotate-90">
+                <circle cx="40" cy="40" r="35" stroke="#e2e8f0" strokeWidth="8" fill="transparent" />
+                <circle cx="40" cy="40" r="35" stroke="#4f46e5" strokeWidth="8" fill="transparent"
+                  strokeDasharray={220} strokeDashoffset={220 - (porcentaje / 100) * 220} strokeLinecap="round" />
+             </svg>
+             <span className="absolute text-sm font-black text-slate-700">{porcentaje}%</span>
           </div>
           <div>
-            <h2 className="text-lg font-black text-white tracking-tight uppercase">{hijoData.nombreCompleto}</h2>
-            <p className="text-xs text-indigo-300 font-bold uppercase tracking-widest">{hijoData.curso} • Ciclo 2026</p>
+            <p className="text-2xl font-black text-slate-800">Presentismo</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Estatus Actual</p>
           </div>
         </div>
-      </div>
 
-      <div className="p-6 space-y-6">
-        {/* RESUMEN ESTADÍSTICO */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
-            <div className="p-3 bg-emerald-100 rounded-xl">
-              <CalendarCheck className="text-emerald-600" size={24} />
-            </div>
-            <div>
-              <p className="text-2xl font-black text-emerald-700">{hijoData.stats.presentismo}</p>
-              <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Presentes / Tardes</p>
-            </div>
+          <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-center">
+            <span className="block text-2xl font-black text-emerald-600">{stats?.presentismo || 0}</span>
+            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-tighter">Presentes</span>
           </div>
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-100">
-            <div className="p-3 bg-rose-100 rounded-xl">
-              <CalendarX className="text-rose-600" size={24} />
-            </div>
-            <div>
-              <p className="text-2xl font-black text-rose-700">{hijoData.stats.ausentismo}</p>
-              <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Ausencias Totales</p>
-            </div>
-          </div>
-        </div>
-
-        {/* TABLA DETALLADA */}
-        <div>
-          <h3 className="text-sm font-black text-slate-700 uppercase tracking-widest mb-4 px-2">Historial Reciente</h3>
-          <div className="overflow-hidden rounded-2xl border border-slate-200">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                <tr>
-                  <th className="px-4 py-3">Fecha</th>
-                  <th className="px-4 py-3">Materia / Horario</th>
-                  <th className="px-4 py-3 text-center">Estado</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
-                {hijoData.asistencias.length === 0 ? (
-                   <tr>
-                     <td colSpan={3} className="px-4 py-8 text-center text-slate-400 italic">
-                       No hay registros de asistencia aún.
-                     </td>
-                   </tr>
-                ) : (
-                  hijoData.asistencias.map((asis) => (
-                    <tr key={asis.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-4 py-3 whitespace-nowrap font-bold text-slate-700">{asis.fecha}</td>
-                      <td className="px-4 py-3">
-                        <div className="font-bold text-slate-700 uppercase text-xs">{asis.materia}</div>
-                        <div className="text-[10px] text-slate-400 font-bold">{asis.horaInicio} hs.</div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${getStatusColor(asis.estado)}`}>
-                          {asis.estado}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100 text-center">
+            <span className="block text-2xl font-black text-rose-600">{stats?.ausentismo || 0}</span>
+            <span className="text-[9px] font-black text-rose-500 uppercase tracking-tighter">Ausentes</span>
           </div>
         </div>
       </div>
+
+      {/* ✅ NAVEGACIÓN CORREGIDA: Verifica que la ruta coincida con tu carpeta */}
+      <Link
+        href={`/dashboard/asistencias/${idAlumno}`}
+        className="mt-8 flex items-center justify-center gap-2 w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-bold hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+      >
+        Ver historial por materia <ArrowRight size={14} />
+      </Link>
     </div>
   );
 }
