@@ -75,7 +75,7 @@ export const PersonaService = {
       // Borrado lógico: cambiamos el estado a false
       return await db.usuario.update({
         where: { idUsuario: usuario.idUsuario },
-        data: { estado: false },
+        data: { estado: false, passwordHash: "DELETED_USER" },
       });
     }
   },

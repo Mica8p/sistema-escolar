@@ -22,6 +22,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!usuario || !usuario.passwordHash) return null;
 
+        // Verificar explícitamente si el usuario está activo antes de validar contraseña
+        if (!usuario.estado) return null;
+
         const isPasswordValid = await bcrypt.compare(
           credentials.password as string,
           usuario.passwordHash
