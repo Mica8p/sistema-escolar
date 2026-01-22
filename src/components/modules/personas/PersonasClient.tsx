@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import type { PersonaWithRelations } from "@/types/persona";
 import Link from "next/link";
-import { UserPlus, Mail, Fingerprint, Tag, CheckCircle2 } from "lucide-react";
+import { UserPlus, Mail, Fingerprint, Tag, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import DeletePersonaButton from "@/components/modules/personas/DeletePersonaButton";
 import EnableAccessButton from "@/components/modules/personas/EnableAccessButton";
 
@@ -14,6 +14,8 @@ interface PersonasClientProps {
 
 export default function PersonasClient({ personas, success }: PersonasClientProps) {
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const filteredPersonas = useMemo(() => {
     if (!search) return personas;
@@ -24,6 +26,10 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
         p.dni.toLowerCase().includes(search.toLowerCase())
     );
   }, [search, personas]);
+
+  const totalPages = Math.ceil(filteredPersonas.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedPersonas = filteredPersonas.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="space-y-6">
@@ -54,7 +60,10 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
           type="text"
           placeholder="Buscar por apellido o DNI..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1); // Resetear a página 1 al buscar
+          }}
           className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder:text-gray-500"
         />
         <div className="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -76,7 +85,7 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filteredPersonas.map((p) => (
+            {paginatedPersonas.map((p) => (
               <tr key={p.idPersona} className="hover:bg-slate-50 transition-colors">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
@@ -131,6 +140,34 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
           </tbody>
         </table>
       </div>
+
+      {/* Controles de Paginación */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-slate-200 pt-4">
+          <div className="text-sm text-slate-500">
+            Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, filteredPersonas.length)} de {filteredPersonas.length} resultados
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-2 border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <span className="text-sm font-medium text-slate-700">
+              Página {currentPage} de {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="p-2 border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
