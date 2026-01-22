@@ -1,5 +1,8 @@
 import db from "@/lib/db";
 import bcrypt from "bcryptjs";
+import type { PersonaWithRelations } from "@/types/persona";
+
+export type { PersonaWithRelations };
 
 export const PersonaService = {
   // Obtener todas las personas con sus usuarios y roles
