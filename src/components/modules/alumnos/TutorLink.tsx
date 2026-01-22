@@ -94,7 +94,7 @@ export default function TutorLink({ alumno }: { alumno: AlumnoExtendido }) {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-lg">
             <h3 className="text-2xl font-bold text-gray-900 mb-6">Vincular Nuevo Tutor</h3>
             
@@ -148,4 +148,3 @@ export default function TutorLink({ alumno }: { alumno: AlumnoExtendido }) {
     </div>
   );
 }
-
