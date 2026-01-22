@@ -82,7 +82,7 @@ export default async function AlumnosPage() {
                       </td>
                       <td className="p-4 text-center">
                         <button className="text-blue-500 hover:text-blue-700 text-xs font-bold">
-                          VER FICHA
+                          Ver Perfil
                         </button>
                       </td>
                     </tr>
