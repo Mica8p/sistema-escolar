@@ -105,4 +105,38 @@ export const PersonaService = {
       },
     });
   },
+
+  async getTutoresDisponibles(idAlumno: number) {
+    // Primero, obtenemos los IDs de los padres que YA están vinculados al alumno
+    const padresVinculados = await db.alumnoPadre.findMany({
+      where: { idAlumno },
+      select: { idPadre: true },
+    });
+    const idsPadresVinculados = padresVinculados.map(p => p.idPadre);
+
+    // Luego, buscamos todas las personas con rol 'PADRE' que NO están en esa lista de vinculados
+    return await db.persona.findMany({
+      where: {
+        usuario: {
+          roles: {
+            some: { rol: { nombre: 'PADRE' } },
+          },
+        },
+        padre: {
+          // La magia está aquí: nos aseguramos que su 'idPadre' no esté en la lista de los ya vinculados
+          NOT: {
+            idPadre: {
+              in: idsPadresVinculados,
+            },
+          },
+        },
+      },
+      include: {
+        padre: true, // Incluimos el modelo 'Padre' para tener el 'idPadre'
+      },
+      orderBy: {
+        apellido: 'asc',
+      },
+    });
+  },
 };

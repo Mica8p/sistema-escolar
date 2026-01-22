@@ -98,5 +98,46 @@ export const AlumnoService = {
 
       return { alumno, matricula };
     });
-  }
+  },
+
+  async getById(idAlumno: number) {
+    const idCiclo = await getCicloActual();
+    return await db.alumno.findUnique({
+      where: { idAlumno: idAlumno },
+      include: {
+        persona: true,
+        matriculas: {
+          where: { idCiclo },
+          include: {
+            curso: true,
+            notas: {
+              include: {
+                asignacion: {
+                  include: {
+                    materia: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { fechaInscripcion: 'desc' },
+        },
+        cargos: {
+          include: {
+            concepto: true,
+          },
+          orderBy: { fechaVencimiento: 'asc' },
+        },
+        padres: {
+          include: {
+            padre: {
+              include: {
+                persona: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  },
 };

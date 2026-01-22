@@ -3,6 +3,7 @@ import { GraduationCap } from "lucide-react";
 import { getCicloActual } from "@/lib/ciclo-session";
 import { CicloService } from "@/service/ciclo.service";
 import { InscripcionForm } from "@/components/modules/alumnos/InscripcionForm";
+import Link from "next/link";
 
 export default async function AlumnosPage() {
   const cicloId = await getCicloActual(); // Obtenemos el ciclo del selector de Gabriel
@@ -81,9 +82,9 @@ export default async function AlumnosPage() {
                         )}
                       </td>
                       <td className="p-4 text-center">
-                        <button className="text-blue-500 hover:text-blue-700 text-xs font-bold">
+                        <Link href={`/dashboard/alumnos/${alumno.idAlumno}`} className="text-blue-500 hover:text-blue-700 text-xs font-bold">
                           Ver Perfil
-                        </button>
+                        </Link>
                       </td>
                     </tr>
                   )

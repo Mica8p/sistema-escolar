@@ -57,5 +57,10 @@ export async function updatePersonaAction(
   } catch (error) {
     return "Error al actualizar los datos.";
   }
-  redirect("/dashboard/personas?success=updated");
-}
+    redirect("/dashboard/personas?success=updated");
+  }
+  
+  export async function getTutoresDisponiblesAction(idAlumno: number) {
+    return await PersonaService.getTutoresDisponibles(idAlumno);
+  }
+  

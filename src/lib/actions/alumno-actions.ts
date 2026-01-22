@@ -1,25 +1,52 @@
 "use server";
 
-import { AlumnoService } from "@/service/alumno.service";
+import db from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { AlumnoService } from "@/service/alumno.service";
+import { z } from "zod";
 
-export async function inscribirAlumnoAction(fprevState: any, formData: FormData): Promise<{ success?: boolean; error?: string } | void> {
-  const idPersona = Number(formData.get('idPersona'));
-  const idCurso = Number(formData.get('idCurso'));
+export async function vincularPadre(idAlumno: number, idPadre: number, relacion: string) {
+  try {
+    await db.alumnoPadre.create({
+      data: {
+        idAlumno,
+        idPadre,
+        relacion,
+      },
+    });
 
-  if (!idPersona || !idCurso) {
-    return { error: "Debe seleccionar una persona y un curso válidos." };
+    revalidatePath(`/dashboard/alumnos/${idAlumno}`);
+    return { success: true, message: "Tutor vinculado correctamente." };
+  } catch (error) {
+    return { success: false, message: "Error al vincular el tutor." };
+  }
+}
+
+const InscripcionSchema = z.object({
+  idPersona: z.coerce.number().min(1, "Debe seleccionar una persona."),
+  idCurso: z.coerce.number().min(1, "Debe seleccionar un curso."),
+});
+
+export async function inscribirAlumnoAction(prevState: any, formData: FormData) {
+  const validatedFields = InscripcionSchema.safeParse({
+    idPersona: formData.get("idPersona"),
+    idCurso: formData.get("idCurso"),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      error: "Campos inválidos. Por favor, verifique la información.",
+    };
   }
 
   try {
-    await AlumnoService.enroll(idPersona, idCurso);
-  } catch (error: any) {
+    await AlumnoService.enroll(validatedFields.data.idPersona, validatedFields.data.idCurso);
+    revalidatePath("/dashboard/alumnos");
+    return { success: true };
+  } catch (error) {
     console.error("Error en la inscripción:", error);
-    // CAMBIO: Retornamos el error para que la UI lo maneje
-    return { error: "Hubo un problema al procesar la inscripción. Verifique si el alumno ya está inscripto." };
+    return {
+      error: "Hubo un error al procesar la inscripción. Inténtelo de nuevo.",
+    };
   }
-
-  revalidatePath("/dashboard/alumnos");
-  redirect("/dashboard/alumnos");
 }
