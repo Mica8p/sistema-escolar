@@ -14,18 +14,31 @@ interface PersonasClientProps {
 
 export default function PersonasClient({ personas, success }: PersonasClientProps) {
   const [search, setSearch] = useState("");
+  const [selectedRole, setSelectedRole] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const filteredPersonas = useMemo(() => {
-    if (!search) return personas;
+  const availableRoles = useMemo(() => {
+    const rolesMap = new Map<number, string>();
+    personas.forEach((p) => {
+      p.usuario?.roles.forEach((ur) => {
+        rolesMap.set(ur.rol.idRol, ur.rol.nombre);
+      });
+    });
+    return Array.from(rolesMap.entries()).map(([id, nombre]) => ({ id, nombre }));
+  }, [personas]);
 
-    return personas.filter(
-      (p) =>
+  const filteredPersonas = useMemo(() => {
+    return personas.filter((p) => {
+      const matchesSearch = !search ||
         p.apellido.toLowerCase().includes(search.toLowerCase()) ||
-        p.dni.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [search, personas]);
+        p.dni.toLowerCase().includes(search.toLowerCase());
+
+      const matchesRole = !selectedRole || p.usuario?.roles.some((r) => r.rol.idRol.toString() === selectedRole);
+
+      return matchesSearch && matchesRole;
+    });
+  }, [search, selectedRole, personas]);
 
   const totalPages = Math.ceil(filteredPersonas.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -54,21 +67,39 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
         </Link>
       </div>
       
-      {/* Search Input */}
-      <div className="relative">
-        <input
-          type="text"
-          placeholder="Buscar por apellido o DNI..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setCurrentPage(1); // Resetear a página 1 al buscar
-          }}
-          className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder:text-gray-500"
-        />
-        <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-          <Fingerprint className="h-5 w-5 text-slate-400" />
+      {/* Search Input and Filter */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Buscar por apellido o DNI..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1); // Resetear a página 1 al buscar
+            }}
+            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder:text-gray-500"
+          />
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3">
+            <Fingerprint className="h-5 w-5 text-slate-400" />
+          </div>
         </div>
+
+        <select
+          value={selectedRole}
+          onChange={(e) => {
+            setSelectedRole(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="w-full md:w-64 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+        >
+          <option value="">Todos los Roles</option>
+          {availableRoles.map((role) => (
+            <option key={role.id} value={role.id}>
+              {role.nombre}
+            </option>
+          ))}
+        </select>
       </div>
 
 
