@@ -1,33 +1,97 @@
-import { getAlumnosConEstadoDeCuenta, getConceptosDePago } from "@/service/finanzas.service";
-import AlumnosDeudoresList from "@/components/modules/finanzas/AlumnosDeudoresList";
-import { GenerarCuotaMasivaDialog } from "@/components/modules/finanzas/generar-cuota-masiva-dialog";
-import Link from "next/link";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { AlumnoService } from "@/service/alumno.service";
+import { getDetalleCuenta, getAlumnosConEstadoDeCuenta, getConceptosDePago } from "@/service/finanzas.service";
+import { getCicloActual } from "@/lib/ciclo-session";
+import EstadoCuentaSummary from "@/components/modules/finanzas/EstadoCuentaSummary";
+import CargosList from "@/components/modules/finanzas/CargosList";
+import PagosList from "@/components/modules/finanzas/PagosList";
+import AdminFinanzasView from "@/components/modules/finanzas/AdminFinanzasView";
+import { Wallet, DollarSign } from "lucide-react";
 
 export default async function FinanzasPage() {
-  const [alumnos, conceptos] = await Promise.all([
+  const session = await auth();
+  if (!session) redirect("/login");
+
+  const userRoles = session.user.roles || [];
+  const isAdmin = userRoles.includes("ADMIN");
+  const isPadre = userRoles.includes("PADRE");
+
+  // === VISTA PARA PADRES (Solo ven a sus hijos) ===
+  if (isPadre && !isAdmin) {
+    const idPadre = session.user.idPadre;
+    if (!idPadre) return <div className="p-6 text-red-600">Error: No se encontró información del perfil de padre.</div>;
+
+    // 1. Buscamos los hijos del padre
+    const hijos = await AlumnoService.getAlumnosDePadre(Number(idPadre));
+    
+    // 2. Para cada hijo, buscamos su estado de cuenta completo
+    const estadosDeCuenta = await Promise.all(
+        hijos.map(h => getDetalleCuenta(h.idAlumno))
+    );
+
+    return (
+      <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
+        <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+          <Wallet className="h-8 w-8 text-blue-600" />
+          Mis Pagos y Cuotas
+        </h1>
+        
+        {estadosDeCuenta.length > 0 ? (
+            estadosDeCuenta.map((estado) => (
+                <div key={estado.idAlumno} className="space-y-4 border-b border-gray-200 pb-8 last:border-0 last:pb-0">
+                    <div className="flex items-center gap-3 mb-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                            {estado.persona.nombre[0]}{estado.persona.apellido[0]}
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-800">
+                                {estado.persona.apellido}, {estado.persona.nombre}
+                            </h2>
+                            <p className="text-sm text-gray-500">Legajo: {estado.legajo}</p>
+                        </div>
+                    </div>
+                    
+                    <EstadoCuentaSummary alumno={estado} />
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-white p-4 rounded-lg shadow border border-gray-100">
+                            <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                <DollarSign className="w-4 h-4" /> Cuotas y Cargos
+                            </h3>
+                            <CargosList cargos={estado.cargos} />
+                        </div>
+                        <div className="bg-white p-4 rounded-lg shadow border border-gray-100">
+                            <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                <Wallet className="w-4 h-4" /> Historial de Pagos
+                            </h3>
+                            <PagosList pagos={estado.pagos} />
+                        </div>
+                    </div>
+                </div>
+            ))
+        ) : (
+            <div className="text-center py-10 bg-white rounded-lg shadow">
+                <p className="text-gray-500 italic">No tenés alumnos asociados a tu cuenta.</p>
+            </div>
+        )}
+      </div>
+    );
+  }
+
+  // === VISTA PARA ADMIN (Gestión global) ===
+  const cicloId = await getCicloActual();
+  const [alumnosDeudores, conceptos] = await Promise.all([
     getAlumnosConEstadoDeCuenta(),
-    getConceptosDePago(),
+    getConceptosDePago()
   ]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Finanzas y Cuotas</h1>
-        <div className="flex gap-3">
-          <GenerarCuotaMasivaDialog conceptos={conceptos} />
-          <Link 
-            href="/dashboard/finanzas/conceptos" 
-            className="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 font-medium shadow-sm flex items-center"
-          >
-            Gestionar Conceptos
-          </Link>
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800">Listado de Alumnos</h2>
-        <AlumnosDeudoresList alumnos={alumnos} />
-      </div>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <AdminFinanzasView 
+        conceptos={conceptos} 
+        alumnosDeudores={alumnosDeudores} 
+      />
     </div>
   );
 }

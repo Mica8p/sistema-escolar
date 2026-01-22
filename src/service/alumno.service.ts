@@ -140,4 +140,16 @@ export const AlumnoService = {
       },
     });
   },
+
+  // 5. Obtener alumnos asociados a un padre
+  async getAlumnosDePadre(idPadre: number) {
+    return await db.alumno.findMany({
+      where: {
+        padres: { some: { idPadre: idPadre } }
+      },
+      include: {
+        persona: true
+      }
+    });
+  },
 };
