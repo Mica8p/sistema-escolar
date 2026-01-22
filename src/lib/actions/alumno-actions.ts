@@ -5,20 +5,54 @@ import { revalidatePath } from "next/cache";
 import { AlumnoService } from "@/service/alumno.service";
 import { z } from "zod";
 
-export async function vincularPadre(idAlumno: number, idPadre: number, relacion: string) {
+export async function vincularPadre(idAlumno: number, idPersona: number, relacion: string) {
   try {
-    await db.alumnoPadre.create({
-      data: {
-        idAlumno,
-        idPadre,
-        relacion,
-      },
+    await db.$transaction(async (tx) => {
+      // 1. Verificar si la Persona ya tiene un registro en la tabla Padre
+      let padre = await tx.padre.findUnique({
+        where: { idPersona }
+      });
+
+      // 2. Si no existe, lo creamos automáticamente
+      if (!padre) {
+        padre = await tx.padre.create({
+          data: { idPersona }
+        });
+      }
+
+      // 3. Crear la vinculación en AlumnoPadre usando el ID del padre (existente o nuevo)
+      await tx.alumnoPadre.create({
+        data: {
+          idAlumno,
+          idPadre: padre.idPadre,
+          relacion,
+        },
+      });
     });
 
     revalidatePath(`/dashboard/alumnos/${idAlumno}`);
     return { success: true, message: "Tutor vinculado correctamente." };
   } catch (error) {
+    console.error("Error al vincular tutor:", error);
     return { success: false, message: "Error al vincular el tutor." };
+  }
+}
+
+export async function desvincularPadre(idAlumno: number, idPadre: number) {
+  try {
+    await db.alumnoPadre.delete({
+      where: {
+        idAlumno_idPadre: {
+          idAlumno,
+          idPadre,
+        },
+      },
+    });
+    revalidatePath(`/dashboard/alumnos/${idAlumno}`);
+    return { success: true, message: "Vínculo eliminado correctamente." };
+  } catch (error) {
+    console.error("Error al desvincular tutor:", error);
+    return { success: false, message: "Error al eliminar el vínculo." };
   }
 }
 

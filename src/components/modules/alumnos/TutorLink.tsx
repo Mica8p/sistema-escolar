@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useTransition } from 'react';
-import { vincularPadre } from '@/lib/actions/alumno-actions';
+import { vincularPadre, desvincularPadre } from '@/lib/actions/alumno-actions';
 import { getTutoresDisponiblesAction } from '@/lib/actions/persona-actions';
+import { Trash2 } from 'lucide-react';
 
 type AlumnoExtendido = {
   idAlumno: number;
@@ -40,7 +41,11 @@ export default function TutorLink({ alumno }: { alumno: AlumnoExtendido }) {
     }
   }, [isModalOpen, alumno.idAlumno]);
 
-  const handleOpenModal = () => setIsModalOpen(true);
+  const handleOpenModal = () => {
+    setSuccess(null);
+    setError(null);
+    setIsModalOpen(true);
+  };
   const handleCloseModal = () => {
       setIsModalOpen(false);
       setError(null);
@@ -68,6 +73,19 @@ export default function TutorLink({ alumno }: { alumno: AlumnoExtendido }) {
     });
   };
 
+  const handleDelete = (idPadre: number) => {
+    if (!confirm("¿Estás seguro de que querés eliminar este vínculo?")) return;
+
+    startTransition(async () => {
+      const result = await desvincularPadre(alumno.idAlumno, idPadre);
+      if (result.success) {
+        setSuccess(result.message);
+      } else {
+        setError(result.message);
+      }
+    });
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
       <div className="flex justify-between items-center mb-4">
@@ -77,6 +95,12 @@ export default function TutorLink({ alumno }: { alumno: AlumnoExtendido }) {
         </button>
       </div>
       
+      {!isModalOpen && (success || error) && (
+        <div className={`mb-4 p-3 rounded-md text-sm ${success ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+          {success || error}
+        </div>
+      )}
+
       {alumno.padres.length > 0 ? (
         <ul className="space-y-3">
           {alumno.padres.map((relacion) => (
@@ -85,7 +109,17 @@ export default function TutorLink({ alumno }: { alumno: AlumnoExtendido }) {
                 <p className="font-semibold text-gray-800">{relacion.padre.persona.apellido}, {relacion.padre.persona.nombre}</p>
                 <p className="text-sm text-gray-500">{relacion.relacion}</p>
               </div>
-              <span className="text-xs text-gray-600">DNI: {relacion.padre.persona.dni}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-600">DNI: {relacion.padre.persona.dni}</span>
+                <button
+                  onClick={() => handleDelete(relacion.padre.idPadre)}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full transition-colors"
+                  title="Eliminar vínculo"
+                  disabled={isPending}
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
             </li>
           ))}
         </ul>
@@ -106,11 +140,11 @@ export default function TutorLink({ alumno }: { alumno: AlumnoExtendido }) {
                     id="tutor"
                     value={selectedTutor}
                     onChange={(e) => setSelectedTutor(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   >
                     <option value="">-- Seleccione un tutor --</option>
                     {tutores.map((tutor) => (
-                      <option key={tutor.idPersona} value={tutor.padre?.idPadre}>
+                      <option key={tutor.idPersona} value={tutor.idPersona}>
                         {tutor.apellido}, {tutor.nombre} (DNI: {tutor.dni})
                       </option>
                     ))}
@@ -123,7 +157,7 @@ export default function TutorLink({ alumno }: { alumno: AlumnoExtendido }) {
                     id="relacion"
                     value={relacion}
                     onChange={(e) => setRelacion(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     placeholder="Ej: Madre, Padre, Tutor Legal"
                   />
                 </div>
