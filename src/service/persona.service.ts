@@ -5,11 +5,6 @@ export const PersonaService = {
   // Obtener todas las personas con sus usuarios y roles
   async getAll() {
     return await db.persona.findMany({
-      where: {
-        usuario: {
-          estado: true, // <-- SOLO TRAER LOS ACTIVOS
-        },
-      },
       include: {
         usuario: {
           include: {
@@ -32,7 +27,9 @@ export const PersonaService = {
     password?: string;
     idRol: number;
   }) {
-    const passwordHash = await bcrypt.hash(data.password || "escuela123", 10);
+    // La contraseña se establecerá al habilitar el acceso.
+    // Se guarda un hash inválido para prevenir el login.
+    const passwordHash = "NO_PASSWORD_SET";
 
     return await db.$transaction(async (tx) => {
       // 1. Creamos la Persona
@@ -48,7 +45,7 @@ export const PersonaService = {
           usuario: {
             create: {
               passwordHash,
-              estado: true,
+              estado: false, // El usuario se crea inactivo por defecto
               // 3. Asignamos el Rol
               roles: {
                 create: { idRol: data.idRol },

@@ -3,6 +3,7 @@ import { PersonaService } from "@/service/persona.service";
 import { UserPlus, Mail, Fingerprint, Tag, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import DeletePersonaButton from "@/components/modules/personas/DeletePersonaButton";
+import EnableAccessButton from "@/components/modules/personas/EnableAccessButton";
 
 // En Next.js 15, searchParams es una Promise
 export default async function PersonasPage({
@@ -54,7 +55,14 @@ export default async function PersonasPage({
             {personas.map((p) => (
               <tr key={p.idPersona} className="hover:bg-slate-50 transition-colors">
                 <td className="px-6 py-4">
-                  <span className="font-medium text-slate-900">{p.apellido}, {p.nombre}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium text-slate-900">{p.apellido}, {p.nombre}</span>
+                    {p.usuario?.estado ? (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold border border-emerald-200">Activo</span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200">Inactivo</span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-slate-600">
                   <div className="flex items-center gap-2">
@@ -79,6 +87,13 @@ export default async function PersonasPage({
                   </div>
                 </td>
                 <td className="px-6 py-4 text-right flex justify-end gap-3">
+                  {/* Botón de Activación / Blanqueo de Clave */}
+                  <EnableAccessButton 
+                    idPersona={p.idPersona} 
+                    dni={p.dni} 
+                    isActive={p.usuario?.estado ?? false} 
+                  />
+
                   <Link
                     href={`/dashboard/personas/${p.idPersona}`}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
