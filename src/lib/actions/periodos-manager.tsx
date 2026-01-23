@@ -59,7 +59,7 @@ export default function PeriodosManager({ idCiclo, periodos }: Props) {
         <input type="hidden" name="idCiclo" value={idCiclo} />
 
         <div className="grid grid-cols-1 gap-2 mb-2">
-          <select name="nombre" className="w-full border rounded p-1.5 text-xs" required>
+          <select name="nombre" className="w-full border rounded p-1.5 text-xs text-gray-900" required>
             <option value="">-- Seleccionar Tipo --</option>
             <option value={PeriodoNombre.TRIMESTRE_1}>1er Trimestre</option>
             <option value={PeriodoNombre.TRIMESTRE_2}>2do Trimestre</option>
@@ -71,11 +71,11 @@ export default function PeriodosManager({ idCiclo, periodos }: Props) {
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="block text-[10px] text-gray-600 mb-0.5">Inicio</label>
-              <input type="date" name="fechaInicio" className="w-full border rounded p-1 text-xs" required />
+              <input type="date" name="fechaInicio" className="w-full border rounded p-1 text-xs text-gray-900" required />
             </div>
             <div>
               <label className="block text-[10px] text-gray-600 mb-0.5">Fin</label>
-              <input type="date" name="fechaFin" className="w-full border rounded p-1 text-xs" required />
+              <input type="date" name="fechaFin" className="w-full border rounded p-1 text-xs text-gray-900" required />
             </div>
           </div>
         </div>

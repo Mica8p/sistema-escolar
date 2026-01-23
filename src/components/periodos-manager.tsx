@@ -100,7 +100,7 @@ export default function PeriodosManager() {
             <select
               id="idCiclo"
               name="idCiclo"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-gray-600"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-gray-900"
               value={selectedCiclo}
               onChange={(e) => setSelectedCiclo(Number(e.target.value))}
               required
@@ -120,7 +120,7 @@ export default function PeriodosManager() {
             <select
               id="nombre"
               name="nombre"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-gray-600"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-gray-900"
               required
             >
               {Object.values(PeriodoNombre).map((nombre) => (
@@ -139,7 +139,7 @@ export default function PeriodosManager() {
               type="date"
               id="fechaInicio"
               name="fechaInicio"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-gray-600"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-gray-900"
               required
             />
           </div>
@@ -152,7 +152,7 @@ export default function PeriodosManager() {
               type="date"
               id="fechaFin"
               name="fechaFin"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-gray-600"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-gray-900"
               required
             />
           </div>

@@ -59,7 +59,7 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
                 setNombre(value);
               }
             }}
-            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-black focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             placeholder="Ej: Juan"
           />
         </div>
@@ -79,7 +79,7 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
                 setApellido(value);
               }
             }}
-            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-black focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             placeholder="Ej: Pérez"
           />
         </div>
@@ -104,7 +104,7 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
             }}
             maxLength={8}
             inputMode="numeric"
-            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-black focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             placeholder="Solo números"
           />
         </div>
@@ -118,7 +118,7 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
             type="email"
             required
             defaultValue={initialData?.email}
-            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-black focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             placeholder="correo@ejemplo.com"
           />
         </div>
@@ -134,7 +134,7 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
             name="telefono"
             type="text"
             defaultValue={initialData?.telefono}
-            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-black focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             placeholder="Ej: 1122334455"
           />
         </div>
@@ -147,7 +147,7 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
             name="direccion"
             type="text"
             defaultValue={initialData?.direccion}
-            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-black focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             placeholder="Ej: Av. Corrientes 1234"
           />
         </div>
@@ -162,7 +162,7 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
           <select
             name="idRol"
             required
-            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-black focus:ring-2 focus:ring-blue-500 outline-none transition-all"
           >
             <option value="">Seleccioná un rol...</option>
             {roles.map((rol) => (

@@ -2,6 +2,8 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Sidebar from "@/components/shared/Sidebar";
 import Header from "@/components/shared/Header";
+import FirstLoginModal from "./FirstLoginModal";
+
 
 // 1. Forzamos que la página siempre sea dinámica (no caché)
 export const dynamic = "force-dynamic";
@@ -21,6 +23,7 @@ export default async function DashboardLayout({
   }
 
   const roles = (session.user as any).roles || [];
+  const shouldForceChange = (session.user as any).isDefaultPassword;
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -31,6 +34,7 @@ export default async function DashboardLayout({
           {children}
         </main>
       </div>
+      <FirstLoginModal shouldForceChange={shouldForceChange} />
     </div>
   );
 }
