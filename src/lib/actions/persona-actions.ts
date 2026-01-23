@@ -3,6 +3,8 @@
 import { PersonaService } from "@/service/persona.service";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import db from "@/lib/db";
+import bcrypt from "bcryptjs";
 
 export async function createPersonaAction(prevState: any, formData: FormData) {
   try {
@@ -63,4 +65,32 @@ export async function updatePersonaAction(
   export async function getTutoresDisponiblesAction(idAlumno: number) {
     return await PersonaService.getTutoresDisponibles(idAlumno);
   }
+
+export async function habilitarAccesoAction(idPersona: number, dni: string) {
+  try {
+    // 1. Hashear el DNI para usarlo como contraseña
+    const passwordHash = await bcrypt.hash(dni, 10);
+
+    // 2. Buscar el usuario asociado a la persona
+    const usuario = await db.usuario.findFirst({
+      where: { idPersona },
+    });
+
+    if (!usuario) {
+      return { success: false, message: "Usuario no encontrado para esta persona." };
+    }
+
+    // 3. Actualizar la contraseña y activar la cuenta
+    await db.usuario.update({
+      where: { idUsuario: usuario.idUsuario },
+      data: { passwordHash, estado: true },
+    });
+
+    revalidatePath("/dashboard/personas");
+    return { success: true, message: `Acceso habilitado. La contraseña es: ${dni}` };
+  } catch (error) {
+    console.error("Error habilitando acceso:", error);
+    return { success: false, message: "Error al habilitar el acceso." };
+  }
+}
   
