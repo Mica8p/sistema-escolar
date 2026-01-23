@@ -4,6 +4,7 @@ import db from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { AlumnoService } from "@/service/alumno.service";
 import { z } from "zod";
+import { EstadoAcademico } from "@prisma/client";
 
 export async function vincularPadre(idAlumno: number, idPersona: number, relacion: string) {
   try {
@@ -81,6 +82,23 @@ export async function inscribirAlumnoAction(prevState: any, formData: FormData) 
     console.error("Error en la inscripción:", error);
     return {
       error: "Hubo un error al procesar la inscripción. Inténtelo de nuevo.",
+    };
+  }
+}
+
+export async function cambiarEstadoMatriculaAction(idMatricula: number, nuevoEstado: EstadoAcademico, path: string) {
+  try {
+    await AlumnoService.updateEstadoMatricula(idMatricula, nuevoEstado);
+    revalidatePath(path);
+    return {
+      success: true,
+      message: "Estado académico actualizado correctamente."
+    };
+  } catch (error) {
+    console.error("Error al actualizar estado:", error);
+    return {
+      success: false,
+      message: "Error al actualizar el estado académico."
     };
   }
 }
