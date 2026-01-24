@@ -5,8 +5,9 @@ import {
   Wallet,
   Package,
   Megaphone,
-  ClipboardList, // Ahora se usará abajo
-  UserCheck      // Ahora se usará abajo
+  ClipboardList,
+  UserCheck,
+  CalendarDays
 } from "lucide-react";
 
 export const menuItems = [
@@ -44,6 +45,12 @@ export const menuItems = [
         icon: UserCheck,
         roles: ["ADMIN", "DOCENTE"]
       },
+      {
+        title: "Horarios",
+        href: "/dashboard/horarios",
+        icon: CalendarDays,
+        roles: ["ADMIN", "DOCENTE", "PADRE"]
+      },
     ],
   },
   {
@@ -67,4 +74,6 @@ export const menuItems = [
     icon: Megaphone,
     roles: ["ADMIN", "DOCENTE", "ALUMNO", "PADRE"],
   },
+
+
 ];

@@ -65,3 +65,26 @@ export const cursoService = {
     }
   },
 };
+
+export async function getCursosParaComunicado(rol: string, idProfesor?: number | null) {
+  if (rol === "ADMIN") {
+    // El Admin ve todos los cursos
+    return await db.curso.findMany({
+      orderBy: [{ grado: 'asc' }, { seccion: 'asc' }]
+    });
+  }
+
+  if (rol === "DOCENTE" && idProfesor) {
+    // El Docente solo ve sus cursos asignados
+    const asignaciones = await db.asignacionAcademica.findMany({
+      where: { idProfesor },
+      select: { curso: true }
+    });
+
+    // Quitamos duplicados si el docente tiene varias materias en el mismo curso
+    const cursosUnicos = Array.from(new Map(asignaciones.map(a => [a.curso.idCurso, a.curso])).values());
+    return cursosUnicos;
+  }
+
+  return [];
+}

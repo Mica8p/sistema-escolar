@@ -2,6 +2,7 @@ import { PrismaClient, PeriodoNombre, DiaSemana, Turno, Nivel, EstadoCuota } fro
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import bcrypt from "bcryptjs";
 import "dotenv/config";
+import db from "@/lib/db";
 
 const adapter = new PrismaBetterSqlite3({
   url: "file:./prisma/dev.db",
@@ -295,10 +296,10 @@ async function main() {
 
   // 12. GENERAR CARGO DE PRUEBA (Para probar finanzas)
   if (alumnoPrueba.alumno) {
-    const conceptoInscripcion = await prisma.conceptoDePago.findUnique({ 
-      where: { nombre: "Inscripción Anual" } 
+    const conceptoInscripcion = await prisma.conceptoDePago.findUnique({
+      where: { nombre: "Inscripción Anual" }
     });
-    
+
     if (conceptoInscripcion) {
       await prisma.cargo.create({
         data: {
@@ -314,7 +315,43 @@ async function main() {
     }
   }
 
+  const adminUser = await prisma.usuario.findFirst({
+    where: { persona: { dni: "12345678" } }
+  });
+
+  if (adminUser) {
+    const listadoComunicados = [
+      {
+        titulo: "Bienvenida al Ciclo Lectivo 2026",
+        contenido: "Estimada comunidad, les damos la bienvenida a un nuevo año escolar lleno de desafíos.",
+        target: "TODOS",
+        idUsuario: adminUser.idUsuario,
+      },
+      {
+        titulo: "Nueva funcionalidad: Gestión de Horarios",
+        contenido: "Docentes, ya pueden consultar sus horarios asignados en la nueva sección del panel.",
+        target: "DOCENTES",
+        idUsuario: adminUser.idUsuario,
+      },
+      {
+        titulo: "Recordatorio de Pago de Matrícula",
+        contenido: "Se informa a los padres que el vencimiento de la matrícula es el próximo 10 de febrero.",
+        target: "PADRES",
+        idUsuario: adminUser.idUsuario,
+      }
+    ];
+
+    for (const c of listadoComunicados) {
+      // Usamos create porque Comunicado no tiene campos únicos que generen conflicto al repetir el seed
+      await prisma.comunicado.create({
+        data: c
+      });
+    }
+    console.log("✅ Comunicados de prueba generados.");
+  }
+
   console.log("✅ Seed completado con éxito.");
+
 }
 
 main()

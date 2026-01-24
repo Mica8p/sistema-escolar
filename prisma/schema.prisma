@@ -129,7 +129,8 @@ model Usuario {
   roles            UsuarioRol[]
   pagosRegistrados Pago[]               @relation("PagosRegistradosPorUsuario")
   asistencias      Asistencia[]
-  comunicados      Comunicado[]
+  comunicados      Comunicado[]         @relation("AutorComunicado")
+  comunicadosVistos ComunicadoVisto[]   @relation("LectorComunicado")
   movimientos      MovimientoStock[]
   gastos           GastoInstitucional[]
 
@@ -438,12 +439,34 @@ model Comunicado {
   idComunicado Int      @id @default(autoincrement())
   titulo       String
   contenido    String
-  fecha        DateTime
-  idUsuario    Int
+  fecha        DateTime @default(now())
 
-  usuario Usuario @relation(fields: [idUsuario], references: [idUsuario])
+  // Autor: Quién envía el mensaje (Admin o Docente)
+  idUsuario    Int
+  usuario      Usuario  @relation("AutorComunicado", fields: [idUsuario], references: [idUsuario])
+
+  // Segmentación: A quién va dirigido
+  // puede ser: "TODOS", "DOCENTES", "PADRES", "CURSO"
+  target       String
+  idTarget     Int?
+
+  // Seguimiento de lectura
+  vistos       ComunicadoVisto[]
 
   @@map("COMUNICADO")
+}
+
+model ComunicadoVisto {
+  id           Int      @id @default(autoincrement())
+  idComunicado Int
+  idUsuario    Int
+  fechaLectura DateTime @default(now())
+
+  comunicado   Comunicado @relation(fields: [idComunicado], references: [idComunicado])
+  usuario      Usuario    @relation("LectorComunicado", fields: [idUsuario], references: [idUsuario])
+
+  @@unique([idComunicado, idUsuario])
+  @@map("COMUNICADO_VISTO")
 }
 
 model Inventario {
