@@ -5,8 +5,8 @@ import {
   Wallet,
   Package,
   Megaphone,
-  ClipboardList, // Ahora se usará abajo
-  UserCheck      // Ahora se usará abajo
+  ClipboardList, 
+  UserCheck      
 } from "lucide-react";
 
 export const menuItems = [

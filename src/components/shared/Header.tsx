@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { logout } from "@/lib/actions/auth-actions";
 import { getCicloActual } from "@/lib/ciclo-session";
 import { CicloService } from "@/service/ciclo.service";
@@ -11,12 +12,16 @@ interface HeaderProps {
 
 export default async function Header({ userName }: HeaderProps) {
   const session = await auth();
-  const isAdmin = session?.user.roles.includes("ADMIN") ?? false;
-  const [ciclos, cicloActual, ] = await Promise.all([
+
+  const roles = session?.user?.roles ?? [];
+  const isAdmin = roles.includes("ADMIN");
+
+  const [ciclos, cicloActual] = await Promise.all([
     CicloService.getAll(),
     getCicloActual(),
   ]);
 
+  const displayName = userName ?? session?.user?.name ?? "Mi cuenta";
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 shadow-sm">
@@ -25,19 +30,26 @@ export default async function Header({ userName }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-6">
-        {/* Info del Usuario */}
-        <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 rounded-full border border-slate-100">
+        {/* Info del Usuario -> Link al Perfil */}
+        <Link
+          href="/perfil"
+          className="flex items-center gap-2 px-3 py-1 bg-slate-50 rounded-full border border-slate-100 hover:bg-slate-100 transition"
+        >
           <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
             <User size={14} className="text-blue-600" />
           </div>
           <span className="text-sm font-semibold text-slate-700">
-            {userName}
+            {displayName}
           </span>
-        </div>
+        </Link>
 
-        <ConfiguracionesButton ciclos={ciclos} cicloActual={cicloActual} isAdmin={isAdmin} />
+        <ConfiguracionesButton
+          ciclos={ciclos}
+          cicloActual={cicloActual}
+          isAdmin={isAdmin}
+        />
 
-        {/* Botón de Salir (como Server Action) */}
+        {/* Botón de Salir (Server Action) */}
         <form action={logout}>
           <button
             type="submit"
