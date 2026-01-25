@@ -125,14 +125,14 @@ model Usuario {
   estado       Boolean
   createdAt    DateTime @default(now())
 
-  persona          Persona              @relation(fields: [idPersona], references: [idPersona])
-  roles            UsuarioRol[]
-  pagosRegistrados Pago[]               @relation("PagosRegistradosPorUsuario")
-  asistencias      Asistencia[]
-  comunicados      Comunicado[]         @relation("AutorComunicado")
-  comunicadosVistos ComunicadoVisto[]   @relation("LectorComunicado")
-  movimientos      MovimientoStock[]
-  gastos           GastoInstitucional[]
+  persona           Persona              @relation(fields: [idPersona], references: [idPersona])
+  roles             UsuarioRol[]
+  pagosRegistrados  Pago[]               @relation("PagosRegistradosPorUsuario")
+  asistencias       Asistencia[]
+  comunicados       Comunicado[]         @relation("AutorComunicado")
+  comunicadosVistos ComunicadoVisto[]    @relation("LectorComunicado")
+  movimientos       MovimientoStock[]
+  gastos            GastoInstitucional[]
 
   @@map("USUARIO")
 }
@@ -253,6 +253,7 @@ model Curso {
 
   asignaciones AsignacionAcademica[]
   matriculas   Matricula[]
+  comunicados  Comunicado[]
 
   @@map("CURSO")
 }
@@ -300,6 +301,7 @@ model Horario {
 
   asignacion  AsignacionAcademica @relation(fields: [idAsignacion], references: [idAsignacion])
   asistencias Asistencia[]
+
   @@map("HORARIO")
 }
 
@@ -442,16 +444,17 @@ model Comunicado {
   fecha        DateTime @default(now())
 
   // Autor: Quién envía el mensaje (Admin o Docente)
-  idUsuario    Int
-  usuario      Usuario  @relation("AutorComunicado", fields: [idUsuario], references: [idUsuario])
+  idUsuario Int
+  usuario   Usuario @relation("AutorComunicado", fields: [idUsuario], references: [idUsuario])
 
   // Segmentación: A quién va dirigido
   // puede ser: "TODOS", "DOCENTES", "PADRES", "CURSO"
-  target       String
-  idTarget     Int?
+  target   String
+  idTarget Int?
+  curso    Curso? @relation(fields: [idTarget], references: [idCurso])
 
   // Seguimiento de lectura
-  vistos       ComunicadoVisto[]
+  vistos ComunicadoVisto[]
 
   @@map("COMUNICADO")
 }
@@ -462,8 +465,8 @@ model ComunicadoVisto {
   idUsuario    Int
   fechaLectura DateTime @default(now())
 
-  comunicado   Comunicado @relation(fields: [idComunicado], references: [idComunicado])
-  usuario      Usuario    @relation("LectorComunicado", fields: [idUsuario], references: [idUsuario])
+  comunicado Comunicado @relation(fields: [idComunicado], references: [idComunicado])
+  usuario    Usuario    @relation("LectorComunicado", fields: [idUsuario], references: [idUsuario])
 
   @@unique([idComunicado, idUsuario])
   @@map("COMUNICADO_VISTO")

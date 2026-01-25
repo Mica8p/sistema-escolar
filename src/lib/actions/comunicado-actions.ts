@@ -40,7 +40,7 @@ export async function enviarComunicado(formData: FormData) {
 }
 
 export async function marcarComoLeido(idComunicado: number) {
-  const session = await auth(); // Usamos la sesión de Gabi
+  const session = await auth();
   const idUsuario = session?.user?.idUsuario;
 
   if (!idUsuario) return { error: "Usuario no identificado" };
@@ -65,5 +65,42 @@ export async function marcarComoLeido(idComunicado: number) {
   } catch (error) {
     console.error("Error al marcar como leído:", error);
     return { error: "No se pudo actualizar el estado de lectura" };
+  }
+}
+
+export async function eliminarComunicado(idComunicado: number) {
+  const session = await auth();
+  const idUsuario = (session?.user as any)?.idUsuario;
+
+  if (!idUsuario) return { error: "No autorizado" };
+
+  try {
+    const comunicado = await db.comunicado.findUnique({
+      where: { idComunicado },
+      select: { idUsuario: true }
+    });
+
+    const roles = (session?.user as any)?.roles || [];
+    const esAdmin = roles.includes("ADMIN");
+
+    if (comunicado?.idUsuario !== idUsuario && !esAdmin) {
+      return { error: "No tienes permiso para eliminar este mensaje" };
+    }
+
+    await db.comunicadoVisto.deleteMany({
+      where: { idComunicado }
+    });
+
+    await db.comunicado.delete({
+      where: { idComunicado }
+    });
+
+    revalidatePath("/dashboard/comunicados");
+    revalidatePath("/dashboard/comunicados/enviados");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error al eliminar:", error);
+    return { error: "No se pudo eliminar el comunicado" };
   }
 }

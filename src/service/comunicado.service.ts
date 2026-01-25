@@ -1,7 +1,6 @@
 import db from "@/lib/db";
 
-export async function getComunicadosRecibidos(idUsuario: number, rol: string, idCursoAlumno?: number) {
-
+export async function getComunicadosRecibidos(idUsuario: number, rol: string, idsCursos: number[] = []) {
   if (!idUsuario || isNaN(idUsuario)) {
     console.error("ID de usuario no válido en getComunicadosRecibidos");
     return [];
@@ -9,6 +8,9 @@ export async function getComunicadosRecibidos(idUsuario: number, rol: string, id
 
   return await db.comunicado.findMany({
     where: {
+      NOT: {
+        idUsuario: idUsuario
+      },
       OR: [
         { target: "TODOS" },
 
@@ -16,12 +18,12 @@ export async function getComunicadosRecibidos(idUsuario: number, rol: string, id
 
         {
           AND: [
-            { idTarget: idCursoAlumno || 0 },
+            { idTarget: { in: idsCursos } }, // ✅ Filtra por múltiples cursos simultáneamente
             {
               target: {
                 in: [
                   "CURSO",
-                  rol === "PADRE" ? "CURSO_PADRES" : "CURSO_DOCENTES" // Específico por rol dentro del curso
+                  rol === "PADRE" ? "CURSO_PADRES" : "CURSO_DOCENTES"
                 ]
               }
             }
@@ -63,6 +65,18 @@ export async function getContadorNoLeidos(idUsuario: number, rol: string) {
           }
         }
       ]
+    }
+  });
+}
+export async function getComunicadosEnviados(idUsuario: number) {
+  return await db.comunicado.findMany({
+    where: { idUsuario },
+    include: {
+      vistos: true,
+      curso: true
+    },
+    orderBy: {
+      fecha: "desc"
     }
   });
 }

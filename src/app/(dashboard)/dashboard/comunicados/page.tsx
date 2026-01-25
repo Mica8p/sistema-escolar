@@ -3,17 +3,12 @@ import { getComunicadosRecibidos } from "@/service/comunicado.service";
 import { Megaphone, Calendar, User, Plus } from "lucide-react";
 import BotonLeido from "@/components/modules/comunicados/BotonLeido";
 import Link from "next/link";
+import db from "@/lib/db";
 
 export default async function ComunicadosPage() {
   const session = await auth();
 
-  const idUsuario = (session?.user as any)?.idUsuario;
-  const roles = (session?.user as any)?.roles || [];
-  const rolPrincipal = roles[0] || "USUARIO";
-
-  const puedeCrear = roles.includes("ADMIN") || roles.includes("DOCENTE");
-
-  if (!idUsuario) {
+  if (!session?.user) {
     return (
       <div className="p-20 text-center">
         <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
@@ -23,11 +18,38 @@ export default async function ComunicadosPage() {
     );
   }
 
-  const comunicados = await getComunicadosRecibidos(idUsuario, rolPrincipal);
+  const user = session.user as any;
+  const idUsuario = user.idUsuario as number;
+  const idPadre = user.idPadre as number | null;
+  const roles = user.roles || [];
+  const rolPrincipal = roles[0] || "USUARIO";
+  const puedeCrear = roles.includes("ADMIN") || roles.includes("DOCENTE");
+
+  let idsCursosHijos: number[] = [];
+
+  if (rolPrincipal === "PADRE" && idPadre) {
+    const hijos = await db.alumnoPadre.findMany({
+      where: { idPadre: idPadre },
+      include: {
+        alumno: {
+          include: {
+            matriculas: {
+              where: { estadoAcademico: "Activo" }
+            }
+          }
+        }
+      }
+    });
+
+    idsCursosHijos = hijos.flatMap(h =>
+      h.alumno.matriculas.map(m => m.idCurso)
+    );
+  }
+
+  const comunicados = await getComunicadosRecibidos(idUsuario, rolPrincipal, idsCursosHijos);
 
   return (
     <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">
-      {/* ENCABEZADO CORREGIDO */}
       <header className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-black text-slate-800 tracking-tighter">Bandeja de Comunicados</h1>

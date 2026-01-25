@@ -1,4 +1,3 @@
-// src/components/shared/Sidebar.tsx
 "use client";
 
 import { useState } from "react";
@@ -9,7 +8,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 
 interface SidebarProps {
   userRoles: string[];
-  noLeidos: number; // ✅ Nueva prop
+  noLeidos: number;
 }
 
 export default function Sidebar({ userRoles, noLeidos }: SidebarProps) {
@@ -28,9 +27,10 @@ export default function Sidebar({ userRoles, noLeidos }: SidebarProps) {
         {menuItems.map((item) => {
           if (!hasAccess(item.roles)) return null;
 
-          // CASO A: Ítem con submenús (Académico, Gestión, etc.)
           if (item.subItems) {
             const isOpen = openGroup === item.title;
+            const isComunicados = item.title === "Comunicados";
+
             return (
               <div key={item.title} className="flex flex-col">
                 <button
@@ -41,7 +41,14 @@ export default function Sidebar({ userRoles, noLeidos }: SidebarProps) {
                     <item.icon size={20} />
                     <span className="text-sm">{item.title}</span>
                   </div>
-                  {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+
+                  <div className="flex items-center gap-2">
+                    {/* Badge pequeño en el padre si está cerrado y hay notificaciones */}
+                    {!isOpen && isComunicados && noLeidos > 0 && (
+                      <span className="bg-blue-500 w-2 h-2 rounded-full animate-ping" />
+                    )}
+                    {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                  </div>
                 </button>
 
                 {isOpen && (
@@ -51,11 +58,18 @@ export default function Sidebar({ userRoles, noLeidos }: SidebarProps) {
                         <Link
                           key={sub.href}
                           href={sub.href}
-                          className={`px-4 py-2 text-xs transition-colors ${
+                          className={`flex items-center justify-between px-4 py-2 text-xs transition-colors ${
                             pathname === sub.href ? "text-blue-400 font-bold" : "text-slate-500 hover:text-white"
                           }`}
                         >
-                          {sub.title}
+                          <span>{sub.title}</span>
+
+                          {/* 🔔 BADGE DINÁMICO EN SUBMÉNU */}
+                          {sub.title === "Bandeja de Entrada" && noLeidos > 0 && (
+                            <span className="bg-blue-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black animate-pulse">
+                              {noLeidos}
+                            </span>
+                          )}
                         </Link>
                       )
                     ))}
@@ -65,9 +79,7 @@ export default function Sidebar({ userRoles, noLeidos }: SidebarProps) {
             );
           }
 
-          // CASO B: Ítem simple (Inicio, Inventario, COMUNICADOS)
-          const isComunicados = item.title === "Comunicados";
-
+          // CASO B: Ítem simple (Inicio, Inventario)
           return (
             <Link
               key={item.href}
@@ -80,15 +92,6 @@ export default function Sidebar({ userRoles, noLeidos }: SidebarProps) {
                 <item.icon size={20} />
                 <span className="text-sm">{item.title}</span>
               </div>
-
-              {/* 🔔 BADGE DINÁMICO */}
-              {isComunicados && noLeidos > 0 && (
-                <span className={`flex items-center justify-center min-w-[18px h-[18px px-1 rounded-full text-[9px] font-black animate-pulse ${
-                  pathname === item.href ? "bg-white text-blue-600" : "bg-blue-500 text-white"
-                }`}>
-                  {noLeidos}
-                </span>
-              )}
             </Link>
           );
         })}
