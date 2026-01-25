@@ -35,7 +35,8 @@ export const AlumnoService = {
       where: {
         usuario: {
           roles: { some: { rol: { nombre: 'ALUMNO' } } },
-          estado: true,
+          // No requerimos estado: true para alumnos, ya que no se loguean.
+          passwordHash: { not: "DELETED_USER" }, // Pero evitamos los eliminados.
         },
         NOT: {
           alumno: {
@@ -150,6 +151,14 @@ export const AlumnoService = {
       include: {
         persona: true
       }
+    });
+  },
+
+  // 6. Cambiar estado de matrícula (Para Bajas o Egresos sin borrar a la persona)
+  async updateEstadoMatricula(idMatricula: number, nuevoEstado: EstadoAcademico) {
+    return await db.matricula.update({
+      where: { idMatricula },
+      data: { estadoAcademico: nuevoEstado }
     });
   },
 };

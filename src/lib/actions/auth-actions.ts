@@ -1,9 +1,10 @@
 // src/lib/actions/auth-actions.ts
 "use server";
 
-import { signIn } from "@/auth";
+import { signIn, signOut, auth } from "@/auth";
 import { AuthError } from "next-auth";
-import { signOut } from "@/auth";
+import db from "@/lib/db";
+import bcrypt from "bcryptjs";
 
 // Agregamos 'prevState' como primer argumento
 export async function authenticate(
@@ -40,4 +41,32 @@ export async function authenticate(
 
 export async function logout() {
   await signOut({ redirectTo: "/login" });
+}
+
+export async function changePasswordAction(prevState: any, formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.idUsuario) return { success: false, message: "No autorizado" };
+
+  const newPassword = formData.get("newPassword") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+
+  if (!newPassword || newPassword.length < 6) {
+    return { success: false, message: "La contraseña debe tener al menos 6 caracteres." };
+  }
+  if (newPassword !== confirmPassword) {
+    return { success: false, message: "Las contraseñas no coinciden." };
+  }
+
+  try {
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await db.usuario.update({
+      where: { idUsuario: Number(session.user.idUsuario) },
+      data: { passwordHash },
+    });
+
+    return { success: true, message: "Contraseña actualizada correctamente." };
+  } catch (error) {
+    return { success: false, message: "Error al actualizar la contraseña." };
+  }
 }

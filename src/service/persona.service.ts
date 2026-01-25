@@ -1,15 +1,13 @@
 import db from "@/lib/db";
 import bcrypt from "bcryptjs";
+import type { PersonaWithRelations } from "@/types/persona";
+
+export type { PersonaWithRelations };
 
 export const PersonaService = {
   // Obtener todas las personas con sus usuarios y roles
   async getAll() {
     return await db.persona.findMany({
-      where: {
-        usuario: {
-          estado: true, // <-- SOLO TRAER LOS ACTIVOS
-        },
-      },
       include: {
         usuario: {
           include: {
@@ -32,7 +30,9 @@ export const PersonaService = {
     password?: string;
     idRol: number;
   }) {
-    const passwordHash = await bcrypt.hash(data.password || "escuela123", 10);
+    // La contraseña se establecerá al habilitar el acceso.
+    // Se guarda un hash inválido para prevenir el login.
+    const passwordHash = "NO_PASSWORD_SET";
 
     return await db.$transaction(async (tx) => {
       // 1. Creamos la Persona
@@ -48,7 +48,7 @@ export const PersonaService = {
           usuario: {
             create: {
               passwordHash,
-              estado: true,
+              estado: false, // El usuario se crea inactivo por defecto
               // 3. Asignamos el Rol
               roles: {
                 create: { idRol: data.idRol },
@@ -75,7 +75,7 @@ export const PersonaService = {
       // Borrado lógico: cambiamos el estado a false
       return await db.usuario.update({
         where: { idUsuario: usuario.idUsuario },
-        data: { estado: false },
+        data: { estado: false, passwordHash: "DELETED_USER" },
       });
     }
   },
@@ -107,29 +107,30 @@ export const PersonaService = {
   },
 
   async getTutoresDisponibles(idAlumno: number) {
-    // Primero, obtenemos los IDs de los padres que YA están vinculados al alumno
-    const padresVinculados = await db.alumnoPadre.findMany({
+    // 1. Obtener los padres ya vinculados a este alumno
+    const vinculaciones = await db.alumnoPadre.findMany({
       where: { idAlumno },
-      select: { idPadre: true },
+      include: {
+        padre: true
+      }
     });
-    const idsPadresVinculados = padresVinculados.map(p => p.idPadre);
+    
+    // Extraemos los IDs de Persona de los padres ya vinculados
+    const idsPersonasVinculadas = vinculaciones.map(v => v.padre.idPersona);
 
-    // Luego, buscamos todas las personas con rol 'PADRE' que NO están en esa lista de vinculados
+    // 2. Buscar personas con rol PADRE que NO estén en la lista de vinculados
     return await db.persona.findMany({
       where: {
         usuario: {
           roles: {
             some: { rol: { nombre: 'PADRE' } },
           },
+          estado: true
         },
-        padre: {
-          // La magia está aquí: nos aseguramos que su 'idPadre' no esté en la lista de los ya vinculados
-          NOT: {
-            idPadre: {
-              in: idsPadresVinculados,
-            },
-          },
-        },
+        // Excluimos por idPersona. Así aparecen aunque no tengan registro en tabla 'Padre' todavía.
+        idPersona: {
+          notIn: idsPersonasVinculadas
+        }
       },
       include: {
         padre: true, // Incluimos el modelo 'Padre' para tener el 'idPadre'

@@ -1,10 +1,11 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 import { getCicloActual } from "@/lib/ciclo-session";
 import { getHijosConAsistenciaCompleta } from "@/service/padre.service";
 import { getCalificacionesHijo } from "@/service/calificaciones.service";
-
+import { getContadorNoLeidos } from "@/service/comunicado.service";
 import CardAsistenciaHijo from "@/components/modules/padres/CardAsistenciaHijo";
 import SeccionCalificaciones from "@/components/modules/padres/SeccionCalificaciones";
 
@@ -31,6 +32,7 @@ export default async function DashboardPage() {
 
   const roles = session.user.roles ?? [];
   const idPersona = session.user.idPersona;
+  const idUsuario = session.user.idUsuario;
 
   const esDocente = roles.includes("DOCENTE");
   const esPadre = roles.includes("PADRE");
@@ -40,6 +42,16 @@ export default async function DashboardPage() {
 
   // Ciclo actual (sirve para PADRE y también para el mensaje/header)
   const idCiclo = await getCicloActual();
+
+
+  /**
+   * ==========================
+   * LÓGICA DE COMUNICADOS (Dinámica)
+   * ==========================
+   */
+  const rolPrincipal = roles[0] || "USUARIO";
+  const noLeidos = idUsuario ? await getContadorNoLeidos(idUsuario, rolPrincipal) : 0;
+
 
   /**
    * ==========================
@@ -67,7 +79,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-8 bg-slate-50/50 min-h-screen space-y-5">
-      {/* HEADER */}
       <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 p-4 opacity-20">
           <Sparkles size={160} className="text-indigo-600" />
@@ -276,20 +287,33 @@ export default async function DashboardPage() {
               </p>
             </div>
           ) : (
-            <div className="p-8 bg-slate-100 min-h-screen space-y-10">
+            <div className="space-y-10">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* TARJETA DINÁMICA DE COMUNICADOS */}
                 <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm flex items-center justify-between overflow-hidden relative">
                   <div className="relative z-10">
                     <h1 className="text-3xl font-black text-slate-800 tracking-tighter">
                       ¡Información del día!
                     </h1>
                     <p className="text-slate-500 font-medium italic mt-1">
-                      Tienes 2 comunicados sin leer de la institución.
+                      {noLeidos > 0
+                        ? `Tienes ${noLeidos} ${noLeidos === 1 ? 'comunicado' : 'comunicados'} sin leer de la institución.`
+                        : "Estás al día con todas las novedades institucionales."
+                      }
                     </p>
                   </div>
-                  <button className="relative z-10 bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
-                    Leer comunicados
-                  </button>
+
+                  <Link href="/dashboard/comunicados">
+                    <button className="relative z-10 bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center gap-2">
+                      Leer comunicados
+                      {noLeidos > 0 && (
+                        <span className="bg-white text-indigo-600 w-5 h-5 rounded-full text-[10px] flex items-center justify-center animate-pulse">
+                          {noLeidos}
+                        </span>
+                      )}
+                    </button>
+                  </Link>
+
                   <Sparkles
                     size={160}
                     className="absolute -right-10 -bottom-10 text-indigo-50 opacity-50"
@@ -301,14 +325,13 @@ export default async function DashboardPage() {
                     Cuota Febrero 2026
                   </p>
                   <div className="flex justify-between items-end">
-                    <span className="text-2xl font-black text-emerald-400">
-                      Al día
-                    </span>
+                    <span className="text-2xl font-black text-emerald-400">Al día</span>
                     <Wallet className="text-slate-700" size={32} />
                   </div>
                 </div>
               </div>
 
+              {/* LISTADO DE HIJOS */}
               <div className="space-y-16">
                 {hijosData.map((hijo) => (
                   <div

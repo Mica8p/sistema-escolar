@@ -16,8 +16,8 @@ export default function AcademicInfo({ alumno }: { alumno: AlumnoExtendido }) {
       
       {matriculaActual ? (
         <div>
-          <p><strong>Curso:</strong> {matriculaActual.curso.grado}° "{matriculaActual.curso.seccion}" - {matriculaActual.curso.turno}</p>
-          <p><strong>Estado:</strong> {matriculaActual.estadoAcademico}</p>
+          <p className="text-gray-800"><strong>Curso:</strong> {matriculaActual.curso.grado}° "{matriculaActual.curso.seccion}" - {matriculaActual.curso.turno}</p>
+          <p className="text-gray-800"><strong>Estado:</strong> {matriculaActual.estadoAcademico}</p>
           
           <h3 className="text-lg font-semibold text-gray-700 mt-4 mb-2">Calificaciones</h3>
           {matriculaActual.notas.length > 0 ? (
