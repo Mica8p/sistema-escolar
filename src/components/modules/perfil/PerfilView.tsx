@@ -1,9 +1,14 @@
+import React from "react";
 import Link from "next/link";
-import { KeyRound, User, Shield, Info, Users, Calendar } from "lucide-react";
+import { KeyRound, Shield, Info, Users, Calendar } from "lucide-react";
+import AvatarEditor from "./AvatarEditor";
 
 type HijoInfo = {
   relacion: string;
   alumno: {
+    idPersona: number;
+    avatarUrl?: string | null;
+
     nombre: string;
     apellido: string;
     legajo: string;
@@ -55,6 +60,9 @@ type AdminStats = {
 };
 
 type PerfilData = {
+  idPersona: number;
+  avatarUrl?: string | null;
+
   nombre: string;
   apellido: string;
   dni: string;
@@ -85,7 +93,15 @@ function formatDateTime(value: Date | string | null | undefined) {
   if (!value) return "—";
   const d = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString("es-AR");
+
+  return d.toLocaleString("es-AR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }
 
 function Field({
@@ -190,18 +206,35 @@ export default function PerfilView({ perfil }: { perfil: PerfilData }) {
         </div>
       </div>
 
-      {/* Card superior */}
-      <div className="flex items-center justify-between gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-100">
-            <User size={18} className="text-blue-600" />
-          </div>
+      {/* Card superior (avatar grande + nombre/email) */}
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-start">
+          <AvatarEditor
+            idPersona={perfil.idPersona}
+            nombre={perfil.nombre}
+            apellido={perfil.apellido}
+            avatarUrl={perfil.avatarUrl}
+            canEdit={true}
+            size={152} 
+          />
 
-          <div className="min-w-0">
-            <p className="text-lg font-bold text-slate-900">{nombreCompleto}</p>
+          <div className="min-w-0 pt-1">
+            <p className="text-xl font-bold text-slate-900">{nombreCompleto}</p>
             <p className="truncate text-sm text-slate-500">
               {perfil.email || "—"}
             </p>
+
+            {/* Mini info extra */}
+            <div className="mt-2 flex flex-wrap gap-2">
+              {perfil.roles.map((r) => (
+                <span
+                  key={r}
+                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700"
+                >
+                  {r}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -231,25 +264,6 @@ export default function PerfilView({ perfil }: { perfil: PerfilData }) {
           <Field label="Dirección" value={perfil.direccion ?? "—"} />
         </div>
 
-        {/* Roles */}
-        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-xs font-medium text-slate-500">Roles</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {perfil.roles.length ? (
-              perfil.roles.map((r) => (
-                <span
-                  key={r}
-                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700"
-                >
-                  {r}
-                </span>
-              ))
-            ) : (
-              <span className="text-sm text-slate-700">—</span>
-            )}
-          </div>
-        </div>
-
         <div className="mt-4 text-xs font-medium text-slate-700">
           Creado: {formatDateTime(perfil.createdAt)}
         </div>
@@ -271,29 +285,40 @@ export default function PerfilView({ perfil }: { perfil: PerfilData }) {
                     key={`${h.alumno.legajo}-${idx}`}
                     className="rounded-xl border border-slate-200 p-4"
                   >
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">
-                          {hNombre}
-                        </p>
-                        <p className="text-xs font-medium text-slate-600">
-                          Relación: {h.relacion || "—"} • Legajo:{" "}
-                          {h.alumno.legajo}
-                        </p>
-                      </div>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                        <AvatarEditor
+                          idPersona={h.alumno.idPersona}
+                          nombre={h.alumno.nombre}
+                          apellido={h.alumno.apellido}
+                          avatarUrl={h.alumno.avatarUrl}
+                          canEdit={true}
+                          size={112}
+                        />
 
-                      {h.alumno.matriculaActual ? (
-                        <div className="mt-2 sm:mt-0">
-                          <CursoBadge
-                            curso={h.alumno.matriculaActual.curso}
-                            cicloAnio={h.alumno.matriculaActual.cicloAnio}
-                          />
+                        <div className="pt-1">
+                          <p className="text-sm font-bold text-slate-900">
+                            {hNombre}
+                          </p>
+                          <p className="text-xs font-medium text-slate-600">
+                            Relación: {h.relacion || "—"} • Legajo:{" "}
+                            {h.alumno.legajo}
+                          </p>
+
+                          {h.alumno.matriculaActual ? (
+                            <div className="mt-2">
+                              <CursoBadge
+                                curso={h.alumno.matriculaActual.curso}
+                                cicloAnio={h.alumno.matriculaActual.cicloAnio}
+                              />
+                            </div>
+                          ) : (
+                            <span className="mt-2 inline-block text-xs font-medium text-slate-600">
+                              Sin matrícula activa
+                            </span>
+                          )}
                         </div>
-                      ) : (
-                        <span className="mt-2 text-xs font-medium text-slate-600 sm:mt-0">
-                          Sin matrícula activa
-                        </span>
-                      )}
+                      </div>
                     </div>
 
                     {h.alumno.matriculaActual?.estadoAcademico && (
@@ -323,7 +348,10 @@ export default function PerfilView({ perfil }: { perfil: PerfilData }) {
           icon={<Calendar size={16} className="text-slate-700" />}
         >
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <Field label="Fecha de ingreso" value={formatDate(perfil.docente.fechaIngreso)} />
+            <Field
+              label="Fecha de ingreso"
+              value={formatDate(perfil.docente.fechaIngreso)}
+            />
             <Field
               label="Asignaciones activas"
               value={perfil.docente.asignacionesActivas.length}

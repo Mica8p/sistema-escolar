@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "PERSONA" ADD COLUMN "avatarPublicId" TEXT;
+ALTER TABLE "PERSONA" ADD COLUMN "avatarUrl" TEXT;

@@ -110,6 +110,9 @@ model Persona {
   direccion String?
   email     String?
 
+  avatarUrl      String?
+  avatarPublicId String?
+
   usuario  Usuario?
   alumno   Alumno?
   profesor Profesor?

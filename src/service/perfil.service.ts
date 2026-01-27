@@ -34,13 +34,18 @@ export async function getPerfilByIdPersona(idPersona: number) {
                 include: {
                   alumno: {
                     include: {
-                      persona: true,
+                      persona: true, // avatarUrl/idPersona del hijo (Persona)
                       matriculas: {
                         orderBy: { fechaInscripcion: "desc" },
                         include: {
                           ciclo: { select: { anio: true, estado: true } },
                           curso: {
-                            select: { grado: true, seccion: true, nivel: true, turno: true },
+                            select: {
+                              grado: true,
+                              seccion: true,
+                              nivel: true,
+                              turno: true,
+                            },
                           },
                         },
                       },
@@ -59,10 +64,20 @@ export async function getPerfilByIdPersona(idPersona: number) {
                 include: {
                   materia: { select: { nombre: true } },
                   curso: {
-                    select: { grado: true, seccion: true, nivel: true, turno: true },
+                    select: {
+                      grado: true,
+                      seccion: true,
+                      nivel: true,
+                      turno: true,
+                    },
                   },
                   horarios: {
-                    select: { diaSemana: true, horaInicio: true, horaFin: true, aula: true },
+                    select: {
+                      diaSemana: true,
+                      horaInicio: true,
+                      horaFin: true,
+                      aula: true,
+                    },
                     orderBy: { diaSemana: "asc" },
                   },
                 },
@@ -98,6 +113,10 @@ export async function getPerfilByIdPersona(idPersona: number) {
         hijos: usuario.persona.padre.alumnos.map((ap: any) => ({
           relacion: ap.relacion,
           alumno: {
+            // AvatarEditor en hijos
+            idPersona: ap.alumno.persona.idPersona,
+            avatarUrl: ap.alumno.persona.avatarUrl ?? null,
+
             nombre: ap.alumno.persona.nombre,
             apellido: ap.alumno.persona.apellido,
             legajo: ap.alumno.legajo,
@@ -129,6 +148,10 @@ export async function getPerfilByIdPersona(idPersona: number) {
     : null;
 
   return {
+    // AvatarEditor del perfil
+    idPersona: usuario.persona.idPersona,
+    avatarUrl: usuario.persona.avatarUrl ?? null,
+
     nombre: usuario.persona.nombre,
     apellido: usuario.persona.apellido,
     dni: usuario.persona.dni,
