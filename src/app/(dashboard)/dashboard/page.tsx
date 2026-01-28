@@ -8,6 +8,7 @@ import { getCalificacionesHijo } from "@/service/calificaciones.service";
 import { getContadorNoLeidos } from "@/service/comunicado.service";
 import CardAsistenciaHijo from "@/components/modules/padres/CardAsistenciaHijo";
 import SeccionCalificaciones from "@/components/modules/padres/SeccionCalificaciones";
+import { getDashboardAdminData } from "@/service/admin-dashboard.service";
 
 import {
   Sparkles,
@@ -17,6 +18,8 @@ import {
   ClipboardList,
   UserCheck,
   GraduationCap,
+  Plus,
+  Megaphone,
 } from "lucide-react";
 
 import {
@@ -38,9 +41,9 @@ export default async function DashboardPage() {
   const esPadre = roles.includes("PADRE");
   const esAdmin = roles.includes("ADMIN");
 
+  const adminData = esAdmin ? await getDashboardAdminData() : null;
   const idProfesor = session.user.idProfesor ?? null;
 
-  // Ciclo actual (sirve para PADRE y también para el mensaje/header)
   const idCiclo = await getCicloActual();
 
 
@@ -368,43 +371,62 @@ export default async function DashboardPage() {
         </div>
       ) : (
         /* 3) ADMIN  */
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-8 bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-blue-50 rounded-2xl text-blue-600">
-                <Users size={24} />
-              </div>
-              <h3 className="font-black text-slate-700 uppercase text-[10px] tracking-widest">
-                Alumnos Activos
-              </h3>
-            </div>
-            <p className="text-4xl font-black text-slate-800 tracking-tighter">--</p>
-          </div>
+        <div className="space-y-8">
+    {/* MÉTRICAS PRINCIPALES */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <StatCard icon={<Users size={24} />} title="Alumnos" value={adminData?.alumnos ?? 0} color="blue" />
+      <StatCard icon={<GraduationCap size={24} />} title="Docentes" value={adminData?.docentes ?? 0} color="purple" />
+      <StatCard icon={<ClipboardList size={24} />} title="Cursos Activos" value={adminData?.cursos ?? 0} color="emerald" />
+      <StatCard icon={<Megaphone size={24} />} title="Comunicados" value={adminData?.comunicadosRecientes.length ?? 0} color="indigo" />
+    </div>
 
-          <div className="p-8 bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600">
-                <Wallet size={24} />
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* ACTIVIDAD RECIENTE */}
+      <div className="lg:col-span-2">
+        <Panel title="Últimos Comunicados Institucionales">
+          <div className="space-y-4">
+            {adminData?.comunicadosRecientes.map((c: any) => (
+              <div key={c.idComunicado} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-indigo-600 shadow-sm">
+                    <Megaphone size={18} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-800 text-sm">{c.titulo}</p>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                      Por: {c.usuario.persona.nombre} {c.usuario.persona.apellido}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold text-slate-400 italic">
+                  {new Date(c.fecha).toLocaleDateString()}
+                </span>
               </div>
-              <h3 className="font-black text-slate-700 uppercase text-[10px] tracking-widest">
-                Cuotas al Día
-              </h3>
-            </div>
-            <p className="text-4xl font-black text-slate-800 tracking-tighter">--</p>
+            ))}
           </div>
+        </Panel>
+      </div>
 
-          <div className="p-8 bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-purple-50 rounded-2xl text-purple-600">
-                <Calendar size={24} />
-              </div>
-              <h3 className="font-black text-slate-700 uppercase text-[10px] tracking-widest">
-                Próximos Eventos
-              </h3>
-            </div>
-            <p className="text-4xl font-black text-slate-800 tracking-tighter">0</p>
-          </div>
+      {/* ACCIONES RÁPIDAS */}
+      <div className="space-y-6">
+        <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] px-2">Gestión Rápida</h3>
+        <div className="grid grid-cols-1 gap-3">
+          <Link href="/dashboard/comunicados/nuevo" className="group p-4 bg-indigo-600 rounded-2xl flex items-center gap-4 hover:bg-indigo-700 transition-all">
+            <div className="p-2 bg-white/20 rounded-xl text-white"><Plus size={20} /></div>
+            <span className="text-white font-bold text-sm">Nuevo Comunicado</span>
+          </Link>
+          <Link href="/dashboard/alumnos" className="p-4 bg-white border border-slate-200 rounded-2xl flex items-center gap-4 hover:border-indigo-500 transition-all">
+            <div className="p-2 bg-slate-100 rounded-xl text-slate-500"><Users size={20} /></div>
+            <span className="text-slate-700 font-bold text-sm">Registrar Alumno</span>
+          </Link>
+          <Link href="/dashboard/finanzas" className="p-4 bg-white border border-slate-200 rounded-2xl flex items-center gap-4 hover:border-emerald-500 transition-all">
+            <div className="p-2 bg-slate-100 rounded-xl text-slate-500"><Wallet size={20} /></div>
+            <span className="text-slate-700 font-bold text-sm">Verificar Cobros</span>
+          </Link>
         </div>
+      </div>
+    </div>
+  </div>
       )}
     </div>
   );
