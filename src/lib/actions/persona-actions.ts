@@ -83,7 +83,7 @@ export async function habilitarAccesoAction(idPersona: number, dni: string) {
     // 3. Actualizar la contraseña y activar la cuenta
     await db.usuario.update({
       where: { idUsuario: usuario.idUsuario },
-      data: { passwordHash, estado: true },
+      data: { passwordHash, estado: true, defaultPassword: true },
     });
 
     revalidatePath("/dashboard/personas");

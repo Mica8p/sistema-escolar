@@ -9,6 +9,7 @@ declare module "next-auth" {
       idPersona: number;
       idProfesor: number | null;
       idPadre: number | null; // Agregamos el ID del padre
+      isDefaultPassword?: boolean;
     } & DefaultSession["user"];
   }
 
@@ -18,6 +19,7 @@ declare module "next-auth" {
     idPersona: number;
     idProfesor: number | null;
     idPadre: number | null;
+    isDefaultPassword?: boolean;
   }
 }
 
@@ -28,5 +30,6 @@ declare module "next-auth/jwt" {
     idPersona: number;
     idProfesor: number | null;
     idPadre: number | null;
+    isDefaultPassword?: boolean;
   }
 }
