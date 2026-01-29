@@ -32,7 +32,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!isPasswordValid) return null;
 
         // Detectar si está usando la contraseña por defecto (DNI)
-        const isDefaultPassword = String(credentials.password) === String(credentials.dni);
+        const isDefaultPassword = usuario.defaultPassword;
 
         const rolesArray = usuario.roles.map((r) => r.rol.nombre);
 

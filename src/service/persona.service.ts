@@ -38,30 +38,6 @@ export const PersonaService = {
       }
     }
 
-    if (idCiclo) {
-      conditions.push({
-        OR: [
-          // Alumnos matriculados en el ciclo
-          { alumno: { matriculas: { some: { idCiclo } } } },
-          // Profesores con asignación activa en el ciclo
-          { profesor: { asignaciones: { some: { idCiclo, estado: true } } } },
-          // Padres con hijos matriculados en el ciclo
-          { padre: { alumnos: { some: { alumno: { matriculas: { some: { idCiclo } } } } } } },
-          // Administrativos y otros roles (siempre visibles)
-          { usuario: { roles: { some: { rol: { nombre: { notIn: ["ALUMNO", "DOCENTE", "PADRE"] } } } } } },
-          
-          // --- INCLUSIONES PARA GESTIÓN (Nuevos e Inactivos) ---
-          // 1. Personas recién creadas (sin perfil específico aún)
-          { AND: [{ alumno: null }, { profesor: null }, { padre: null }] },
-          // 2. Perfiles sin historial (existen pero nunca se han matriculado/asignado)
-          { alumno: { matriculas: { none: {} } } },
-          { profesor: { asignaciones: { none: {} } } },
-          // 3. Usuarios inactivos (para poder verlos y activarlos independientemente del ciclo)
-          { usuario: { estado: false } }
-        ]
-      });
-    }
-
     const where = conditions.length > 0 ? { AND: conditions } : {};
 
     return await db.persona.findMany({
