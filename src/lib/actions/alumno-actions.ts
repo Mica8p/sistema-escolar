@@ -119,3 +119,13 @@ export async function updateMatriculaCursoAction(idMatricula: number, idCurso: n
     };
   }
 }
+
+export async function deleteMatriculaAction(idMatricula: number) {
+  try {
+    await AlumnoService.deleteMatricula(idMatricula);
+    revalidatePath("/dashboard/alumnos");
+    return { success: true, message: "Inscripción eliminada correctamente." };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
