@@ -2,13 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { EstadoAcademico } from "@prisma/client";
-import { cambiarEstadoMatriculaAction, vincularPadre, desvincularPadre } from "@/lib/actions/alumno-actions";
+import { cambiarEstadoMatriculaAction, vincularPadre, desvincularPadre, updateMatriculaCursoAction } from "@/lib/actions/alumno-actions";
 import { getTutoresDisponiblesAction } from "@/lib/actions/persona-actions";
+import { getAllCursos } from "@/lib/actions/curso-actions";
 import { 
   User, Calendar, MapPin, Phone, Mail, 
   GraduationCap, AlertTriangle, CheckCircle2, 
   FileText, ArrowLeft, Ban, RotateCcw,
-  Users, Plus, Trash2
+  Users, Plus, Trash2, Pencil
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -24,6 +25,36 @@ export default function AlumnoDetalle({ alumno }: AlumnoDetalleProps) {
   // Tomamos la matrícula más reciente (la del ciclo actual)
   const matriculaActual = alumno.matriculas[0];
   const estadoActual = matriculaActual?.estadoAcademico;
+
+  // Estados para Edición de Curso
+  const [isEditingCurso, setIsEditingCurso] = useState(false);
+  const [cursos, setCursos] = useState<any[]>([]);
+  const [selectedCurso, setSelectedCurso] = useState<string>("");
+
+  const handleEditCurso = async () => {
+    if (!matriculaActual) return;
+    const cursosList = await getAllCursos();
+    setCursos(cursosList);
+    setSelectedCurso(matriculaActual.curso.idCurso.toString());
+    setIsEditingCurso(true);
+  };
+
+  const handleUpdateCurso = () => {
+    if (!selectedCurso || !matriculaActual) return;
+
+    startTransition(async () => {
+      const res = await updateMatriculaCursoAction(
+        matriculaActual.idMatricula,
+        Number(selectedCurso),
+        `/dashboard/alumnos/${alumno.idAlumno}`
+      );
+      if (res.success) {
+        setIsEditingCurso(false);
+      } else {
+        alert(res.message);
+      }
+    });
+  };
 
   // Estados para vinculación de tutores
   const [showVincular, setShowVincular] = useState(false);
@@ -154,18 +185,60 @@ export default function AlumnoDetalle({ alumno }: AlumnoDetalleProps) {
               <h3 className="font-semibold text-slate-800 flex items-center gap-2">
                 <GraduationCap size={18} className="text-blue-600" /> Situación Académica
               </h3>
+              {matriculaActual && !isEditingCurso && (
+                 <button 
+                  onClick={handleEditCurso}
+                  className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                  title="Editar curso del alumno"
+                >
+                  <Pencil size={14} />
+                  Cambiar Curso
+                </button>
+              )}
             </div>
 
             {matriculaActual ? (
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 mb-6">
-                <p className="text-sm text-slate-600 mb-1">Curso Actual:</p>
-                <p className="text-lg font-bold text-slate-900">
-                  {matriculaActual.curso.grado} "{matriculaActual.curso.seccion}" - {matriculaActual.curso.nivel}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  Inscrito el {new Date(matriculaActual.fechaInscripcion).toLocaleDateString()}
-                </p>
-              </div>
+              !isEditingCurso ? (
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 mb-6">
+                  <p className="text-sm text-slate-600 mb-1">Curso Actual:</p>
+                  <p className="text-lg font-bold text-slate-900">
+                    {matriculaActual.curso.grado} "{matriculaActual.curso.seccion}" - {matriculaActual.curso.nivel}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Inscrito el {new Date(matriculaActual.fechaInscripcion).toLocaleDateString()}
+                  </p>
+                </div>
+              ) : (
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 mb-6 animate-in fade-in">
+                  <p className="text-sm font-semibold text-blue-900 mb-2">Seleccionar nuevo curso:</p>
+                  <select 
+                    className="w-full p-2 text-sm border border-blue-300 rounded bg-white text-slate-900"
+                    value={selectedCurso}
+                    onChange={(e) => setSelectedCurso(e.target.value)}
+                  >
+                    {cursos.map((c) => (
+                      <option key={c.idCurso} value={c.idCurso}>
+                        {c.grado}° "{c.seccion}" - {c.nivel} ({c.turno})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex justify-end gap-2 pt-3">
+                    <button 
+                      onClick={() => setIsEditingCurso(false)}
+                      className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      onClick={handleUpdateCurso}
+                      disabled={isPending}
+                      className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded disabled:opacity-50"
+                    >
+                      {isPending ? 'Guardando...' : 'Guardar Cambio'}
+                    </button>
+                  </div>
+                </div>
+              )
             ) : (
               <div className="p-4 bg-yellow-50 text-yellow-800 rounded-lg mb-6 text-sm">
                 Este alumno no está inscrito en el ciclo lectivo actual.

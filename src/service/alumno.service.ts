@@ -161,4 +161,11 @@ export const AlumnoService = {
       data: { estadoAcademico: nuevoEstado }
     });
   },
+
+  async updateMatriculaCurso(idMatricula: number, idCurso: number) {
+    return await db.matricula.update({
+        where: { idMatricula },
+        data: { idCurso: idCurso }
+    });
+  },
 };
