@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { EstadoAcademico } from "@prisma/client";
 import { cambiarEstadoMatriculaAction, vincularPadre, desvincularPadre, updateMatriculaCursoAction } from "@/lib/actions/alumno-actions";
 import { getTutoresDisponiblesAction } from "@/lib/actions/persona-actions";
@@ -12,18 +12,24 @@ import {
   Users, Plus, Trash2, Pencil
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 interface AlumnoDetalleProps {
-  alumno: any; // Usamos any por simplicidad, idealmente sería el tipo completo de Prisma
+  alumno: any; 
+  cicloId: number;
 }
 
-export default function AlumnoDetalle({ alumno }: AlumnoDetalleProps) {
+export default function AlumnoDetalle({ alumno, cicloId }: AlumnoDetalleProps) {
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
   
-  // Tomamos la matrícula más reciente (la del ciclo actual)
-  const matriculaActual = alumno.matriculas[0];
+  // SOLUCIÓN: Usamos useMemo para encontrar LA matrícula correcta para el ciclo actual.
+  // Esto evita problemas si hay matrículas de otros ciclos en los datos del alumno.
+  const matriculaActual = useMemo(() => {
+    if (!Array.isArray(alumno.matriculas)) return null;
+    // Buscamos la matrícula que coincide con el ID del ciclo lectivo actual Y está activa o en un estado manejable.
+    // Damos prioridad a la más reciente si hubiera múltiples (caso anómalo).
+    return alumno.matriculas.find((m: any) => m.idCiclo === cicloId) || alumno.matriculas[0] || null;
+  }, [alumno.matriculas, cicloId]);
+
   const estadoActual = matriculaActual?.estadoAcademico;
 
   // Estados para Edición de Curso
@@ -89,7 +95,10 @@ export default function AlumnoDetalle({ alumno }: AlumnoDetalleProps) {
   };
 
   const handleCambioEstado = (nuevoEstado: EstadoAcademico) => {
-    if (!matriculaActual) return;
+    if (!matriculaActual) {
+      alert("Error: No se encontró una matrícula válida para realizar esta acción.");
+      return;
+    }
     
     const confirmacion = confirm(`¿Estás seguro de cambiar el estado a ${nuevoEstado}?`);
     if (!confirmacion) return;
@@ -103,6 +112,7 @@ export default function AlumnoDetalle({ alumno }: AlumnoDetalleProps) {
       if (!res.success) {
         alert(res.message);
       }
+      // La revalidación del path en la server action se encarga de refrescar los datos.
     });
   };
 
@@ -200,7 +210,7 @@ export default function AlumnoDetalle({ alumno }: AlumnoDetalleProps) {
             {matriculaActual ? (
               !isEditingCurso ? (
                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 mb-6">
-                  <p className="text-sm text-slate-600 mb-1">Curso Actual:</p>
+                  <p className="text-sm text-slate-600 mb-1">Curso Actual (Ciclo ID: {matriculaActual.idCiclo}):</p>
                   <p className="text-lg font-bold text-slate-900">
                     {matriculaActual.curso.grado} "{matriculaActual.curso.seccion}" - {matriculaActual.curso.nivel}
                   </p>
@@ -240,8 +250,8 @@ export default function AlumnoDetalle({ alumno }: AlumnoDetalleProps) {
                 </div>
               )
             ) : (
-              <div className="p-4 bg-yellow-50 text-yellow-800 rounded-lg mb-6 text-sm">
-                Este alumno no está inscrito en el ciclo lectivo actual.
+              <div className="p-4 bg-yellow-50 text-yellow-800 rounded-lg mb-6 text-sm flex items-center gap-2">
+                <AlertTriangle size={16} /> Este alumno no está inscrito en el ciclo lectivo actual (ID: {cicloId}).
               </div>
             )}
 
@@ -251,27 +261,27 @@ export default function AlumnoDetalle({ alumno }: AlumnoDetalleProps) {
                 {estadoActual === "Activo" && (
                   <>
                     <button 
-                      onClick={() => handleCambioEstado(EstadoAcademico.Baja)}
+                      onClick={() => handleCambioEstado(EstadoAcademico.Retirado)}
                       disabled={isPending}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 border border-red-200 text-sm font-medium transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 border border-red-200 text-sm font-medium transition-colors disabled:opacity-50"
                     >
                       <Ban size={16} /> Dar de Baja
                     </button>
                     <button 
                       onClick={() => handleCambioEstado(EstadoAcademico.Egresado)}
                       disabled={isPending}
-                      className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 border border-indigo-200 text-sm font-medium transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 border border-indigo-200 text-sm font-medium transition-colors disabled:opacity-50"
                     >
                       <GraduationCap size={16} /> Marcar como Egresado
                     </button>
                   </>
                 )}
 
-                {(estadoActual === "Baja" || estadoActual === "Egresado") && (
+                {(estadoActual === "Retirado" || estadoActual === "Egresado") && (
                   <button 
                     onClick={() => handleCambioEstado(EstadoAcademico.Activo)}
                     disabled={isPending}
-                    className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 border border-emerald-200 text-sm font-medium transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 border border-emerald-200 text-sm font-medium transition-colors disabled:opacity-50"
                   >
                     <RotateCcw size={16} /> Reincorporar / Activar
                   </button>
@@ -379,8 +389,8 @@ function EstadoBadge({ estado }: { estado?: string }) {
   if (estado === "Activo") {
     return <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold border border-emerald-200 flex items-center gap-1"><CheckCircle2 size={14}/> Regular</span>;
   }
-  if (estado === "Baja") {
-    return <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold border border-red-200 flex items-center gap-1"><Ban size={14}/> Baja</span>;
+  if (estado === "Retirado") {
+    return <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold border border-red-200 flex items-center gap-1"><Ban size={14}/> Retirado</span>;
   }
   if (estado === "Egresado") {
     return <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-semibold border border-indigo-200 flex items-center gap-1"><GraduationCap size={14}/> Egresado</span>;

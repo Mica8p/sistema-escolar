@@ -1,24 +1,37 @@
 import db from "@/lib/db";
-import { EstadoAcademico } from "@prisma/client";
+import { EstadoAcademico, Prisma } from "@prisma/client";
 import { getCicloActual } from "@/lib/ciclo-session";
 
 export const AlumnoService = {
   // 1. Obtener alumnos para la tabla (incluyendo su curso actual)
-  async getAll(idCiclo: number) {
+  async getAll(idCiclo: number, estado?: string) {
+
+    const matriculaWhere: any = {
+      idCiclo: idCiclo,
+    }
+
+    if(estado && estado !== "Todos") {
+      const mapEstados: Record<string, string> = {
+        "Activos": "Activo",
+        "Baja": "Retirado",
+        "Egresados": "Egresado",
+        "Suspendidos": "Suspendido"
+      };
+      matriculaWhere.estadoAcademico = mapEstados[estado] || estado;
+    }
+
     return await db.alumno.findMany({
       where: {
-        // Solo alumnos que tienen matricula en el ciclo actual
+        // Solo alumnos que tienen matricula que cumple la condición
         matriculas: {
-          some: {
-            idCiclo: idCiclo
-          }
+          some: matriculaWhere
         }
       },
       include: {
         persona: true,
         matriculas: {
           where: {
-            idCiclo: idCiclo // Nos aseguramos de traer la matrícula del ciclo correcto
+            idCiclo: idCiclo // Nos aseguramos de traer la matrícula del ciclo correcto para mostrarla
           },
           include: {
             curso: true
@@ -83,7 +96,6 @@ export const AlumnoService = {
             fechaNacimiento: new Date(), // Esto luego lo traeremos de la Persona
           }
         });
-        console.log("✅ Ficha de Alumno creada exitosamente.");
       }
 
       // CAMBIO 3: Creamos la Matrícula vinculando el Alumno con el Curso

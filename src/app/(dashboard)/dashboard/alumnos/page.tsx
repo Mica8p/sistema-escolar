@@ -5,18 +5,54 @@ import { CicloService } from "@/service/ciclo.service";
 import { InscripcionForm } from "@/components/modules/alumnos/InscripcionForm";
 import DeleteMatriculaButton from "@/components/modules/alumnos/DeleteMatriculaButton";
 import Link from "next/link";
+import { EstadoAcademico } from "@prisma/client";
+import { StatusFilter } from "@/components/modules/alumnos/StatusFilter";
+import { cn } from "@/lib/utils";
 
-export default async function AlumnosPage() {
-  const cicloId = await getCicloActual(); // Obtenemos el ciclo del selector de Gabriel
+export const dynamic = 'force-dynamic';
+
+const StatusBadge = ({ estado }: { estado: EstadoAcademico }) => {
+  const baseClasses = "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider";
+  const statusStyles: Record<EstadoAcademico, string> = {
+    Activo: "bg-green-100 text-green-800",
+    Retirado: "bg-red-100 text-red-800",
+    Egresado: "bg-blue-100 text-blue-800",
+    Suspendido: "bg-yellow-100 text-yellow-800",
+  };
+  return <span className={cn(baseClasses, statusStyles[estado])}>{estado}</span>;
+}
+
+
+export default async function AlumnosPage({
+  searchParams,
+}: {
+  searchParams: { estado?: string };
+}) {
+  const { estado } = (await (searchParams as any)) || {};
+  const cicloId = await getCicloActual();
+
+  const currentStatusParam = estado;
+  const validStatuses = Object.values(EstadoAcademico);
+  
+  let statusToFilter: EstadoAcademico | undefined;
+  
+  if (currentStatusParam === undefined) {
+    statusToFilter = EstadoAcademico.Activo;
+  } else if (validStatuses.includes(currentStatusParam as EstadoAcademico)) {
+    statusToFilter = currentStatusParam as EstadoAcademico;
+  }
+  // If param is 'Todos' or invalid, statusToFilter remains undefined, so the service fetches all.
 
   const [alumnos, personasSinInscribir, cursos, cicloActivo] = await Promise.all([
-    AlumnoService.getAll(cicloId),
+    AlumnoService.getAll(cicloId, statusToFilter),
     AlumnoService.getPersonasDisponibles(cicloId),
     AlumnoService.getCursosDisponibles(),
     CicloService.getActive(),
   ]);
 
   const puedeInscribir = cicloActivo?.idCiclo === cicloId;
+  const activeFilter = statusToFilter || 'Todos';
+
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
@@ -25,20 +61,17 @@ export default async function AlumnosPage() {
         Gestión de Alumnos
       </h1>
 
-      {/* === SECCIÓN 1: FORMULARIO DE INSCRIPCIÓN === */}
       {puedeInscribir ? (
-        <InscripcionForm
-          personas={personasSinInscribir}
-          cursos={cursos}
-        />
+        <InscripcionForm personas={personasSinInscribir} cursos={cursos} />
       ) : (
         <div className="bg-yellow-100 text-yellow-800 p-4 rounded-lg border border-yellow-200 shadow-sm">
           <p className="font-semibold">La inscripción solo está permitida en el ciclo lectivo activo.</p>
           <p className="text-sm">Cambiá el año en el selector superior para ver otros listados.</p>
         </div>
       )}
+      
+      <StatusFilter currentStatus={activeFilter} />
 
-      {/* === SECCIÓN 2: TABLA DE LISTADO (AQUÍ ESTÁ DE NUEVO) === */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
         <div className="p-4 bg-gray-100 border-b flex justify-between items-center">
           <h2 className="text-lg font-semibold text-gray-700">Listado de Alumnos Inscriptos</h2>
@@ -55,6 +88,7 @@ export default async function AlumnosPage() {
                 <th className="p-4">Apellido y Nombre</th>
                 <th className="p-4">DNI</th>
                 <th className="p-4">Curso y Turno</th>
+                <th className="p-4">Estado</th>
                 <th className="p-4 text-center">Acciones</th>
               </tr>
             </thead>
@@ -82,6 +116,9 @@ export default async function AlumnosPage() {
                           <span className="text-red-500 text-xs italic">Sin matrícula</span>
                         )}
                       </td>
+                      <td className="p-4">
+                        {matriculaActual && <StatusBadge estado={matriculaActual.estadoAcademico} />}
+                      </td>
                       <td className="p-4 text-center space-x-2">
                         <Link href={`/dashboard/alumnos/${alumno.idAlumno}`} className="text-blue-500 hover:text-blue-700 text-xs font-bold">
                           Ver Perfil
@@ -98,8 +135,8 @@ export default async function AlumnosPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="p-10 text-center text-gray-400 italic">
-                    No hay alumnos inscriptos en este ciclo. ¡Comenzá inscribiendo uno arriba!
+                  <td colSpan={6} className="p-10 text-center text-gray-400 italic">
+                    No hay alumnos que coincidan con el estado seleccionado en este ciclo.
                   </td>
                 </tr>
               )}
