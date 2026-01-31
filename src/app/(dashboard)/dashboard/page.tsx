@@ -28,6 +28,8 @@ import {
   getNotasRecientesDocente,
   getProximosCierresDocente,
 } from "@/service/profesor-dashboard.service";
+import { getHorariosPorCurso } from "@/service/horario.service";
+import GrillaSemanal from "@/components/modules/horarios/GrillaSemanal";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -67,7 +69,8 @@ export default async function DashboardPage() {
     hijosData = await Promise.all(
       rawHijos.map(async (hijo: any) => {
         const notas = await getCalificacionesHijo(hijo.idAlumno, idCiclo);
-        return { ...hijo, notas };
+        const horarios = await getHorariosPorCurso(hijo.idCurso, idCiclo);
+        return { ...hijo, notas, horarios };
       })
     );
   }
@@ -79,6 +82,7 @@ export default async function DashboardPage() {
    */
   const docenteData =
     esDocente && idProfesor ? await getDashboardDocenteData(idProfesor) : null;
+
 
   return (
     <div className="p-8 bg-slate-50/50 min-h-screen space-y-5">
@@ -362,7 +366,31 @@ export default async function DashboardPage() {
                       <div className="lg:col-span-7 bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-inner">
                         <SeccionCalificaciones notas={hijo.notas} />
                       </div>
-                    </div>
+                      <div className="lg:col-span-12 bg-white rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-inner mt-8">
+                        <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-4">
+                          <Calendar className="text-indigo-600 shrink-0" size={24} />
+                          <h3 className="text-xl font-black text-slate-800 tracking-tight leading-none">
+                            Horario de Clases
+                          </h3>
+                        </div>
+
+                          <div className="w-full overflow-hidden rounded-2xl border border-slate-50 min-h-[300px]">
+                            <div className="overflow-x-auto custom-scrollbar">
+                              {hijo.horarios && hijo.horarios.length > 0 ? (
+                                <div className="w-full">
+                                  <GrillaSemanal horarios={hijo.horarios} compact />
+                                </div>
+                              ) : (
+                                <div className="p-10 text-center bg-slate-50/50">
+                                  <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">
+                                    No hay horarios cargados para este curso.
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                   </div>
                 ))}
               </div>

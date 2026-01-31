@@ -57,3 +57,26 @@ export const getHorariosPorCurso = async (idCurso: number, idCiclo: number) => {
     ],
   });
 };
+
+export async function getHorariosPorDocente(idProfesor: number, idCiclo: number) {
+  return await db.horario.findMany({
+    where: {
+      asignacion: {
+        idProfesor,
+        idCiclo
+      }
+    },
+    include: {
+      asignacion: {
+        include: {
+          materia: true,
+          curso: true,
+          profesor: {
+            include: { persona: true }
+          }
+        }
+      }
+    },
+    orderBy: { horaInicio: 'asc' }
+  });
+}
