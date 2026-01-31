@@ -100,7 +100,7 @@ export default async function AlumnosPage({
                     <tr key={alumno.idAlumno} className="hover:bg-gray-50 transition-colors">
                       <td className="p-4 font-mono text-sm text-blue-600">{alumno.legajo}</td>
                       <td className="p-4 font-medium text-gray-800 uppercase">
-                        {alumno.persona.apellido}, {alumno.persona.nombre}
+                        {alumno.persona.apellido}, {alumno.persona.nombre} (ID: {alumno.idAlumno})
                       </td>
                       <td className="p-4 text-gray-600">{alumno.persona.dni}</td>
                       <td className="p-4">

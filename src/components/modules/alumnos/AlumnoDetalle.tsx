@@ -261,6 +261,13 @@ export default function AlumnoDetalle({ alumno, cicloId }: AlumnoDetalleProps) {
                 {estadoActual === "Activo" && (
                   <>
                     <button 
+                      onClick={() => handleCambioEstado(EstadoAcademico.Suspendido)}
+                      disabled={isPending}
+                      className="flex items-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 border border-yellow-200 text-sm font-medium transition-colors disabled:opacity-50"
+                    >
+                      <AlertTriangle size={16} /> Suspender
+                    </button>
+                    <button 
                       onClick={() => handleCambioEstado(EstadoAcademico.Retirado)}
                       disabled={isPending}
                       className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 border border-red-200 text-sm font-medium transition-colors disabled:opacity-50"
@@ -277,7 +284,7 @@ export default function AlumnoDetalle({ alumno, cicloId }: AlumnoDetalleProps) {
                   </>
                 )}
 
-                {(estadoActual === "Retirado" || estadoActual === "Egresado") && (
+                {(estadoActual === "Retirado" || estadoActual === "Egresado" || estadoActual === "Suspendido") && (
                   <button 
                     onClick={() => handleCambioEstado(EstadoAcademico.Activo)}
                     disabled={isPending}
@@ -388,6 +395,9 @@ export default function AlumnoDetalle({ alumno, cicloId }: AlumnoDetalleProps) {
 function EstadoBadge({ estado }: { estado?: string }) {
   if (estado === "Activo") {
     return <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold border border-emerald-200 flex items-center gap-1"><CheckCircle2 size={14}/> Regular</span>;
+  }
+  if (estado === "Suspendido") {
+    return <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-sm font-semibold border border-yellow-200 flex items-center gap-1"><AlertTriangle size={14}/> Suspendido</span>;
   }
   if (estado === "Retirado") {
     return <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold border border-red-200 flex items-center gap-1"><Ban size={14}/> Retirado</span>;
