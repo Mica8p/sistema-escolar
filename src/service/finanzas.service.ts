@@ -1,8 +1,9 @@
 "use server";
 
 import db from "@/lib/db";
-import { MetodoPago } from "@prisma/client";
+import { MetodoPago, EstadoCuota } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+
 
 // Tipado para el resultado que esperamos
 export type AlumnoConDeuda = {
@@ -174,7 +175,7 @@ export async function generarCargosMensualesCiclo(
         conceptoId: conceptoId,
         monto: monto,
         fechaVencimiento: new Date(`${anio}-${mes}-10`), // Vence el 10 de cada mes
-        estado: 'Pendiente',
+        estado: 'Pendiente' as EstadoCuota,
         cicloId: cicloId,
       });
     }
@@ -182,7 +183,7 @@ export async function generarCargosMensualesCiclo(
 
   return db.cargo.createMany({
     data: cargosData,
-    skipDuplicates: true, // Evita crear cargos si ya existen para ese alumno y concepto (si se añade @@unique)
+    //skipDuplicates: true, // Evita crear cargos si ya existen para ese alumno y concepto (si se añade @@unique)
   });
 }
 
@@ -207,7 +208,7 @@ export async function crearCargoMasivo(
     conceptoId,
     monto,
     fechaVencimiento,
-    estado: 'Pendiente',
+    estado: 'Pendiente' as EstadoCuota,
     cicloId,
   }));
 

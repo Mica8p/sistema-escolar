@@ -1,4 +1,3 @@
-// src/app/(dashboard)/dashboard/asistencias/[id]/page.tsx
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getCicloActual } from "@/lib/ciclo-session";
@@ -8,7 +7,6 @@ import { ArrowLeft, UserCircle } from "lucide-react";
 import Link from "next/link";
 import db from "@/lib/db";
 
-// 1. En Next.js 15, params es una Promise
 export default async function DetalleAsistenciaPage({
   params
 }: {
@@ -17,17 +15,14 @@ export default async function DetalleAsistenciaPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  // 2. Esperamos los params antes de usarlos
   const resolvedParams = await params;
   const idAlumno = parseInt(resolvedParams.id);
   const idCiclo = await getCicloActual();
 
-  // 3. Validación de seguridad para el ID
   if (isNaN(idAlumno)) {
     redirect("/dashboard");
   }
 
-  // 4. Obtenemos datos del alumno para el header
   const alumno = await db.alumno.findUnique({
     where: { idAlumno },
     include: { persona: true }
@@ -39,7 +34,6 @@ export default async function DetalleAsistenciaPage({
 
   return (
     <div className="p-8 bg-slate-100 min-h-screen space-y-8">
-      {/* Header de Navegación */}
       <div className="flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors font-bold text-sm">
           <ArrowLeft size={18} /> Volver al panel familiar
@@ -60,7 +54,6 @@ export default async function DetalleAsistenciaPage({
           </p>
         </div>
 
-        {/* Componente de Calendario Agrupado */}
         <CalendarioAsistencia asistencias={asistencias} />
       </div>
     </div>

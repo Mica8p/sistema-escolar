@@ -9,6 +9,7 @@ import { getContadorNoLeidos } from "@/service/comunicado.service";
 import CardAsistenciaHijo from "@/components/modules/padres/CardAsistenciaHijo";
 import SeccionCalificaciones from "@/components/modules/padres/SeccionCalificaciones";
 import { getDashboardAdminData } from "@/service/admin-dashboard.service";
+import { getDetalleCuenta } from "@/service/finanzas.service";
 
 import {
   Sparkles,
@@ -30,6 +31,7 @@ import {
 } from "@/service/profesor-dashboard.service";
 import { getHorariosPorCurso } from "@/service/horario.service";
 import GrillaSemanal from "@/components/modules/horarios/GrillaSemanal";
+import db from "@/lib/db";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -43,10 +45,11 @@ export default async function DashboardPage() {
   const esPadre = roles.includes("PADRE");
   const esAdmin = roles.includes("ADMIN");
 
-  const adminData = esAdmin ? await getDashboardAdminData() : null;
+   const idCiclo = await getCicloActual();
+  const adminData = esAdmin ? await getDashboardAdminData(idCiclo) : null;
   const idProfesor = session.user.idProfesor ?? null;
 
-  const idCiclo = await getCicloActual();
+
 
 
   /**
@@ -55,25 +58,70 @@ export default async function DashboardPage() {
    * ==========================
    */
   const rolPrincipal = roles[0] || "USUARIO";
-  const noLeidos = idUsuario ? await getContadorNoLeidos(idUsuario, rolPrincipal) : 0;
+  let idsCursosHijos: number[] = [];
 
+  if (esPadre && idPersona) {
+  const relaciones = await db.alumnoPadre.findMany({
+    where: { idPadre: (session.user as any).idPadre },
+    include: {
+      alumno: {
+        include: {
+          matriculas: {
+            where: { estadoAcademico: "Activo" },
+            select: { idCurso: true }
+          }
+        }
+      }
+    }
+  });
+  idsCursosHijos = relaciones.flatMap(r => r.alumno.matriculas.map(m => m.idCurso));
+}
+
+
+const noLeidos = idUsuario
+  ? await getContadorNoLeidos(idUsuario, rolPrincipal, idsCursosHijos)
+  : 0;
 
   /**
    * ==========================
    * DATA PADRE (solo si corresponde)
    * ==========================
    */
-  let hijosData: any[] = [];
-  if (esPadre && idPersona && idCiclo) {
-    const rawHijos = await getHijosConAsistenciaCompleta(idPersona, idCiclo);
-    hijosData = await Promise.all(
-      rawHijos.map(async (hijo: any) => {
-        const notas = await getCalificacionesHijo(hijo.idAlumno, idCiclo);
-        const horarios = await getHorariosPorCurso(hijo.idCurso, idCiclo);
-        return { ...hijo, notas, horarios };
-      })
-    );
-  }
+
+
+let hijosData: any[] = [];
+let totalDeudaFamilia = 0;
+
+
+if (esPadre && idPersona && idCiclo) {
+  const rawHijos = await getHijosConAsistenciaCompleta(idPersona, idCiclo);
+
+  hijosData = await Promise.all(
+    rawHijos.map(async (hijo: any) => {
+      const matricula = await db.matricula.findFirst({
+        where: {
+          idAlumno: hijo.idAlumno,
+          idCiclo: idCiclo
+        },
+        select: { idCurso: true }
+      });
+
+      const idCursoReal = matricula?.idCurso;
+
+      const [notas, horarios, cuenta] = await Promise.all([
+        getCalificacionesHijo(hijo.idAlumno, idCiclo),
+        idCursoReal ? getHorariosPorCurso(idCursoReal, idCiclo) : [],
+        getDetalleCuenta(hijo.idAlumno) // ✅ FALTABA ESTA LÍNEA AQUÍ
+      ]);
+
+      const deudaHijo = cuenta.cargos.reduce((acc: number, cargo: any) => acc + (cargo.saldo || 0), 0);
+
+      totalDeudaFamilia += deudaHijo;
+
+      return { ...hijo, notas, horarios, deudaHijo, cuenta };
+    })
+  );
+}
 
   /**
    * ==========================
@@ -327,15 +375,28 @@ export default async function DashboardPage() {
                   />
                 </div>
 
-                <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white flex flex-col justify-center">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
-                    Cuota Febrero 2026
-                  </p>
-                  <div className="flex justify-between items-end">
-                    <span className="text-2xl font-black text-emerald-400">Al día</span>
-                    <Wallet className="text-slate-700" size={32} />
+                <Link href="/dashboard/finanzas" className="group">
+                  <div className={`p-8 rounded-[2.5rem] text-white flex flex-col justify-center transition-all h-full ${
+                    totalDeudaFamilia > 0
+                    ? 'bg-rose-600 shadow-lg shadow-rose-100 hover:bg-rose-700'
+                    : 'bg-slate-900 hover:bg-slate-800'
+                  }`}>
+                    <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-2">
+                      Estado de Cuenta Familiar
+                    </p>
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <span className="text-2xl font-black block">
+                          {totalDeudaFamilia > 0 ? `-$${totalDeudaFamilia.toLocaleString()}` : 'Al día'}
+                        </span>
+                        <span className="text-[10px] font-medium opacity-70 italic">
+                          {totalDeudaFamilia > 0 ? 'Tienes pagos pendientes' : 'Sin deudas registradas'}
+                        </span>
+                      </div>
+                      <Wallet className={totalDeudaFamilia > 0 ? 'text-white/40' : 'text-slate-700'} size={32} />
+                    </div>
                   </div>
-                </div>
+                </Link>
               </div>
 
               {/* LISTADO DE HIJOS */}
@@ -374,7 +435,7 @@ export default async function DashboardPage() {
                           </h3>
                         </div>
 
-                          <div className="w-full overflow-hidden rounded-2xl border border-slate-50 min-h-[300px]">
+                          <div className="w-full overflow-hidden rounded-2xl border border-slate-50 min-h-[300px">
                             <div className="overflow-x-auto custom-scrollbar">
                               {hijo.horarios && hijo.horarios.length > 0 ? (
                                 <div className="w-full">
@@ -389,6 +450,7 @@ export default async function DashboardPage() {
                               )}
                             </div>
                           </div>
+
                         </div>
                       </div>
                   </div>

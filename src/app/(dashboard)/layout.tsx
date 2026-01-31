@@ -1,10 +1,10 @@
-// src/app/(dashboard)/layout.tsx
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Sidebar from "@/components/shared/Sidebar";
 import Header from "@/components/shared/Header";
 import FirstLoginModal from "./FirstLoginModal";
-import { getContadorNoLeidos } from "@/service/comunicado.service"; // ✅ Importamos el servicio
+import { getContadorNoLeidos } from "@/service/comunicado.service";
+import db from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -16,14 +16,35 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const roles = (session.user as any).roles || [];
   const idUsuario = (session.user as any).idUsuario;
+  const idPadre = (session.user as any).idPadre;
   const shouldForceChange = (session.user as any).isDefaultPassword;
 
+  const rolPrincipal = roles[0] || "USUARIO";
+  let idsCursosHijos: number[] = [];
 
-  const noLeidos = idUsuario ? await getContadorNoLeidos(idUsuario, roles[0]) : 0;
+  if (roles.includes("PADRE") && idPadre) {
+    const relaciones = await db.alumnoPadre.findMany({
+      where: { idPadre: idPadre },
+      include: {
+        alumno: {
+          include: {
+            matriculas: {
+              where: { estadoAcademico: "Activo" },
+              select: { idCurso: true }
+            }
+          }
+        }
+      }
+    });
+    idsCursosHijos = relaciones.flatMap(r => r.alumno.matriculas.map(m => m.idCurso));
+  }
+
+  const noLeidos = idUsuario
+    ? await getContadorNoLeidos(idUsuario, rolPrincipal, idsCursosHijos)
+    : 0;
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      {/* 🚀 Pasamos el contador al Sidebar */}
       <Sidebar userRoles={roles} noLeidos={noLeidos} />
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden">

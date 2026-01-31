@@ -47,16 +47,23 @@ export async function getComunicadosRecibidos(idUsuario: number, rol: string, id
   });
 }
 
-export async function getContadorNoLeidos(idUsuario: number, rol: string) {
+export async function getContadorNoLeidos(idUsuario: number, rol: string, idsCursos: number[] = []) {
   if (!idUsuario) return 0;
 
   return await db.comunicado.count({
     where: {
+      NOT: { idUsuario },
       AND: [
         {
           OR: [
             { target: "TODOS" },
             { target: rol === "PADRE" ? "PADRES" : "DOCENTES" },
+            {
+              AND: [
+                { idTarget: { in: idsCursos } },
+                { target: { in: ["CURSO", rol === "PADRE" ? "CURSO_PADRES" : "CURSO_DOCENTES"] } }
+              ]
+            }
           ]
         },
         {

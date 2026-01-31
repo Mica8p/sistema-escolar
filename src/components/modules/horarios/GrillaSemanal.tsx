@@ -9,7 +9,7 @@ export default function GrillaSemanal({ horarios, compact = false }: { horarios:
 
   // 🚩 Quitamos animaciones para descartar que el fade-in esté fallando
   return (
-    <div className="w-full border border-slate-200 rounded-[2rem] bg-white shadow-sm overflow-hidden">
+    <div className="w-full border border-slate-200 rounded-[2rem bg-white shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         {/* Usamos min-w-max para que la tabla siempre ocupe su espacio real */}
         <table className="min-w-full border-collapse table-fixed">
@@ -17,7 +17,7 @@ export default function GrillaSemanal({ horarios, compact = false }: { horarios:
             <tr className="bg-slate-900 text-white">
               <th className="w-24 p-4 text-[10px] font-black uppercase tracking-widest border-r border-slate-800">Bloque</th>
               {DIAS.map(dia => (
-                <th key={dia} className="p-4 text-[10px] font-black uppercase tracking-widest min-w-[150px]">
+                <th key={dia} className="p-4 text-[10px] font-black uppercase tracking-widest min-w-[150px">
                   {dia}
                 </th>
               ))}
@@ -39,6 +39,9 @@ export default function GrillaSemanal({ horarios, compact = false }: { horarios:
                         <div className="h-full bg-indigo-50 border border-indigo-100 rounded-2xl p-3 flex flex-col justify-between shadow-sm">
                           <p className="text-[10px] font-black text-indigo-700 uppercase leading-tight">
                             {item.asignacion.materia.nombre}
+                          </p>
+                          <p className="text-[9px] font-bold text-indigo-300 uppercase">
+                            Prof. {item.asignacion.profesor?.persona?.apellido || "Sin asignar"}
                           </p>
                           <div className="flex items-center gap-1 text-[8px] font-bold text-indigo-400 uppercase mt-auto">
                             <MapPin size={10} /> {item.aula || "S/A"}
