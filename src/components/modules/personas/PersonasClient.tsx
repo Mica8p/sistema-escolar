@@ -117,15 +117,17 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
           </thead>
           <tbody className="divide-y divide-slate-100">
             {paginatedPersonas.map((p) => {
+              const isEnrolled = p.alumno?.matriculas?.length > 0;
               const isAlumno = p.usuario?.roles.some((r) => r.rol.nombre === "ALUMNO");
+
               return (
               <tr key={p.idPersona} className="hover:bg-slate-50 transition-colors">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <span className="font-medium text-slate-900">{p.apellido}, {p.nombre}</span>
-                    {isAlumno ? (
+                    {isEnrolled ? (
                       <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold border border-indigo-200">Estudiante</span>
-                    ) : p.usuario?.estado ? (
+                    ) : isAlumno ? null : p.usuario?.estado ? (
                       <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold border border-emerald-200">Activo</span>
                     ) : (
                       <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200">Inactivo</span>

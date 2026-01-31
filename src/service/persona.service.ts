@@ -6,8 +6,42 @@ export type { PersonaWithRelations };
 
 export const PersonaService = {
   // Obtener todas las personas con sus usuarios y roles
-  async getAll() {
+  async getAll(rol?: string, idCiclo?: number) {
+    const conditions: any[] = [];
+
+    if (rol) {
+      if (rol === "ALUMNO") {
+        conditions.push({
+          OR: [
+            { alumno: { isNot: null } },
+            { usuario: { roles: { some: { rol: { nombre: rol } } } } },
+          ],
+        });
+      } else if (rol === "DOCENTE") {
+        conditions.push({
+          OR: [
+            { profesor: { isNot: null } },
+            { usuario: { roles: { some: { rol: { nombre: rol } } } } },
+          ],
+        });
+      } else if (rol === "PADRE") {
+        conditions.push({
+          OR: [
+            { padre: { isNot: null } },
+            { usuario: { roles: { some: { rol: { nombre: rol } } } } },
+          ],
+        });
+      } else {
+        conditions.push({
+          usuario: { roles: { some: { rol: { nombre: rol } } } },
+        });
+      }
+    }
+
+    const where = conditions.length > 0 ? { AND: conditions } : {};
+
     return await db.persona.findMany({
+      where,
       include: {
         usuario: {
           include: {
@@ -16,6 +50,13 @@ export const PersonaService = {
             },
           },
         },
+        alumno: {
+          include: {
+            matriculas: idCiclo ? { where: { idCiclo } } : true,
+          },
+        },
+        profesor: true,
+        padre: true,
       },
       orderBy: { apellido: "asc" },
     });

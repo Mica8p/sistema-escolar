@@ -62,7 +62,10 @@ export async function changePasswordAction(prevState: any, formData: FormData) {
 
     await db.usuario.update({
       where: { idUsuario: Number(session.user.idUsuario) },
-      data: { passwordHash },
+      data: { 
+        passwordHash,
+        defaultPassword: false 
+      },
     });
 
     return { success: true, message: "Contraseña actualizada correctamente." };

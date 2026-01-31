@@ -161,4 +161,30 @@ export const AlumnoService = {
       data: { estadoAcademico: nuevoEstado }
     });
   },
+
+  async updateMatriculaCurso(idMatricula: number, idCurso: number) {
+    return await db.matricula.update({
+        where: { idMatricula },
+        data: { idCurso: idCurso }
+    });
+  },
+
+  async deleteMatricula(idMatricula: number) {
+    const matricula = await db.matricula.findUnique({
+      where: { idMatricula },
+      include: { notas: true },
+    });
+
+    if (!matricula) {
+      throw new Error('La matrícula no existe');
+    }
+
+    if (matricula.notas.length > 0) {
+      throw new Error('No se puede eliminar la matrícula porque tiene notas cargadas.');
+    }
+
+    return db.matricula.delete({
+      where: { idMatricula },
+    });
+  },
 };

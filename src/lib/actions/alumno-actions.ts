@@ -102,3 +102,30 @@ export async function cambiarEstadoMatriculaAction(idMatricula: number, nuevoEst
     };
   }
 }
+
+export async function updateMatriculaCursoAction(idMatricula: number, idCurso: number, path: string) {
+  try {
+    await AlumnoService.updateMatriculaCurso(idMatricula, idCurso);
+    revalidatePath(path);
+    return {
+      success: true,
+      message: "Curso actualizado correctamente."
+    };
+  } catch (error) {
+    console.error("Error al actualizar curso:", error);
+    return {
+      success: false,
+      message: "Error al actualizar el curso."
+    };
+  }
+}
+
+export async function deleteMatriculaAction(idMatricula: number) {
+  try {
+    await AlumnoService.deleteMatricula(idMatricula);
+    revalidatePath("/dashboard/alumnos");
+    return { success: true, message: "Inscripción eliminada correctamente." };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
