@@ -3,6 +3,7 @@ import { GraduationCap } from "lucide-react";
 import { getCicloActual } from "@/lib/ciclo-session";
 import { CicloService } from "@/service/ciclo.service";
 import { InscripcionForm } from "@/components/modules/alumnos/InscripcionForm";
+import DeleteMatriculaButton from "@/components/modules/alumnos/DeleteMatriculaButton";
 import Link from "next/link";
 
 export default async function AlumnosPage() {
@@ -81,10 +82,16 @@ export default async function AlumnosPage() {
                           <span className="text-red-500 text-xs italic">Sin matrícula</span>
                         )}
                       </td>
-                      <td className="p-4 text-center">
+                      <td className="p-4 text-center space-x-2">
                         <Link href={`/dashboard/alumnos/${alumno.idAlumno}`} className="text-blue-500 hover:text-blue-700 text-xs font-bold">
                           Ver Perfil
                         </Link>
+                        {matriculaActual && (
+                          <>
+                            <span className="text-gray-300">|</span>
+                            <DeleteMatriculaButton idMatricula={matriculaActual.idMatricula} />
+                          </>
+                        )}
                       </td>
                     </tr>
                   )

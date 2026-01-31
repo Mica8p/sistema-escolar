@@ -41,7 +41,7 @@ export async function createMovimientoStock(formData: FormData) {
   if (!idUsuario) return { success: false, message: "Usuario inválido." };
 
   const idInsumo = toInt(formData.get("idInsumo"));
-  const tipo = normalizeText(formData.get("tipo")); // Entrada | Salida | Ajuste
+  const tipo = normalizeText(formData.get("tipo"));
   const cantidadRaw = toInt(formData.get("cantidad"));
   const ajusteSign = normalizeText(formData.get("ajusteSign"));
 
@@ -49,7 +49,6 @@ export async function createMovimientoStock(formData: FormData) {
   if (!["Entrada", "Salida", "Ajuste"].includes(tipo)) {
     return { success: false, message: "Tipo de movimiento inválido." };
   }
-
   if (cantidadRaw <= 0) {
     return { success: false, message: "La cantidad debe ser mayor a 0." };
   }
@@ -72,75 +71,76 @@ export async function createMovimientoStock(formData: FormData) {
   const concepto = normalizeText(formData.get("concepto"));
   const categoria = normalizeText(formData.get("categoria"));
 
-  const result = await db.$transaction(async (tx) => {
-    const insumo = await tx.inventario.findUnique({
-      where: { idInsumo },
-      select: { stockActual: true },
-    });
-
-    if (!insumo) {
-      return { ok: false, message: "El insumo no existe." };
+  // Validaciones del gasto 
+  if (tipo === "Entrada" && crearGasto) {
+    if (!Number.isFinite(monto) || monto <= 0) {
+      return { success: false, message: "El monto del gasto debe ser mayor a 0." };
     }
-
-    const nuevoStock = insumo.stockActual + delta;
-    if (nuevoStock < 0) {
-      return {
-        ok: false,
-        message: `Stock insuficiente. Stock actual: ${insumo.stockActual}.`,
-      };
+    if (!concepto) {
+      return { success: false, message: "El concepto del gasto es obligatorio." };
     }
-
-    await tx.inventario.update({
-      where: { idInsumo },
-      data: { stockActual: nuevoStock },
-    });
-
-    const mov = await tx.movimientoStock.create({
-      data: {
-        idInsumo,
-        idUsuario,
-        tipo: tipo as any,
-        cantidad: delta,
-        fecha: new Date(),
-      },
-    });
-
-    // Vincular gasto SOLO para Entrada
-    if (tipo === "Entrada" && crearGasto) {
-      if (!Number.isFinite(monto) || monto <= 0) {
-        return { ok: false, message: "El monto del gasto debe ser mayor a 0." };
-      }
-      if (!concepto) {
-        return { ok: false, message: "El concepto del gasto es obligatorio." };
-      }
-
-      const categoriasValidas = ["Mantenimiento", "Servicios", "Insumos", "Sueldos"];
-      if (!categoriasValidas.includes(categoria)) {
-        return { ok: false, message: "Categoría de gasto inválida." };
-      }
-
-      await tx.gastoInstitucional.create({
-        data: {
-          idUsuario,
-          monto,
-          fecha: new Date(),
-          concepto,
-          categoria: categoria as any,
-          idMovimiento: mov.idMovimiento,
-        },
-      });
+    const categoriasValidas = ["Mantenimiento", "Servicios", "Insumos", "Sueldos"];
+    if (!categoriasValidas.includes(categoria)) {
+      return { success: false, message: "Categoría de gasto inválida." };
     }
-
-    return {
-      ok: true,
-      message: `Movimiento registrado. Nuevo stock: ${nuevoStock}.`,
-    };
-  });
-
-  if (!result.ok) {
-    return { success: false, message: result.message };
   }
 
-  revalidatePath("/dashboard/inventario");
-  return { success: true, message: result.message };
+  try {
+    const result = await db.$transaction(async (tx) => {
+      const insumo = await tx.inventario.findUnique({
+        where: { idInsumo },
+        select: { stockActual: true },
+      });
+
+      if (!insumo) {
+        throw new Error("El insumo no existe.");
+      }
+
+      const nuevoStock = insumo.stockActual + delta;
+      if (nuevoStock < 0) {
+        throw new Error(`Stock insuficiente. Stock actual: ${insumo.stockActual}.`);
+      }
+
+      await tx.inventario.update({
+        where: { idInsumo },
+        data: { stockActual: nuevoStock },
+      });
+
+      const mov = await tx.movimientoStock.create({
+        data: {
+          idInsumo,
+          idUsuario,
+          tipo: tipo as any,
+          cantidad: delta,
+          fecha: new Date(),
+        },
+      });
+
+      // Vincular gasto SOLO para Entrada
+      if (tipo === "Entrada" && crearGasto) {
+        await tx.gastoInstitucional.create({
+          data: {
+            idUsuario,
+            monto,
+            fecha: new Date(),
+            concepto,
+            categoria: categoria as any,
+            idMovimiento: mov.idMovimiento,
+          },
+        });
+      }
+
+      return {
+        nuevoStock,
+      };
+    });
+
+    revalidatePath("/dashboard/inventario");
+    return {
+      success: true,
+      message: `Movimiento registrado. Nuevo stock: ${result.nuevoStock}.`,
+    };
+  } catch (err: any) {
+    return { success: false, message: err?.message || "Error inesperado." };
+  }
 }

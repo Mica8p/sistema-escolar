@@ -10,6 +10,11 @@ const personaWithRelations = Prisma.validator<Prisma.PersonaDefaultArgs>()({
         },
       },
     },
+    alumno: {
+      include: {
+        matriculas: true,
+      },
+    },
   },
 });
 

@@ -5,15 +5,6 @@ export const ProfesorService = {
   // 1. Obtener profesores e incluir SOLO las asignaciones que están ACTIVAS
 async getAll(idCiclo: number) { // <--- Agregamos idCiclo como parámetro
     return await db.profesor.findMany({
-      where: {
-        // Solo profesores que tienen asignaciones ACTIVAS en EL AÑO SELECCIONADO
-        asignaciones: {
-          some: {
-            estado: true,
-            idCiclo: idCiclo // <--- FILTRO DE SEGURIDAD 1
-          }
-        }
-      },
       include: {
         persona: true,
         asignaciones: {
