@@ -1,56 +1,93 @@
 "use client";
+
 import { useState } from "react";
-import { Copy, Loader2, AlertTriangle } from "lucide-react";
-import { clonarAsignaciones } from "@/lib/actions/asignacion-actions";
+import { Copy, Loader2, CheckCircle2, AlertTriangle, X, Sparkles, CalendarDays } from "lucide-react";
+import { clonarAsignacionesYHorarios } from "@/lib/actions/asignacion-actions";
 import { useRouter } from "next/navigation";
 
 interface Props {
   cicloActualId: number;
   cicloAnteriorId: number | null;
   anioAnterior: number | null;
+  yaTieneDatos: boolean;
 }
 
-export function ImportarAsignaciones({ cicloActualId, cicloAnteriorId, anioAnterior }: Props) {
+export function ImportarAsignaciones({ cicloActualId, cicloAnteriorId, anioAnterior, yaTieneDatos }: Props) {
   const [loading, setLoading] = useState(false);
+  const [confirmMode, setConfirmMode] = useState(false);
+  const [lastResult, setLastResult] = useState<{count: number; horariosCount?: number} | null>(null);
   const router = useRouter();
 
   if (!cicloAnteriorId) return null;
 
-const handleClonar = async () => {
-  if (!confirm(`¿Estás seguro de copiar todas las materias y profes del ciclo ${anioAnterior}?`)) return;
+  const handleClonar = async () => {
+    setLoading(true);
+    const res = await clonarAsignacionesYHorarios(cicloAnteriorId, cicloActualId);
+    setLoading(false);
+    setConfirmMode(false);
 
-  setLoading(true);
-  const res = await clonarAsignaciones(cicloAnteriorId, cicloActualId);
-  setLoading(false);
+    if ("success" in res && res.success) {
+      setLastResult({ count: res.count, horariosCount: res.horariosCount });
 
-  // Usamos "success" in res para que TypeScript sepa qué objeto es
-  if ("success" in res && res.success) {
-    alert("¡Datos importados con éxito!");
-    router.refresh();
-  } else if ("error" in res) {
-    alert(res.error);
-  }
-};
+      alert(`¡Éxito total! Se importaron ${res.count} profesores y ${res.horariosCount} horarios completos.`);
+
+      router.refresh();
+      setTimeout(() => setLastResult(null), 5000);
+    } else if ("error" in res) {
+      alert(res.error);
+    }
+  };
+
+  const isAllSynced = lastResult?.count === 0;
+  const bgColor = isAllSynced ? "bg-emerald-50 border-emerald-200" : (yaTieneDatos ? "bg-indigo-50 border-indigo-200" : "bg-amber-50 border-amber-200");
+  const iconColor = isAllSynced ? "text-emerald-600" : (yaTieneDatos ? "text-indigo-600" : "text-amber-600");
 
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+    <div className={`border rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 mb-8 transition-all duration-500 ${bgColor}`}>
       <div className="flex items-center gap-4">
-        <div className="p-3 bg-amber-100 rounded-full">
-          <AlertTriangle className="text-amber-600 w-6 h-6" />
+        <div className={`p-3 rounded-full ${isAllSynced ? 'bg-emerald-100' : (yaTieneDatos ? 'bg-indigo-100' : 'bg-amber-100')}`}>
+          {isAllSynced ? <Sparkles className={iconColor} /> : <CalendarDays className={iconColor} />}
         </div>
         <div>
-          <h3 className="text-amber-900 font-bold">Ciclo sin asignaciones</h3>
-          <p className="text-amber-700 text-sm">Este año académico aún no tiene docentes vinculados a materias.</p>
+          <h3 className={`font-black uppercase text-xs tracking-widest ${isAllSynced ? 'text-emerald-900' : (yaTieneDatos ? 'text-indigo-900' : 'text-amber-900')}`}>
+            {isAllSynced ? "¡Horarios al día!" : "Importación de Estructura"}
+          </h3>
+          <p className="text-slate-500 text-sm italic">
+            {isAllSynced
+              ? "Los profesores y sus horarios coinciden con el ciclo anterior."
+              : `Copiando profesores, materias y horarios del ciclo ${anioAnterior}.`}
+          </p>
         </div>
       </div>
-      <button
-        onClick={handleClonar}
-        disabled={loading}
-        className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-xl font-bold transition-all disabled:opacity-50"
-      >
-        {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <Copy className="w-4 h-4" />}
-        Importar del {anioAnterior}
-      </button>
+
+      {!confirmMode ? (
+        <button
+          onClick={() => setConfirmMode(true)}
+          disabled={isAllSynced}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-sm active:scale-95 ${
+            isAllSynced
+              ? "bg-emerald-100 text-emerald-600 cursor-default"
+              : (yaTieneDatos ? "bg-indigo-600 hover:bg-indigo-700 text-white" : "bg-amber-600 hover:bg-amber-700 text-white")
+          }`}
+        >
+          {isAllSynced ? <CheckCircle2 size={16} /> : <Copy size={16} />}
+          {isAllSynced ? "Sincronizado" : (yaTieneDatos ? "Sincronizar todo" : `Importar del ${anioAnterior}`)}
+        </button>
+      ) : (
+        <div className="flex items-center gap-2 animate-in fade-in zoom-in duration-300">
+          <button
+            onClick={handleClonar}
+            disabled={loading}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-100"
+          >
+            {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <CheckCircle2 size={16} />}
+            Confirmar e Importar
+          </button>
+          <button onClick={() => setConfirmMode(false)} className="p-3 text-slate-400 hover:text-rose-600">
+            <X size={20} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
