@@ -118,7 +118,7 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
           <tbody className="divide-y divide-slate-100">
             {paginatedPersonas.map((p) => {
               const isEnrolled = p.alumno?.matriculas?.length > 0;
-              const isAlumno = p.usuario?.roles.some((r) => r.rol.nombre === "ALUMNO");
+              const isAlumno = p.alumno !== null || p.usuario?.roles.some(r => r.rol.nombre.toLowerCase() === 'alumno');
 
               return (
               <tr key={p.idPersona} className="hover:bg-slate-50 transition-colors">
@@ -172,7 +172,7 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
                     Editar
                   </Link>
 
-                  <DeletePersonaButton idPersona={p.idPersona} />
+                  {!isAlumno && <DeletePersonaButton idPersona={p.idPersona} />}
                 </td>
               </tr>
             );

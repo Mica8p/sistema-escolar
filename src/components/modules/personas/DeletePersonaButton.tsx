@@ -17,7 +17,7 @@ export default function DeletePersonaButton({ idPersona }: { idPersona: number }
         type="submit"
         className="text-red-600 hover:text-red-800 text-sm font-medium transition-colors"
       >
-        Eliminar
+        Inhabilitar
       </button>
     </form>
   );
