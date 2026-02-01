@@ -8,11 +8,13 @@ export default function ReporteDeudoresTable({ deudores }: { deudores: any[] }) 
   const tableRef = useRef<HTMLDivElement>(null);
 
   const enviarRecordatorio = (alumno: any) => {
-    const telefono = alumno.telefono?.replace(/\D/g, ""); // Limpiamos el número
-    if (!telefono) return alert("Este alumno no tiene un teléfono registrado.");
+    const telefono = alumno.telefonoPadre?.replace(/\D/g, "");
+if (!telefono) {
+      return alert(`No hay un teléfono registrado para el padre/tutor de ${alumno.nombre}.`);
+    }
 
     const mensaje = encodeURIComponent(
-      `Hola! Le informamos desde *Escuela Pro 2026* que el alumno *${alumno.apellido}, ${alumno.nombre}* presenta una deuda pendiente de *$${alumno.deudaTotal.toLocaleString()}*. Por favor, solicitamos regularizar el pago. Saludos!`
+      `Estimado/a *${alumno.nombrePadre}*, le informamos desde *Escuela Pro 2026* que el alumno *${alumno.apellido}, ${alumno.nombre}* presenta una deuda pendiente de *${alumno.deudaFormateada}*. Por favor, solicitamos regularizar el pago. Saludos!`
     );
 
     window.open(`https://wa.me/${telefono}?text=${mensaje}`, "_blank");

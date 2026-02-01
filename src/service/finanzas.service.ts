@@ -19,6 +19,13 @@ export async function getAlumnosConEstadoDeCuenta(): Promise<AlumnoConDeuda[]> {
   const alumnos = await db.alumno.findMany({
     include: {
       persona: true,
+      padres: {
+        include: {
+          padre: {
+            include: { persona: true }
+          }
+        }
+      },
       cargos: {
         where: {
           estado: {
@@ -57,6 +64,10 @@ export async function getAlumnosConEstadoDeCuenta(): Promise<AlumnoConDeuda[]> {
       ? `${matricula.curso.grado} '${matricula.curso.seccion}'`
       : "Sin curso asignado";
 
+    const relacionPadre = alumno.padres[0];
+    const telefonoPadre = relacionPadre?.padre.persona.telefono || "";
+    const nombrePadre = relacionPadre?.padre.persona.nombre || "Tutor";
+
     return {
       id: alumno.idAlumno,
       nombre: alumno.persona.nombre,
@@ -66,6 +77,8 @@ export async function getAlumnosConEstadoDeCuenta(): Promise<AlumnoConDeuda[]> {
       curso: cursoActual,
       deudaTotal: deudaTotal,
       estado: deudaTotal > 0 ? "Con Deuda" : "Al día",
+      telefonoPadre: telefonoPadre,
+      nombrePadre: nombrePadre,
     };
   });
 
