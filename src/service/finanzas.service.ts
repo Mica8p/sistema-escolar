@@ -5,7 +5,6 @@ import { MetodoPago, EstadoCuota } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 
-// Tipado para el resultado que esperamos
 export type AlumnoConDeuda = {
   id: number;
   nombre: string;
@@ -16,10 +15,6 @@ export type AlumnoConDeuda = {
   estado: "Al día" | "Con Deuda";
 };
 
-/**
- * Obtiene todos los alumnos y calcula su deuda total.
- * La deuda se calcula sumando los saldos de todos los cargos pendientes o pagados parcialmente.
- */
 export async function getAlumnosConEstadoDeCuenta(): Promise<AlumnoConDeuda[]> {
   const alumnos = await db.alumno.findMany({
     include: {
@@ -37,7 +32,7 @@ export async function getAlumnosConEstadoDeCuenta(): Promise<AlumnoConDeuda[]> {
       matriculas: {
         where: {
           ciclo: {
-            estado: true, // Solo matricula del ciclo activo
+            estado: true,
           },
         },
         include: {
@@ -67,6 +62,7 @@ export async function getAlumnosConEstadoDeCuenta(): Promise<AlumnoConDeuda[]> {
       nombre: alumno.persona.nombre,
       apellido: alumno.persona.apellido,
       legajo: alumno.legajo,
+      telefono: alumno.persona.telefono,
       curso: cursoActual,
       deudaTotal: deudaTotal,
       estado: deudaTotal > 0 ? "Con Deuda" : "Al día",
@@ -127,7 +123,6 @@ export async function getDetalleCuenta(alumnoId: number) {
     throw new Error("Alumno no encontrado");
   }
 
-  // Lógica para calcular el saldo de cada cargo
   const cargosConSaldo = alumno.cargos.map((cargo) => {
     const totalPagadoParaCargo = cargo.pagoDetalles.reduce(
       (acc, detalle) => acc + detalle.monto,
@@ -183,14 +178,9 @@ export async function generarCargosMensualesCiclo(
 
   return db.cargo.createMany({
     data: cargosData,
-    //skipDuplicates: true, // Evita crear cargos si ya existen para ese alumno y concepto (si se añade @@unique)
   });
 }
 
-/**
- * Crea un cargo (deuda) para TODOS los alumnos activos del ciclo actual.
- * Útil para generar la "Cuota de Marzo" para todo el colegio de una sola vez.
- */
 export async function crearCargoMasivo(
   cicloId: number,
   conceptoId: number,
@@ -217,7 +207,6 @@ export async function crearCargoMasivo(
   });
 }
 
-// Tipado para los datos del formulario de registro de pago
 export type RegistrarPagoData = {
   alumnoId: number;
   usuarioId: number;
@@ -247,9 +236,7 @@ export async function registrarPago(data: RegistrarPagoData) {
       },
     });
 
-    // 2. Crear los detalles del pago y actualizar los cargos
     for (const item of data.cargosAPagar) {
-      // 2a. Crear el registro en la tabla intermedia PagoDetalle
       await tx.pagoDetalle.create({
         data: {
           pagoId: pago.id,
@@ -258,7 +245,6 @@ export async function registrarPago(data: RegistrarPagoData) {
         },
       });
 
-      // 2b. Actualizar el estado del cargo
       const cargo = await tx.cargo.findUnique({
         where: { id: item.cargoId },
         include: { pagoDetalles: true },
@@ -268,7 +254,6 @@ export async function registrarPago(data: RegistrarPagoData) {
         throw new Error(`El cargo con ID ${item.cargoId} no existe.`);
       }
 
-      // Se suma el pago actual al total ya pagado por otros pagos.
       const totalPagado = cargo.pagoDetalles.reduce((acc, det) => acc + det.monto, 0) + item.monto;
 
       let nuevoEstado = cargo.estado;
@@ -290,10 +275,6 @@ export async function registrarPago(data: RegistrarPagoData) {
   });
 }
 
-/**
- * Crea un cargo (deuda) manual para un alumno.
- * Útil para asignar matrículas, cuotas individuales o cargos extra desde la UI.
- */
 export async function crearCargoManual(data: {
   alumnoId: number;
   conceptoId: number;
@@ -370,7 +351,6 @@ export async function updateConceptoDePago(id: number, data: ConceptoDePagoData)
 }
 
 export async function deleteConceptoDePago(id: number) {
-  // Add check here to prevent deleting concepts that are in use
   const cargos = await db.cargo.count({ where: { conceptoId: id } });
   if (cargos > 0) {
     throw new Error("No se puede eliminar un concepto de pago que ya está en uso en cargos existentes.");

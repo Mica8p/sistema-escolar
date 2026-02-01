@@ -60,6 +60,11 @@ export const menuItems = [
     subItems: [
       { title: "Estado de Cuentas", href: "/dashboard/finanzas", roles: ["ADMIN", "PADRE"]},
       { title: "Conceptos de Pago", href: "/dashboard/finanzas/conceptos", roles: ["ADMIN"] },
+      {
+        title: "Reporte de Deudores",
+        href: "/dashboard/finanzas/reporte-deudores",
+        roles: ["ADMIN"]
+      },
     ]
   },
   {
