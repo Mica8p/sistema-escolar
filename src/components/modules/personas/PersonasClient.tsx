@@ -171,8 +171,7 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
                   >
                     Editar
                   </Link>
-
-                  {!isAlumno && <DeletePersonaButton idPersona={p.idPersona} />}
+                  <DeletePersonaButton idPersona={p.idPersona} />
                 </td>
               </tr>
             );
