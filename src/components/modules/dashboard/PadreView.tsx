@@ -11,6 +11,10 @@ import { Users, Sparkles, Wallet, Calendar } from "lucide-react";
 import Link from "next/link";
 
 export default async function PadreView({ idPersona, idUsuario, idCiclo, idPadre }: any) {
+  if (!idPadre) {
+    return <div className="p-8 text-center text-slate-500">No se encontró un perfil de padre asociado a este usuario.</div>;
+  }
+
   // Lógica de Comunicados
   const relaciones = await db.alumnoPadre.findMany({
     where: { idPadre: idPadre },

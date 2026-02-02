@@ -6,6 +6,7 @@ import Link from "next/link";
 import { UserPlus, Mail, Fingerprint, Tag, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import DeletePersonaButton from "@/components/modules/personas/DeletePersonaButton";
 import EnableAccessButton from "@/components/modules/personas/EnableAccessButton";
+import DisablePersonaButton from "@/components/modules/personas/DisablePersonaButton";
 
 interface PersonasClientProps {
   personas: PersonaWithRelations[];
@@ -158,11 +159,18 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
                 </td>
                 <td className="px-6 py-4 text-right flex justify-end gap-3">
                   {!isAlumno && (
-                    <EnableAccessButton 
-                      idPersona={p.idPersona} 
-                      dni={p.dni} 
-                      isActive={p.usuario?.estado ?? false} 
-                    />
+                    <>
+                      <EnableAccessButton 
+                        idPersona={p.idPersona} 
+                        dni={p.dni} 
+                        isActive={p.usuario?.estado ?? false} 
+                      />
+                      <DisablePersonaButton 
+                        idPersona={p.idPersona} 
+                        rol={p.usuario?.roles[0]?.rol?.nombre || ""} 
+                        disabled={!p.usuario?.estado} 
+                      />
+                    </>
                   )}
 
                   <Link

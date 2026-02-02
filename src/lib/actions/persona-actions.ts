@@ -79,6 +79,32 @@ export async function updatePersonaAction(idPersona: number, prevState: any, for
     }
 }
 
+export async function getTutoresDisponiblesAction(idAlumno: number) {
+    try {
+        const existingLinks = await db.alumnoPadre.findMany({
+            where: { idAlumno },
+            select: { idPadre: true }
+        });
+        const existingPadreIds = existingLinks.map(l => l.idPadre);
+
+        return await db.persona.findMany({
+            where: {
+                usuario: {
+                    roles: {
+                        some: { rol: { nombre: "PADRE" } }
+                    },
+                    estado: true
+                },
+                NOT: { padre: { idPadre: { in: existingPadreIds } } }
+            },
+            orderBy: { apellido: 'asc' }
+        });
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+}
+
 export async function habilitarAccesoAction(idPersona: number, dni: string) {
     try {
       const passwordHash = await bcrypt.hash(dni, 10);
@@ -96,6 +122,46 @@ export async function habilitarAccesoAction(idPersona: number, dni: string) {
       return { success: false, message: 'Error al habilitar el acceso.' };
     }
   }
+
+export async function inhabilitarAccesoAction(idPersona: number) {
+    try {
+        const persona = await db.persona.findUnique({
+            where: { idPersona },
+            include: { usuario: { include: { roles: { include: { rol: true } } } } }
+        });
+
+        if (!persona?.usuario) {
+            return { success: false, message: 'Esta persona no tiene un usuario habilitado.' };
+        }
+
+        if (!persona.usuario.estado) {
+             return { success: false, message: 'El usuario ya se encuentra inhabilitado.' };
+        }
+
+        const esAdmin = persona.usuario.roles.some(r => r.rol.nombre === 'ADMIN');
+
+        if (esAdmin) {
+            const adminsActivos = await db.usuario.count({
+                where: { estado: true, roles: { some: { rol: { nombre: 'ADMIN' } } } }
+            });
+
+            if (adminsActivos <= 1) {
+                return { success: false, message: 'No se puede inhabilitar al último administrador activo.' };
+            }
+        }
+
+        await db.usuario.update({
+            where: { idUsuario: persona.usuario.idUsuario },
+            data: { estado: false }
+        });
+
+        revalidatePath('/dashboard/personas');
+        return { success: true, message: 'Usuario inhabilitado correctamente.' };
+    } catch (error) {
+        console.error(error);
+        return { success: false, message: 'Error al inhabilitar el usuario.' };
+    }
+}
 
 export async function deletePersona(idPersona: number) {
     try {
