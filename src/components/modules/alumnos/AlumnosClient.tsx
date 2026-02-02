@@ -3,9 +3,11 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { EstadoAcademico } from "@prisma/client";
-import DeleteMatriculaButton from "@/components/modules/alumnos/DeleteMatriculaButton";
 import { cn } from "@/lib/utils";
-import { Fingerprint } from "lucide-react";
+import { Fingerprint, Settings2, GraduationCap, UserCog } from "lucide-react";
+import GenericDeleteButton from "@/components/shared/GenericDeletButton";
+import { deleteMatriculaAction } from "@/lib/actions/alumno-actions";
+
 
 const StatusBadge = ({ estado }: { estado: EstadoAcademico }) => {
     const baseClasses = "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider";
@@ -96,15 +98,28 @@ export function AlumnosClient({ alumnos }: { alumnos: any[] }) {
                         {matriculaActual && <StatusBadge estado={matriculaActual.estadoAcademico} />}
                       </td>
                       <td className="p-4 text-center space-x-2">
-                        <Link href={`/dashboard/alumnos/${alumno.idAlumno}`} className="text-blue-500 hover:text-blue-700 text-xs font-bold">
-                          Ver Perfil
+                        <div className="flex items-center justify-center gap-3">
+                        <Link
+                          href={`/dashboard/alumnos/${alumno.idAlumno}`}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest shadow-sm"
+                          title="Abrir Expediente Académico"
+                        >
+                          <Settings2 size={14} />
+                          Expediente
                         </Link>
                         {matriculaActual && (
                           <>
-                            <span className="text-gray-300">|</span>
-                            <DeleteMatriculaButton idMatricula={matriculaActual.idMatricula} />
+                            <div className="w-px h-4 bg-slate-200" />
+                            <GenericDeleteButton
+                              id={matriculaActual.idMatricula}
+                              action={deleteMatriculaAction}
+                              title="Eliminar Matrícula"
+                              message={`Estás por eliminar la inscripción de ${alumno.persona.nombre} en este ciclo. Esto no borra al alumno del sistema, solo su matrícula actual.`}
+                              variant="danger"
+                            />
                           </>
                         )}
+                        </div>
                       </td>
                     </tr>
                   )

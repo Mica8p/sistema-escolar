@@ -6,7 +6,6 @@ import {
   createPersonaAction,
   updatePersonaAction
 } from "@/lib/actions/persona-actions";
-import DeletePersonaButton from "@/components/modules/personas/DeletePersonaButton";
 import {
     User,
     Fingerprint,
@@ -25,12 +24,10 @@ interface PersonaFormProps {
 
 export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
     const router = useRouter();
-    // 1. Estados para validación en tiempo real (Rama de Juan)
     const [nombre, setNombre] = useState(initialData?.nombre ?? "");
     const [apellido, setApellido] = useState(initialData?.apellido ?? "");
     const [dni, setDni] = useState(initialData?.dni ?? "");
 
-    // 2. Configuración de la Server Action
     const updateActionWithId = updatePersonaAction.bind(
         null,
         initialData?.idPersona
@@ -45,12 +42,10 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
     useEffect(() => {
         if (state) {
             if (state.success) {
-                // Alerta de éxito
                 alert(state.message);
                 router.push("/dashboard/personas");
                 router.refresh();
             } else if (!state.success && state.message) {
-                // Alerta de error (además del mensaje en rojo abajo)
                 alert(state.message);
             }
         }
@@ -59,7 +54,6 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
     return (
         <form action={formAction} className="space-y-6">
 
-            {/* SECCIÓN: DATOS PERSONALES */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -200,9 +194,7 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
 
             {/* BOTONES DE ACCIÓN */}
             <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-100">
-                {initialData && (
-                    <DeletePersonaButton idPersona={initialData.idPersona} />
-                )}
+
                 <button
                     type="button"
                     onClick={() => window.history.back()}

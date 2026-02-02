@@ -3,11 +3,11 @@
 import { useState, useMemo } from "react";
 import type { PersonaWithRelations } from "@/types/persona";
 import Link from "next/link";
-import { UserPlus, Mail, Fingerprint, Tag, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
-import DeletePersonaButton from "@/components/modules/personas/DeletePersonaButton";
+import { UserPlus, Mail, Fingerprint, Tag, CheckCircle2, ChevronLeft, ChevronRight, Edit3 } from "lucide-react";
 import EnableAccessButton from "@/components/modules/personas/EnableAccessButton";
 import DisablePersonaButton from "@/components/modules/personas/DisablePersonaButton";
-
+import GenericDeleteButton from "@/components/shared/GenericDeletButton";
+import { deletePersona } from "@/lib/actions/persona-actions";
 interface PersonasClientProps {
   personas: PersonaWithRelations[];
   success?: string;
@@ -67,7 +67,7 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
           <span>Nueva Persona</span>
         </Link>
       </div>
-      
+
       {/* Search Input and Filter */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
@@ -118,7 +118,7 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
           </thead>
           <tbody className="divide-y divide-slate-100">
             {paginatedPersonas.map((p) => {
-              const isEnrolled = p.alumno?.matriculas?.length > 0;
+              const isEnrolled = (p.alumno?.matriculas?.length ?? 0) > 0;
               const isAlumno = p.alumno !== null || p.usuario?.roles.some(r => r.rol.nombre.toLowerCase() === 'alumno');
 
               return (
@@ -160,26 +160,33 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
                 <td className="px-6 py-4 text-right flex justify-end gap-3">
                   {!isAlumno && (
                     <>
-                      <EnableAccessButton 
-                        idPersona={p.idPersona} 
-                        dni={p.dni} 
-                        isActive={p.usuario?.estado ?? false} 
+                      <EnableAccessButton
+                        idPersona={p.idPersona}
+                        dni={p.dni}
+                        isActive={p.usuario?.estado ?? false}
                       />
-                      <DisablePersonaButton 
-                        idPersona={p.idPersona} 
-                        rol={p.usuario?.roles[0]?.rol?.nombre || ""} 
-                        disabled={!p.usuario?.estado} 
+                      <DisablePersonaButton
+                        idPersona={p.idPersona}
+                        rol={p.usuario?.roles[0]?.rol?.nombre || ""}
+                        disabled={!p.usuario?.estado}
                       />
                     </>
                   )}
 
                   <Link
                     href={`/dashboard/personas/${p.idPersona}`}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    className="p-2 text-cyan-600 hover:text-white hover:bg-blue-400/80 rounded-xl transition-all"
+                    title="Editar información básica"
                   >
-                    Editar
+                    <Edit3 size={18} />
                   </Link>
-                  <DeletePersonaButton idPersona={p.idPersona} />
+                  <GenericDeleteButton
+                    id={p.idPersona}
+                    action={deletePersona}
+                    title="Eliminar Persona"
+                    message={`Estás por eliminar a ${p.nombre} ${p.apellido}. Esta acción es IRREVERSIBLE. Se borrarán notas, asistencias y pagos. Si solo quieres darle la baja académica, hazlo desde Inscripciones.`}
+                    variant="danger"
+                  />
                 </td>
               </tr>
             );

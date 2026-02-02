@@ -67,23 +67,18 @@ export function InscripcionForm({ personas, cursos }: InscripcionFormProps) {
         </button>
       </form>
 
-      {/* === MENSAJES DE VALIDACIÓN QUE FALTABAN === */}
-
-      {/* 1. Mensaje cuando no hay más alumnos para inscribir */}
       {personas.length === 0 && (
         <p className="text-sm text-orange-600 mt-3 font-medium animate-pulse">
           * No hay personas nuevas con rol 'ALUMNO' para inscribir. Cargá más personas primero.
         </p>
       )}
 
-      {/* 2. Mensaje por si no hay cursos (el recordatorio para Gabriel) */}
       {cursos.length === 0 && (
         <p className="text-sm text-red-600 mt-2 font-medium">
           * ¡Atención! No hay cursos cargados.
         </p>
       )}
 
-      {/* Mensajes de resultado de la acción */}
       {state?.error && <p className="text-red-500 text-sm mt-2 font-bold">{state.error}</p>}
       {state?.success && <p className="text-green-600 text-sm mt-2 font-bold italic">¡Inscripción procesada con éxito!</p>}
     </div>
