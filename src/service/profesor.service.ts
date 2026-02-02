@@ -5,6 +5,11 @@ export const ProfesorService = {
   // 1. Obtener profesores e incluir SOLO las asignaciones que están ACTIVAS
 async getAll(idCiclo: number) { // <--- Agregamos idCiclo como parámetro
     return await db.profesor.findMany({
+      where: {
+        persona: {
+          usuario: { estado: true }
+        }
+      },
       include: {
         persona: true,
         asignaciones: {
@@ -30,9 +35,12 @@ async getAll(idCiclo: number) { // <--- Agregamos idCiclo como parámetro
     return await db.persona.findMany({
       where: {
         usuario: {
+          estado: true,
           roles: { some: { rol: { nombre: "DOCENTE" } } }
-        },
-        profesor: { is: null }
+        }
+      },
+      orderBy: {
+        apellido: "asc"
       }
     });
   },
