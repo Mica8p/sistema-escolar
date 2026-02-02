@@ -106,7 +106,9 @@ export async function deletePersona(idPersona: number) {
                 include: {
                     usuario: {
                         include: {
-                            roles: true,
+                            roles: {
+                                include: { rol: true }
+                            },
                             pagosRegistrados: true,
                             asistencias: true,
                             comunicados: true,
@@ -152,6 +154,21 @@ export async function deletePersona(idPersona: number) {
 
             if (!persona) {
                 throw new Error('Persona not found');
+            }
+
+            // Verificación de seguridad: No eliminar al último ADMIN
+            const esAdmin = persona.usuario?.roles.some(r => r.rol.nombre === 'ADMIN');
+
+            if (esAdmin) {
+                const totalAdmins = await prisma.usuarioRol.count({
+                    where: {
+                        rol: { nombre: 'ADMIN' }
+                    }
+                });
+
+                if (totalAdmins <= 1) {
+                    throw new Error('No se puede eliminar al último administrador del sistema.');
+                }
             }
 
             // Step 2: Delete related Usuario data
@@ -255,8 +272,8 @@ export async function deletePersona(idPersona: number) {
         revalidatePath('/dashboard/personas');
         revalidatePath('/dashboard/alumnos');
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
-        return { success: false, message: 'Error deleting persona' };
+        return { success: false, message: error.message || 'Error al eliminar la persona' };
     }
 }
