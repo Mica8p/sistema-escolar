@@ -1,24 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { BookOpen, UserX, Pencil, Clock } from 'lucide-react';
-import FormHorario from './FormHorario';
+import { BookOpen, UserX, Pencil } from 'lucide-react';
 import { desactivarAsignacionAction } from '@/lib/actions/profesor-actions';
 
 export function AsignacionesList({ profesores }: { profesores: any[] }) {
-  const [isHorarioModalOpen, setIsHorarioModalOpen] = useState(false);
-  const [selectedAsignacion, setSelectedAsignacion] = useState<any>(null);
-
-  const openHorarioModal = (asignacion: any) => {
-    setSelectedAsignacion(asignacion);
-    setIsHorarioModalOpen(true);
-  };
-
-  const closeHorarioModal = () => {
-    setSelectedAsignacion(null);
-    setIsHorarioModalOpen(false);
-  };
-
   const profesoresConAsignacionesActivas = profesores.filter(
     (profe) => profe.asignaciones.some((asig: any) => asig.estado)
   );
@@ -55,17 +40,17 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
                 </td>
 
                 <td className='p-4'>
-                  <div className='flex flex-wrap gap-2'>
+                  <div className='grid grid-cols-1 gap-2 justify-items-start'>
                     {profe.asignaciones
                       .filter((asig: any) => asig.estado)
                       .map((asig: any) => (
-                      <span
+                      <div
                         key={asig.idAsignacion}
-                        className='inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-[11px] font-bold px-3 py-1 rounded-full border border-indigo-100'
+                        className='flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-[11px] font-bold px-3 py-1 rounded-full border border-indigo-100'
                       >
                         <BookOpen size={12} />
                         {asig.materia.nombre} ({asig.curso.grado}° {asig.curso.seccion} - {asig.curso.turno})
-                      </span>
+                      </div>
                     ))}
                   </div>
                 </td>
@@ -90,14 +75,6 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
                         >
                           <Pencil size={18} />
                         </a>
-                        <button
-                          onClick={() => openHorarioModal(asig)}
-                          className='text-teal-500 hover:text-teal-700 transition-transform hover:scale-110'
-                          title={`Gestionar Horarios de ${asig.materia.nombre}`}
-                        >
-                          <Clock size={18} />
-                        </button>
-
                         <form
                           action={async () => {
                             await desactivarAsignacionAction(
@@ -122,12 +99,6 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
           </tbody>
         </table>
       </div>
-      {isHorarioModalOpen && selectedAsignacion && (
-        <FormHorario
-          asignacion={selectedAsignacion}
-          onClose={closeHorarioModal}
-        />
-      )}
     </>
   );
 }
