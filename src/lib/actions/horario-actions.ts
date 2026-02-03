@@ -41,6 +41,12 @@ export async function createHorario(
   }
 }
 
+import { getHorariosPorCurso as getHorariosPorCursoService } from '@/service/horario.service';
+
+export async function getHorariosPorCurso(idCurso: number, idCiclo: number) {
+  return await getHorariosPorCursoService(idCurso, idCiclo);
+}
+
 export async function deleteHorario(idHorario: number) {
   try {
     await deleteHorarioService(idHorario);

@@ -19,6 +19,10 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
     setIsHorarioModalOpen(false);
   };
 
+  const profesoresConAsignacionesActivas = profesores.filter(
+    (profe) => profe.asignaciones.some((asig: any) => asig.estado)
+  );
+
   return (
     <>
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
@@ -36,7 +40,7 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
             </tr>
           </thead>
           <tbody className='divide-y divide-gray-100'>
-            {profesores.map((profe) => (
+            {profesoresConAsignacionesActivas.map((profe) => (
               <tr
                 key={profe.idProfesor}
                 className='hover:bg-gray-50/50 transition-colors'
@@ -52,7 +56,9 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
 
                 <td className='p-4'>
                   <div className='flex flex-wrap gap-2'>
-                    {profe.asignaciones.map((asig: any) => (
+                    {profe.asignaciones
+                      .filter((asig: any) => asig.estado)
+                      .map((asig: any) => (
                       <span
                         key={asig.idAsignacion}
                         className='inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-[11px] font-bold px-3 py-1 rounded-full border border-indigo-100'
@@ -66,7 +72,9 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
 
                 <td className='p-4'>
                   <div className='flex flex-col gap-2'>
-                    {profe.asignaciones.map((asig: any) => (
+                    {profe.asignaciones
+                      .filter((asig: any) => asig.estado)
+                      .map((asig: any) => (
                       <div
                         key={asig.idAsignacion}
                         className='flex items-center justify-center gap-4 py-1 border-b border-gray-50 last:border-0'

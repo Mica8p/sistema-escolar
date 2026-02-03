@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { asignarDocenteAction, editarDocenteAction, FormState } from "@/lib/actions/profesor-actions";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, X } from "lucide-react";
+import { getHorariosPorCurso, getHorarios } from "@/lib/actions/horario-actions";
+import HorarioMatrix from "./HorarioMatrix";
 
 interface Props {
   personas: any[];
@@ -17,15 +19,57 @@ const initialState: FormState = {};
 
 export default function FormAsignacion({ personas, materias, cursos, editData, idCiclo }: Props) {
   const router = useRouter();
+  const [horario, setHorario] = useState<any[]>([]);
+  const [loadingHorario, setLoadingHorario] = useState(false);
+  const [selectedCurso, setSelectedCurso] = useState<number | null>(editData?.idCurso || null);
+  const [selectedSlots, setSelectedSlots] = useState<{ dia: string, hora: string }[]>([]);
 
   // Si hay editData, usamos la acción de editar; si no, la de asignar
   const actionToUse = editData ? editarDocenteAction : asignarDocenteAction;
   const [state, formAction, isPending] = useActionState(actionToUse, initialState);
 
-  // Función para limpiar la URL y salir del modo edición
+  useEffect(() => {
+    if (editData) {
+      getHorarios(editData.idAsignacion).then(horarios => {
+        const slots = horarios.map(h => ({
+          dia: h.diaSemana,
+          hora: `${h.horaInicio} - ${h.horaFin}`
+        }));
+        setSelectedSlots(slots);
+      });
+    }
+  }, [editData]);
+
+  useEffect(() => {
+    if (selectedCurso) {
+      setLoadingHorario(true);
+      getHorariosPorCurso(selectedCurso, idCiclo)
+        .then(setHorario)
+        .finally(() => setLoadingHorario(false));
+    } else {
+      setHorario([]);
+    }
+    if (!editData) {
+      setSelectedSlots([]); // Reset slot selection when course changes
+    }
+  }, [selectedCurso, idCiclo, editData]);
+
+  const handleSlotSelect = (dia: string, hora: string) => {
+    setSelectedSlots(prev => {
+      const index = prev.findIndex(slot => slot.dia === dia && slot.hora === hora);
+      if (index > -1) {
+        return prev.filter((_, i) => i !== index);
+      } else {
+        return [...prev, { dia, hora }];
+      }
+    });
+  };
+
   const cancelarEdicion = () => {
     router.push("/dashboard/profesores");
   };
+
+  const cursoSeleccionado = cursos.find(c => c.idCurso === selectedCurso);
 
   return (
     <div className={`p-6 rounded-xl border transition-all duration-300 ${
@@ -53,6 +97,12 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
         <input type="hidden" name="idCiclo" value={idCiclo} />
         {/* Campo oculto para saber qué ID estamos editando */}
         {editData && <input type="hidden" name="idAsignacion" value={editData.idAsignacion} />}
+        {selectedSlots.map((slot, i) => (
+          <input type="hidden" name={`slots[${i}]dia`} value={slot.dia} key={`${i}-dia`} />
+        ))}
+        {selectedSlots.map((slot, i) => (
+          <input type="hidden" name={`slots[${i}]hora`} value={slot.hora} key={`${i}-hora`} />
+        ))}
 
         <div>
           <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Docente</label>
@@ -98,6 +148,7 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
             key={editData?.idCurso}
             defaultValue={editData?.idCurso || ""}
             className="w-full p-2 border rounded-md bg-white text-gray-600"
+            onChange={(e) => setSelectedCurso(Number(e.target.value))}
           >
             <option value="">Seleccionar...</option>
             {cursos.map(c => <option key={c.idCurso} value={c.idCurso}>{c.grado}° "{c.seccion}" - {c.turno}</option>)}
@@ -126,6 +177,17 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
           )}
         </div>
       </form>
+
+      {selectedCurso && cursoSeleccionado && (
+        <HorarioMatrix
+          horario={horario}
+          turno={cursoSeleccionado.turno}
+          loading={loadingHorario}
+          onSlotSelect={handleSlotSelect}
+          selectedSlots={selectedSlots}
+          idAsignacionActual={editData?.idAsignacion}
+        />
+      )}
     </div>
   );
 }

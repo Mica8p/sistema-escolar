@@ -11,19 +11,33 @@ export type FormState = {
 };
 
 export async function asignarDocenteAction(prevState: FormState, formData: FormData): Promise<FormState> {
-  const idCiclo = Number(formData.get("idCiclo")); // <--- Viene del input hidden que pusimos
+  const idCiclo = Number(formData.get("idCiclo"));
   const idPersona = Number(formData.get("idPersona"));
   const idMateria = Number(formData.get("idMateria"));
   const idCurso = Number(formData.get("idCurso"));
 
-  // Verificamos que tengamos el ciclo también
-  if (!idPersona || !idMateria || !idCurso || !idCiclo) {
+  const slots: { dia: string, hora: string }[] = [];
+  for (const [key, value] of formData.entries()) {
+    const match = key.match(/slots\[(\d+)]/);
+    if (match) {
+      const index = parseInt(match[1], 10);
+      if (!slots[index]) {
+        slots[index] = { dia: '', hora: '' };
+      }
+      if (key.endsWith('dia')) {
+        slots[index].dia = value as string;
+      } else if (key.endsWith('hora')) {
+        slots[index].hora = value as string;
+      }
+    }
+  }
+
+  if (!idPersona || !idMateria || !idCurso || !idCiclo || slots.length === 0) {
     return { error: "Todos los campos son obligatorios." };
   }
 
   try {
-    // LLAMADA CORREGIDA: Pasamos los 4 parámetros
-    await ProfesorService.asignarProfesor(idPersona, idMateria, idCurso, idCiclo);
+    await ProfesorService.asignarProfesor(idPersona, idMateria, idCurso, idCiclo, slots);
 
     revalidatePath("/dashboard/profesores");
     return { success: true };
@@ -37,31 +51,43 @@ export async function asignarDocenteAction(prevState: FormState, formData: FormD
 
 export async function editarDocenteAction(prevState: FormState, formData: FormData): Promise<FormState> {
   const idAsignacion = Number(formData.get("idAsignacion"));
-  const idPersona = Number(formData.get("idPersona"));
   const idMateria = Number(formData.get("idMateria"));
   const idCurso = Number(formData.get("idCurso"));
 
+  const slots: { dia: string, hora: string }[] = [];
+  for (const [key, value] of formData.entries()) {
+    const match = key.match(/slots\[(\d+)]/);
+    if (match) {
+      const index = parseInt(match[1], 10);
+      if (!slots[index]) {
+        slots[index] = { dia: '', hora: '' };
+      }
+      if (key.endsWith('dia')) {
+        slots[index].dia = value as string;
+      } else if (key.endsWith('hora')) {
+        slots[index].hora = value as string;
+      }
+    }
+  }
+
+  if (!idAsignacion || !idMateria || !idCurso || slots.length === 0) {
+    return { error: "Todos los campos son obligatorios." };
+  }
+
   try {
-    // Usamos el servicio que ya preparaste con 'updateAsignacion'
     await ProfesorService.updateAsignacion(idAsignacion, {
       idMateria,
       idCurso,
-      // Nota: No cambiamos el idProfesor aquí porque estamos editando
-      // la asignación de ESTE profesor específico.
-    });
+    }, slots);
 
     revalidatePath("/dashboard/profesores");
-
     redirect("/dashboard/profesores");
 
   } catch (error: any) {
     if (error.message === 'NEXT_REDIRECT') throw error;
-
-        return { error: "Error al actualizar la asignación." };
-
-      }
-
-    }
+    return { error: "Error al actualizar la asignación." };
+  }
+}
 
     
 

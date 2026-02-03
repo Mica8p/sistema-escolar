@@ -46,24 +46,30 @@ async getAll(idCiclo: number) { // <--- Agregamos idCiclo como parámetro
   },
 
   // Crear profesor y asignar su primera materia/curso
-async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idCiclo: number) {
-
-    // IMPORTANTE: Ya no llamamos a getCicloActual() aquí adentro.
-    // Usamos el idCiclo que nos llega desde la Action.
+async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idCiclo: number, slots: { dia: string, hora: string }[]) {
 
     return await db.$transaction(async (tx) => {
-      // Regla de seguridad: ¿Ya hay alguien dando esta materia en ESTE ciclo?
-      const asignacionActiva = await tx.asignacionAcademica.findFirst({
-        where: {
-          idMateria,
-          idCurso,
-          idCiclo: idCiclo, // <--- Usamos el parámetro
-          estado: true
-        }
-      });
 
-      if (asignacionActiva) {
-        throw new Error("Ya existe un docente activo en este ciclo.");
+      for (const slot of slots) {
+        const [horaInicio, horaFin] = slot.hora.split(" - ");
+        const asignacionActiva = await tx.asignacionAcademica.findFirst({
+          where: {
+            idMateria,
+            idCurso,
+            idCiclo: idCiclo,
+            estado: true,
+            horarios: {
+              some: {
+                diaSemana: slot.dia as any,
+                horaInicio: horaInicio,
+              }
+            }
+          }
+        });
+
+        if (asignacionActiva) {
+          throw new Error(`Ya existe un docente activo en este ciclo, en el horario ${slot.dia} ${slot.hora}.`);
+        }
       }
 
       const profesor = await tx.profesor.upsert({
@@ -72,16 +78,30 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
         create: { idPersona, fechaIngreso: new Date() }
       });
 
-      return await tx.asignacionAcademica.create({
+      const asignacion = await tx.asignacionAcademica.create({
         data: {
           idProfesor: profesor.idProfesor,
           idMateria,
           idCurso,
-          idCiclo: idCiclo, // <--- Usamos el parámetro
-          cargaHoraria: 4,
+          idCiclo: idCiclo,
+          cargaHoraria: 4 * slots.length,
           estado: true
         }
       });
+
+      for (const slot of slots) {
+        const [horaInicio, horaFin] = slot.hora.split(" - ");
+        await tx.horario.create({
+          data: {
+            idAsignacion: asignacion.idAsignacion,
+            diaSemana: slot.dia as any,
+            horaInicio,
+            horaFin,
+          }
+        });
+      }
+
+      return asignacion;
     });
   },
 
@@ -96,10 +116,31 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
 
   // NUEVA FUNCIÓN: Editar Asignación
   // Permite corregir si el secretario se equivocó de curso o materia
-  async updateAsignacion(idAsignacion: number, data: { idMateria?: number, idCurso?: number }) {
-    return await db.asignacionAcademica.update({
-      where: { idAsignacion },
-      data
+  async updateAsignacion(idAsignacion: number, data: { idMateria?: number, idCurso?: number }, slots: { dia: string, hora: string }[]) {
+    return await db.$transaction(async (tx) => {
+      await tx.horario.deleteMany({
+        where: { idAsignacion: idAsignacion }
+      });
+
+      for (const slot of slots) {
+        const [horaInicio, horaFin] = slot.hora.split(" - ");
+        await tx.horario.create({
+          data: {
+            idAsignacion: idAsignacion,
+            diaSemana: slot.dia as any,
+            horaInicio,
+            horaFin,
+          }
+        });
+      }
+
+      return await tx.asignacionAcademica.update({
+        where: { idAsignacion },
+        data: {
+          ...data,
+          cargaHoraria: 4 * slots.length,
+        }
+      });
     });
   },
 
