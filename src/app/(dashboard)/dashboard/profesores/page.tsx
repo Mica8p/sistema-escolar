@@ -14,9 +14,22 @@ interface PageProps {
 export default async function DocentesPage({ searchParams }: PageProps) {
   const { editId } = await searchParams;
 
-  const idCicloActual = await getCicloActual();
+  let idCicloActual = await getCicloActual();
 
-  const cicloActualInfo = await db.cicloLectivo.findUnique({ where: { idCiclo: idCicloActual } });
+  let cicloActualInfo = await db.cicloLectivo.findUnique({ where: { idCiclo: idCicloActual } });
+
+  // Si el ciclo de la sesión no existe (por el reset de DB), buscar uno válido automáticamente
+  if (!cicloActualInfo) {
+    const cicloFallback = await db.cicloLectivo.findFirst({
+      where: { estado: true },
+      orderBy: { anio: 'desc' }
+    });
+    if (cicloFallback) {
+      idCicloActual = cicloFallback.idCiclo;
+      cicloActualInfo = cicloFallback;
+    }
+  }
+
   const cicloAnterior = await db.cicloLectivo.findFirst({
     where: { anio: (cicloActualInfo?.anio ?? 0) - 1 },
   });

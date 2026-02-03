@@ -29,7 +29,43 @@ interface HorarioMatrixProps {
 }
 
 export default function HorarioMatrix({ horario, turno, loading, onSlotSelect, selectedSlots, idAsignacionActual }: HorarioMatrixProps) {
-  const horas = turno.toUpperCase() === "MAÑANA" ? horasManana : horasTarde;
+  const [horas, setHoras] = useState(turno.toUpperCase() === "MAÑANA" ? horasManana : horasTarde);
+
+  useEffect(() => {
+    setHoras(turno.toUpperCase() === "MAÑANA" ? horasManana : horasTarde);
+  }, [turno]);
+
+  // Sincronizar las horas visuales con los slots guardados (para que aparezcan los horarios editados)
+  useEffect(() => {
+    if (selectedSlots.length === 0) return;
+
+    setHoras((prevHoras) => {
+      const newHoras = [...prevHoras];
+      let changed = false;
+      const defaults = turno.toUpperCase() === "MAÑANA" ? horasManana : horasTarde;
+
+      selectedSlots.forEach((slot) => {
+        if (newHoras.includes(slot.hora)) return;
+
+        const slotStart = parseInt(slot.hora.split(":")[0]);
+        // Buscamos la fila por defecto que corresponde a este horario (mismo rango de hora)
+        const matchIndex = defaults.findIndex((def) => Math.abs(parseInt(def.split(":")[0]) - slotStart) < 2);
+
+        if (matchIndex !== -1 && newHoras[matchIndex] !== slot.hora) {
+          newHoras[matchIndex] = slot.hora;
+          changed = true;
+        }
+      });
+
+      return changed ? newHoras : prevHoras;
+    });
+  }, [selectedSlots, turno]);
+
+  const handleHoraChange = (index: number, value: string) => {
+    const newHoras = [...horas];
+    newHoras[index] = value;
+    setHoras(newHoras);
+  };
 
   if (loading) {
     return (
@@ -54,8 +90,12 @@ export default function HorarioMatrix({ horario, turno, loading, onSlotSelect, s
 
         {horas.map((hora, i) => (
           <React.Fragment key={i}>
-            <div className="font-bold text-center text-xs text-gray-700">
-              {hora}
+            <div className="font-bold text-center text-xs text-gray-700 flex items-center justify-center">
+              <input
+                value={hora}
+                onChange={(e) => handleHoraChange(i, e.target.value)}
+                className="w-full text-center bg-transparent border border-transparent hover:border-gray-300 focus:border-indigo-500 rounded px-1 text-xs focus:outline-none"
+              />
             </div>
             {dias.map((dia, j) => {
               const [horaInicio, horaFin] = hora.split(" - ");

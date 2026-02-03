@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { asignarDocenteAction, editarDocenteAction, FormState } from "@/lib/actions/profesor-actions";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, X } from "lucide-react";
@@ -19,6 +19,7 @@ const initialState: FormState = {};
 
 export default function FormAsignacion({ personas, materias, cursos, editData, idCiclo }: Props) {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [horario, setHorario] = useState<any[]>([]);
   const [loadingHorario, setLoadingHorario] = useState(false);
   const [selectedCurso, setSelectedCurso] = useState<number | null>(editData?.idCurso || null);
@@ -27,6 +28,14 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
   // Si hay editData, usamos la acción de editar; si no, la de asignar
   const actionToUse = editData ? editarDocenteAction : asignarDocenteAction;
   const [state, formAction, isPending] = useActionState(actionToUse, initialState);
+
+  useEffect(() => {
+    if (state.success && !editData) {
+      setSelectedCurso(null);
+      setSelectedSlots([]);
+      formRef.current?.reset();
+    }
+  }, [state, editData]);
 
   useEffect(() => {
     if (editData) {
@@ -92,7 +101,7 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
         </div>
       )}
 
-      <form action={formAction} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+      <form ref={formRef} action={formAction} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         {/* CAMPO OCULTO PARA EL CICLO */}
         <input type="hidden" name="idCiclo" value={idCiclo} />
         {/* Campo oculto para saber qué ID estamos editando */}
