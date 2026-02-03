@@ -2,54 +2,50 @@
 
 import React from 'react';
 import { use, useEffect, useState } from 'react';
-
-const dias = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES"];
-
-const horasManana = [
-  "07:00 - 08:00",
-  "08:00 - 09:00",
-  "09:00 - 10:00",
-  "10:00 - 11:00",
-  "11:00 - 12:00",
-];
-const horasTarde = [
-  "14:00 - 15:00",
-  "15:00 - 16:00",
-  "16:00 - 17:00",
-  "17:00 - 18:00",
-];
+import { BloqueHorario, DiaHabil, Turno } from '@prisma/client';
 
 interface HorarioMatrixProps {
   horario: any[];
-  turno: "MAÑANA" | "TARDE";
+  turno: Turno;
   loading: boolean;
   onSlotSelect: (dia: string, hora: string) => void;
   selectedSlots: { dia: string, hora: string }[];
   idAsignacionActual?: number;
+  diasHabiles: DiaHabil[];
+  bloquesHorario: BloqueHorario[];
 }
 
-export default function HorarioMatrix({ horario, turno, loading, onSlotSelect, selectedSlots, idAsignacionActual }: HorarioMatrixProps) {
-  const [horas, setHoras] = useState(turno.toUpperCase() === "MAÑANA" ? horasManana : horasTarde);
+export default function HorarioMatrix({ horario, turno, loading, onSlotSelect, selectedSlots, idAsignacionActual, diasHabiles, bloquesHorario }: HorarioMatrixProps) {
+  
+  const dias = diasHabiles.map(d => d.nombre);
+  
+  const getHorasBase = () => {
+    const bloquesTurno = bloquesHorario.filter(b => b.turno.toUpperCase() === turno.toUpperCase());
+    return bloquesTurno.map(b => `${b.horaInicio} - ${b.horaFin}`);
+  }
+
+  const [horas, setHoras] = useState(getHorasBase());
 
   useEffect(() => {
-    setHoras(turno.toUpperCase() === "MAÑANA" ? horasManana : horasTarde);
-  }, [turno]);
+    setHoras(getHorasBase());
+  }, [turno, bloquesHorario]);
 
   // Sincronizar las horas visuales con los slots guardados (para que aparezcan los horarios editados)
   useEffect(() => {
     if (selectedSlots.length === 0) return;
+    
+    const horasBase = getHorasBase();
 
     setHoras((prevHoras) => {
       const newHoras = [...prevHoras];
       let changed = false;
-      const defaults = turno.toUpperCase() === "MAÑANA" ? horasManana : horasTarde;
 
       selectedSlots.forEach((slot) => {
         if (newHoras.includes(slot.hora)) return;
 
         const slotStart = parseInt(slot.hora.split(":")[0]);
         // Buscamos la fila por defecto que corresponde a este horario (mismo rango de hora)
-        const matchIndex = defaults.findIndex((def) => Math.abs(parseInt(def.split(":")[0]) - slotStart) < 2);
+        const matchIndex = horasBase.findIndex((def) => Math.abs(parseInt(def.split(":")[0]) - slotStart) < 2);
 
         if (matchIndex !== -1 && newHoras[matchIndex] !== slot.hora) {
           newHoras[matchIndex] = slot.hora;
@@ -59,13 +55,7 @@ export default function HorarioMatrix({ horario, turno, loading, onSlotSelect, s
 
       return changed ? newHoras : prevHoras;
     });
-  }, [selectedSlots, turno]);
-
-  const handleHoraChange = (index: number, value: string) => {
-    const newHoras = [...horas];
-    newHoras[index] = value;
-    setHoras(newHoras);
-  };
+  }, [selectedSlots, turno, bloquesHorario]);
 
   if (loading) {
     return (
@@ -80,7 +70,7 @@ export default function HorarioMatrix({ horario, turno, loading, onSlotSelect, s
       <h3 className="text-lg font-semibold text-gray-700 mb-4">
         Selecciona los bloques horarios
       </h3>
-      <div className="grid grid-cols-6 gap-1">
+      <div className="grid gap-1" style={{ gridTemplateColumns: `auto repeat(${dias.length}, 1fr)` }}>
         <div className="font-bold text-center text-gray-700">Hora</div>
         {dias.map((dia) => (
           <div key={dia} className="font-bold text-center text-xs text-gray-700">
@@ -90,12 +80,8 @@ export default function HorarioMatrix({ horario, turno, loading, onSlotSelect, s
 
         {horas.map((hora, i) => (
           <React.Fragment key={i}>
-            <div className="font-bold text-center text-xs text-gray-700 flex items-center justify-center">
-              <input
-                value={hora}
-                onChange={(e) => handleHoraChange(i, e.target.value)}
-                className="w-full text-center bg-transparent border border-transparent hover:border-gray-300 focus:border-indigo-500 rounded px-1 text-xs focus:outline-none"
-              />
+            <div className="font-bold text-center text-xs text-gray-700 flex items-center justify-center px-1 py-2">
+              {hora}
             </div>
             {dias.map((dia, j) => {
               const [horaInicio, horaFin] = hora.split(" - ");

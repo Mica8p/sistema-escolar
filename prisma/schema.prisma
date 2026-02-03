@@ -517,3 +517,24 @@ model GastoInstitucional {
 
   @@map("GASTO_INSTITUCIONAL")
 }
+
+model BloqueHorario {
+  id         Int    @id @default(autoincrement())
+  turno      Turno
+  horaInicio String
+  horaFin    String
+  orden      Int
+
+  @@unique([turno, orden])
+  @@map("BLOQUE_HORARIO")
+}
+
+model DiaHabil {
+  id         Int      @id @default(autoincrement())
+  nombre     DiaSemana @unique
+  habilitado Boolean  @default(true)
+  orden      Int
+
+  @@unique([orden])
+  @@map("DIA_HABIL")
+}

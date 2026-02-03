@@ -5,6 +5,7 @@ import { asignarDocenteAction, editarDocenteAction, FormState } from "@/lib/acti
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, X } from "lucide-react";
 import { getHorariosPorCurso, getHorarios } from "@/lib/actions/horario-actions";
+import { BloqueHorario, DiaHabil } from "@prisma/client";
 import HorarioMatrix from "./HorarioMatrix";
 
 interface Props {
@@ -13,11 +14,13 @@ interface Props {
   cursos: any[];
   editData?: any; // Recibe la asignación a editar si existe
   idCiclo: number;
+  diasHabiles: DiaHabil[];
+  bloquesHorario: BloqueHorario[];
 }
 
 const initialState: FormState = {};
 
-export default function FormAsignacion({ personas, materias, cursos, editData, idCiclo }: Props) {
+export default function FormAsignacion({ personas, materias, cursos, editData, idCiclo, diasHabiles, bloquesHorario }: Props) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [horario, setHorario] = useState<any[]>([]);
@@ -195,6 +198,8 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
           onSlotSelect={handleSlotSelect}
           selectedSlots={selectedSlots}
           idAsignacionActual={editData?.idAsignacion}
+          diasHabiles={diasHabiles}
+          bloquesHorario={bloquesHorario}
         />
       )}
     </div>

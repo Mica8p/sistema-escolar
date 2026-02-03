@@ -350,6 +350,62 @@ async function main() {
     console.log("✅ Comunicados de prueba generados.");
   }
 
+  // 13. SEMBRAR PLANTILLA DE HORARIOS
+  console.log("🗓️  Sembrando plantilla de horarios por defecto...");
+
+  const diasSemana = [
+    { nombre: DiaSemana.LUNES, orden: 0, habilitado: true },
+    { nombre: DiaSemana.MARTES, orden: 1, habilitado: true },
+    { nombre: DiaSemana.MIERCOLES, orden: 2, habilitado: true },
+    { nombre: DiaSemana.JUEVES, orden: 3, habilitado: true },
+    { nombre: DiaSemana.VIERNES, orden: 4, habilitado: true },
+    { nombre: DiaSemana.SABADO, orden: 5, habilitado: false },
+    { nombre: DiaSemana.DOMINGO, orden: 6, habilitado: false },
+  ];
+
+  for(const dia of diasSemana) {
+    await prisma.diaHabil.upsert({
+      where: { nombre: dia.nombre },
+      update: { habilitado: dia.habilitado, orden: dia.orden },
+      create: dia,
+    });
+  }
+
+  const horasManana = [
+    "07:00 - 08:00", "08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00",
+  ];
+  const horasTarde = [
+    "14:00 - 15:00", "15:00 - 16:00", "16:00 - 17:00", "17:00 - 18:00",
+  ];
+
+  // Clear existing blocks to avoid duplicates on re-seed
+  await prisma.bloqueHorario.deleteMany({});
+
+  for (let i = 0; i < horasManana.length; i++) {
+    const [horaInicio, horaFin] = horasManana[i].split(" - ");
+    await prisma.bloqueHorario.create({
+      data: {
+        turno: Turno.Mañana,
+        horaInicio,
+        horaFin,
+        orden: i
+      }
+    });
+  }
+
+  for (let i = 0; i < horasTarde.length; i++) {
+    const [horaInicio, horaFin] = horasTarde[i].split(" - ");
+    await prisma.bloqueHorario.create({
+      data: {
+        turno: Turno.Tarde,
+        horaInicio,
+        horaFin,
+        orden: i
+      }
+    });
+  }
+  console.log("✅ Plantilla de horarios creada.");
+
   console.log("✅ Seed completado con éxito.");
 
 }

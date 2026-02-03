@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, CalendarDays, ChevronDown, Check, Edit, School, Book, Calendar } from "lucide-react";
+import { Settings, CalendarDays, ChevronDown, Check, Edit, School, Book, Calendar, Sheet } from "lucide-react";
 import { cambiarCiclo } from "@/lib/actions/ciclo-actions";
 import type { CicloLectivo } from "@prisma/client";
 import Link from "next/link";
@@ -111,6 +111,15 @@ export function ConfiguracionesButton({ ciclos, cicloActual, isAdmin }: Props) {
               >
                 <Calendar className="w-4 h-4 mr-3 text-gray-400" />
                 <span>Administrar Periodos</span>
+              </Link>
+              
+              <Link
+                href="/dashboard/configuraciones/horarios"
+                className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                <Sheet className="w-4 h-4 mr-3 text-gray-400" />
+                <span>Plantilla de Horarios</span>
               </Link>
               </>
               )}

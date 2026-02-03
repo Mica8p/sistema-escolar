@@ -34,12 +34,14 @@ export default async function DocentesPage({ searchParams }: PageProps) {
     where: { anio: (cicloActualInfo?.anio ?? 0) - 1 },
   });
 
-  const [profesores, personas, materias, cursos, historial] = await Promise.all([
+  const [profesores, personas, materias, cursos, historial, diasHabiles, bloquesHorario] = await Promise.all([
     ProfesorService.getAll(idCicloActual),
     ProfesorService.getPersonasDisponibles(),
     ProfesorService.getMaterias(),
     AlumnoService.getCursosDisponibles(),
     ProfesorService.getHistorialAsignaciones(),
+    db.diaHabil.findMany({ where: { habilitado: true }, orderBy: { orden: 'asc' } }),
+    db.bloqueHorario.findMany({ orderBy: { orden: 'asc' } }),
   ]);
 
   const asignacionAEditar = editId
@@ -68,6 +70,8 @@ export default async function DocentesPage({ searchParams }: PageProps) {
         materias={materias}
         cursos={cursos}
         idCiclo={idCicloActual}
+        diasHabiles={diasHabiles}
+        bloquesHorario={bloquesHorario}
       />
 
       <AsignacionesList profesores={profesores} />
