@@ -47,16 +47,18 @@ export default async function AsistenciasPage({
   const horariosRaw = await getHorariosByAsignaciones(idsAsignaciones);
   const horariosFiltrados = horariosRaw.filter(h => h.diaSemana === nombreDiaSeleccionado);
 
-  const horariosUnicos = horariosFiltrados.reduce((acc, h) => {
-    if (!acc.find(i => i.idAsignacion === h.idAsignacion)) {
-      acc.push(h);
+  const horariosPorAsignacion = horariosFiltrados.reduce((acc, h) => {
+    const key = h.idAsignacion;
+    if (!acc[key]) {
+      acc[key] = [];
     }
+    acc[key].push(h);
     return acc;
-  }, [] as typeof horariosFiltrados);
+  }, {} as Record<number, typeof horariosFiltrados>);
 
-  const idHorario = params.horario ? Number(params.horario) : (horariosUnicos[0]?.idHorario || 0);
+  const idHorario = params.horario ? Number(params.horario) : (horariosFiltrados[0]?.idHorario || 0);
   const horarioElegido = horariosFiltrados.find(h => h.idHorario === idHorario);
-  
+
   const idAsignacion = horarioElegido?.idAsignacion || 0;
   const asigElegida = asignaciones.find((a) => a.idAsignacion === idAsignacion);
 
@@ -107,29 +109,35 @@ export default async function AsistenciasPage({
             <span className="text-[10px] font-black uppercase tracking-widest">2. Bloques del {nombreDiaSeleccionado}</span>
           </div>
           <div className="p-4 space-y-2">
-            {horariosUnicos.length === 0 ? (
+            {Object.keys(horariosPorAsignacion).length === 0 ? (
               <div className="py-20 text-center text-slate-300 italic text-xs px-6">
                 No hay clases registradas para el día {nombreDiaSeleccionado.toLowerCase()}.
               </div>
             ) : (
-              horariosUnicos.map((h) => {
-                const asig = asignaciones.find(a => a.idAsignacion === h.idAsignacion);
+              Object.entries(horariosPorAsignacion).map(([idAsig, horarios]) => {
+                const asig = asignaciones.find(a => a.idAsignacion === Number(idAsig));
+                if (!asig) return null;
+
+                const horariosStr = horarios.map(h => `${h.horaInicio.slice(0, 5)}`).join(' - ');
+                const primerHorario = horarios[0];
+                const isSelected = asigElegida && asigElegida.idAsignacion === asig.idAsignacion;
+
                 return (
-                <a
-                  key={h.idHorario}
-                  href={`?mat=${idMateria}&horario=${h.idHorario}&fecha=${fechaISO}`}
-                  className={`block px-4 py-4 rounded-2xl border-2 transition-all ${
-                    h.idHorario === idHorario
-                      ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100 scale-[1.02]"
-                      : "bg-white border-slate-50 hover:border-slate-200 text-slate-600"
-                  }`}
-                >
-                  <div className="font-black text-sm uppercase">{asig?.curso.grado}° {asig?.curso.seccion}</div>
-                  <div className={`text-[10px] font-bold ${h.idHorario === idHorario ? 'text-indigo-100' : 'text-slate-400'}`}>
-                    {h.horaInicio} a {h.horaFin} hs.
-                  </div>
-                </a>
-              )})
+                  <a
+                    key={idAsig}
+                    href={`?mat=${idMateria}&horario=${primerHorario.idHorario}&fecha=${fechaISO}`}
+                    className={`block px-4 py-4 rounded-2xl border-2 transition-all ${
+                      isSelected
+                        ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100 scale-[1.02]"
+                        : "bg-white border-slate-50 hover:border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    <div className="font-black text-sm uppercase">{asig.curso.grado}° {asig.curso.seccion}</div>
+                    <div className={`text-xs font-bold ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>{asig.materia.nombre}</div>
+                    <div className={`text-[10px] font-bold mt-2 ${isSelected ? 'text-indigo-200' : 'text-slate-500'}`}>{horariosStr}</div>
+                  </a>
+                );
+              })
             )}
           </div>
         </div>
