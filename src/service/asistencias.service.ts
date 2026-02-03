@@ -9,6 +9,14 @@ export async function getHorariosByAsignacion(idAsignacion: number) {
   });
 }
 
+export async function getHorariosByAsignaciones(idAsignaciones: number[]) {
+  if (idAsignaciones.length === 0) return [];
+  return db.horario.findMany({
+    where: { idAsignacion: { in: idAsignaciones } },
+    orderBy: { horaInicio: "asc" },
+  });
+}
+
 export async function getPlanillaAsistencia(params: {
   idAsignacion: number;
   idHorario: number;
