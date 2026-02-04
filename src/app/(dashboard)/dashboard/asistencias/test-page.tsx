@@ -1,12 +1,11 @@
 import { auth } from "@/auth";
-import { Users, Clock, CheckCircle } from "lucide-react";
+import { Users, Clock } from "lucide-react";
 import { getAsignacionesParaUsuario } from "@/service/calificaciones.service";
 import { getHorariosByAsignaciones, getPlanillaAsistencia } from "@/service/asistencias.service";
 import AsistenciaView from "./AsistenciaView";
 import { getCicloActual } from "@/lib/ciclo-session";
 import AsistenciasHeader from "./AsistenciasHeader";
 import { Materia } from "@prisma/client";
-
 
 export default async function AsistenciasPage({
   searchParams
@@ -70,7 +69,6 @@ export default async function AsistenciasPage({
   return (
     <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">
 
-      {/* HEADER DINÁMICO (CLIENT COMPONENT) */}
       <AsistenciasHeader
         fechaISO={fechaISO}
         hoyISO={hoyISO}
@@ -79,7 +77,7 @@ export default async function AsistenciasPage({
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* COLUMNA 1: MATERIA */}
+
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
           <div className="px-6 py-4 bg-slate-800 text-white flex items-center gap-2">
             <Users size={16} />
@@ -102,7 +100,7 @@ export default async function AsistenciasPage({
           </div>
         </div>
 
-        {/* COLUMNA 2: HORARIO FILTRADO */}
+
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
           <div className="px-6 py-4 bg-slate-800 text-white flex items-center gap-2">
             <Clock size={16} />
@@ -142,7 +140,6 @@ export default async function AsistenciasPage({
           </div>
         </div>
 
-        {/* COLUMNA 3 Y PLANILLA (AHORA EN COMPONENTE CLIENTE) */}
         {planilla ? (
           <AsistenciaView 
             initialPlanilla={planilla}

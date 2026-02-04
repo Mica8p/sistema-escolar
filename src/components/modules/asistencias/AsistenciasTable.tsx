@@ -11,6 +11,7 @@ interface Props {
   matriculas: any[];
   asistenciaByMatricula: [number, any][];
   readOnly?: boolean;
+  onAsistenciaChange?: (idMatricula: number, estado: EstadoAsistencia) => void;
 }
 
 export default function AsistenciasTable({
@@ -20,6 +21,7 @@ export default function AsistenciasTable({
   matriculas,
   asistenciaByMatricula,
   readOnly = false,
+  onAsistenciaChange
 }: Props) {
   const asistenciaMap = new Map<number, any>(asistenciaByMatricula);
 
@@ -34,6 +36,11 @@ export default function AsistenciasTable({
     formData.append("estado", estado);
 
     await guardarAsistenciaAction(formData);
+
+    // Notificamos al componente padre que la asistencia ha cambiado
+    if (onAsistenciaChange) {
+      onAsistenciaChange(idMatricula, estado);
+    }
   };
 
   return (
