@@ -14,7 +14,7 @@ export default function AsistenciasClient({
   hoyISO,
   idAsignacion,
   nombreDiaSeleccionado,
-  horariosPorAsignacion,
+  horariosPorCurso,
   asignaciones,
   idHorario,
   planilla,
@@ -82,22 +82,28 @@ export default function AsistenciasClient({
               <span className="text-[10px] font-black uppercase tracking-widest">2. Bloques del {nombreDiaSeleccionado}</span>
             </div>
             <div className="p-4 space-y-2">
-              {Object.keys(horariosPorAsignacion).length === 0 ? (
+              {Object.keys(horariosPorCurso || {}).length === 0 ? (
                 <div className="py-20 text-center text-slate-300 italic text-xs px-6">
                   No hay clases registradas para el día {nombreDiaSeleccionado.toLowerCase()}.
                 </div>
               ) : (
-                Object.entries(horariosPorAsignacion).map(([idAsig, horarios]) => {
-                  const asig = asignaciones.find(a => a.idAsignacion === Number(idAsig));
+                Object.entries(horariosPorCurso || {}).map(([idCursoStr, horarios]) => {
+                  const idCurso = Number(idCursoStr);
+                  // Buscamos la asignación usando el Curso y la Materia seleccionada
+                  const asig = asignaciones.find(a => a.idCurso === idCurso && a.materia.idMateria === idMateria);
                   if (!asig) return null;
 
-                  const horariosStr = horarios.map(h => `${h.horaInicio.slice(0, 5)}`).join(' - ');
-                  const primerHorario = horarios[0];
-                  const isSelected = idAsignacion !== 0 && idAsignacion === asig.idAsignacion;
+                  // Ordenamos y mostramos los horarios
+                  const horariosOrdenados = [...horarios].sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+                  const horariosStr = horariosOrdenados.map(h => `${h.horaInicio.slice(0, 5)}`).join(' - ');
+                  const primerHorario = horariosOrdenados[0];
+                  
+                  // Está seleccionado si ALGUNO de los horarios de este bloque coincide con el idHorario seleccionado
+                  const isSelected = horarios.some(h => h.idHorario === idHorario);
 
                   return (
                     <a
-                      key={idAsig}
+                      key={idCurso}
                       href={`?mat=${idMateria}&horario=${primerHorario.idHorario}&fecha=${fechaISO}`}
                       className={`block px-4 py-4 rounded-2xl border-2 transition-all ${
                         isSelected

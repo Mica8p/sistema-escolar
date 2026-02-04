@@ -45,8 +45,13 @@ export default async function AsistenciasPage({
   const horariosRaw = await getHorariosByAsignaciones(idsAsignaciones);
   const horariosFiltrados = horariosRaw.filter(h => h.diaSemana === nombreDiaSeleccionado);
 
-  const horariosPorAsignacion = horariosFiltrados.reduce((acc, h) => {
-    const key = h.idAsignacion;
+  // CAMBIO: Agrupamos por CURSO en lugar de por ASIGNACIÓN
+  // Esto fusiona visualmente si el profesor tiene 2 asignaciones de la misma materia en el mismo curso
+  const horariosPorCurso = horariosFiltrados.reduce((acc, h) => {
+    const asig = asignacionesDeMateria.find(a => a.idAsignacion === h.idAsignacion);
+    if (!asig) return acc;
+
+    const key = asig.idCurso;
     if (!acc[key]) {
       acc[key] = [];
     }
@@ -72,7 +77,7 @@ export default async function AsistenciasPage({
     hoyISO={hoyISO}
     idAsignacion={idAsignacion}
     nombreDiaSeleccionado={nombreDiaSeleccionado}
-    horariosPorAsignacion={horariosPorAsignacion}
+    horariosPorCurso={horariosPorCurso}
     asignaciones={asignaciones}
     idHorario={idHorario}
     planilla={planilla}
