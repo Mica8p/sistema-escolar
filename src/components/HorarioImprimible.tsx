@@ -31,7 +31,7 @@ export default function HorarioImprimible({ horarios, nombreAlumno, curso }: Pro
               <GraduationCap size={32} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">Escuela Pro 2026</h1>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">Escuela Pro 2026 </h1>
               <p className="text-xs font-bold text-slate-500 tracking-widest uppercase">Gestión Educativa Digital</p>
             </div>
           </div>
