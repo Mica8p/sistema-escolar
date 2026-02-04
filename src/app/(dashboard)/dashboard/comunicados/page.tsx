@@ -67,48 +67,62 @@ export default async function ComunicadosPage() {
       </header>
 
       <div className="grid gap-4">
-        {comunicados.length > 0 ? comunicados.map((msg) => {
-          const isRead = msg.vistos.length > 0;
-          return (
-            <div
-              key={msg.idComunicado}
-              className={`bg-white p-6 rounded-[2rem border transition-all ${
-                isRead ? "border-slate-200 opacity-70" : "border-indigo-200 shadow-md ring-1 ring-indigo-50"
-              }`}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-2xl ${isRead ? "bg-slate-100 text-slate-400" : "bg-indigo-600 text-white"}`}>
-                    <Megaphone size={18} />
-                  </div>
-                  <div>
-                    <h3 className={`font-bold ${isRead ? "text-slate-600" : "text-slate-900"}`}>{msg.titulo}</h3>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      <User size={10} /> {msg.usuario.persona.nombre} {msg.usuario.persona.apellido}
-                    </p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                  <Calendar size={12} /> {new Date(msg.fecha).toLocaleDateString()}
-                </span>
+  {comunicados.length > 0 ? (
+    comunicados.map((msg) => {
+      const isRead = msg.vistos.length > 0;
+      return (
+        <div
+          key={msg.idComunicado}
+          className={`relative bg-white p-6 rounded-2rem border transition-all ${
+            isRead
+              ? "border-slate-200 opacity-70"
+              : "border-indigo-200 shadow-md ring-1 ring-indigo-50 hover:shadow-xl"
+          }`}
+        >
+          <Link
+            href={`/dashboard/comunicados/${msg.idComunicado}`}
+            className="absolute inset-0 z-10 rounded-2rem"
+            aria-label={`Ver detalle de ${msg.titulo}`}
+          />
+
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-3 rounded-2xl ${isRead ? "bg-slate-100 text-slate-400" : "bg-indigo-600 text-white"}`}>
+                <Megaphone size={18} />
               </div>
-
-              <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                {msg.contenido}
-              </p>
-
-              <div className="flex justify-end items-center border-t border-slate-50 pt-4">
-                {!isRead ? (
-                   <BotonLeido idComunicado={msg.idComunicado} />
-                ) : (
-                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
-                    Visto el {new Date(msg.vistos[0].fechaLectura).toLocaleDateString()}
-                  </span>
-                )}
+              <div className="relative z-20"> {/* z-20 para que el texto se vea sobre el link */}
+                <h3 className={`font-black tracking-tight ${isRead ? "text-slate-600" : "text-slate-900"} uppercase text-sm`}>
+                  {msg.titulo}
+                </h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mt-1">
+                  <User size={10} /> {msg.usuario.persona.nombre} {msg.usuario.persona.apellido}
+                </p>
               </div>
             </div>
+            <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 relative z-20">
+              <Calendar size={12} /> {new Date(msg.fecha).toLocaleDateString()}
+            </span>
+          </div>
+
+          <p className="text-sm text-slate-600 leading-relaxed mb-4 line-clamp-2 relative z-20">
+            {msg.contenido}
+          </p>
+
+          <div className="flex justify-end items-center border-t border-slate-50 pt-4 relative z-30">
+            {!isRead ? (
+               <div className="relative z-40">
+                 <BotonLeido idComunicado={msg.idComunicado} />
+               </div>
+            ) : (
+              <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
+                Visto el {new Date(msg.vistos[0].fechaLectura).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+        </div>
           );
-        }) : (
+        })
+        ) : (
           <div className="p-20 text-center border-2 border-dashed border-slate-200 rounded-[3rem]">
             <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">No hay comunicados disponibles.</p>
           </div>

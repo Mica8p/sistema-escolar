@@ -87,3 +87,16 @@ export async function getComunicadosEnviados(idUsuario: number) {
     }
   });
 }
+
+export async function getComunicadoById(id: number) {
+  return await db.comunicado.findUnique({
+    where: { idComunicado: id },
+    include: {
+      usuario: {
+        include: {
+          persona: { select: { nombre: true, apellido: true } }
+        }
+      }
+    }
+  });
+}
