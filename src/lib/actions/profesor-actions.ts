@@ -94,19 +94,20 @@ export async function editarDocenteAction(prevState: FormState, formData: FormDa
     export async function desactivarAsignacionAction(idAsignacion: number) {
 
       try {
-
-        await ProfesorService.desactivarAsignacion(idAsignacion);
-
+        // Ahora llamamos a la función de eliminación física
+        await ProfesorService.eliminarAsignacion(idAsignacion);
         revalidatePath('/dashboard/profesores');
-
         return { success: true };
-
-      } catch (error) {
-
+      } catch (error: any) {
         console.error(error);
-
-        return { success: false, message: 'Error al desactivar la asignación' };
-
+        // Si falla (probablemente por tener asistencias vinculadas), avisamos al usuario
+        if (error.code === 'P2003') { // Código de error de Prisma para restricción de clave foránea
+            return { success: false, message: 'No se puede eliminar: Esta materia ya tiene asistencias registradas.' };
+        }
+        return {
+            success: false,
+            message: 'Error al eliminar la asignación.'
+        };
       }
 
     }

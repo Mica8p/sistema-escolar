@@ -105,12 +105,15 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
     });
   },
 
-  // NUEVA FUNCIÓN: "Borrado Lógico"
-  // En lugar de borrar la fila de la base de datos, simplemente "apagamos" el estado
-  async desactivarAsignacion(idAsignacion: number) {
-    return await db.asignacionAcademica.update({
-      where: { idAsignacion: idAsignacion },
-      data: { estado: false } // Cambiamos el switch a falso
+  // CAMBIO: De "Borrado Lógico" a "Borrado Físico"
+  // Elimina la asignación y sus horarios asociados de la base de datos
+  async eliminarAsignacion(idAsignacion: number) {
+    return await db.$transaction(async (tx) => {
+      // 1. Primero borramos los horarios para no dejar huérfanos
+      await tx.horario.deleteMany({ where: { idAsignacion } });
+
+      // 2. Luego borramos la asignación
+      return await tx.asignacionAcademica.delete({ where: { idAsignacion } });
     });
   },
 

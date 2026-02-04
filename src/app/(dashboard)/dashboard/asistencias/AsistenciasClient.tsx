@@ -95,7 +95,7 @@ export default function AsistenciasClient({
 
                   // Ordenamos y mostramos los horarios
                   const horariosOrdenados = [...horarios].sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
-                  const horariosStr = horariosOrdenados.map(h => `${h.horaInicio.slice(0, 5)}`).join(' - ');
+                  const horariosStr = horariosOrdenados.map(h => `${h.horaInicio.slice(0, 5)} a ${h.horaFin.slice(0, 5)}`).join(' - ');
                   const primerHorario = horariosOrdenados[0];
                   
                   // Está seleccionado si ALGUNO de los horarios de este bloque coincide con el idHorario seleccionado
