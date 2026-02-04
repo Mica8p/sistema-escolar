@@ -25,37 +25,38 @@ export function WelcomeBanner({ title, subtitle }: { title: string; subtitle: st
   );
 }
 
-export function StatCard({
-  icon,
-  title,
-  value,
-  color,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  value: number;
-  color: "indigo" | "emerald" | "blue" | "purple" | "rose";
-}) {
-  const colorMap: Record<string, string> = {
-    indigo: "bg-indigo-50 text-indigo-600",
-    emerald: "bg-emerald-50 text-emerald-600",
-    blue: "bg-blue-50 text-blue-600",
-    purple: "bg-purple-50 text-purple-600",
-    rose: "bg-rose-50 text-rose-600",
+export function StatCard({ icon, title, value, color }: any) {
+  const shadowColors: any = {
+    indigo: "shadow-indigo-400/40",
+    emerald: "shadow-emerald-200/60",
+    blue: "shadow-blue-300/40",
+    purple: "shadow-purple-400/40",
   };
 
   return (
-    <div className="p-5 bg-white rounded-3xl border border-slate-100 shadow-sm flex items-center gap-5 hover:shadow-md transition-all hover:scale-[1.02]">
-      <div className={`p-3 rounded-2xl ${colorMap[color]} shadow-sm`}>
-        {icon}
-      </div>
-      <div>
-        <p className="text-3xl font-black text-slate-800 tracking-tighter leading-none mb-1">
-          {value}
-        </p>
-        <h3 className="font-bold text-slate-500 uppercase text-[9px] tracking-widest">
-          {title}
-        </h3>
+    <div className={`
+      bg-white p-4 rounded-[2rem] border transition-all duration-300
+      border-slate-400/50
+      shadow-xl ${shadowColors[color] || "shadow-slate-300/50"}
+
+      hover:shadow-2xl hover:-translate-y-1 hover:border-indigo-900/60
+    `}>
+      <div className="flex flex-col gap-4">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center
+          ${color === 'indigo' ? 'bg-indigo-50 text-indigo-600' :
+            color === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
+            color === 'blue' ? 'bg-blue-50 text-blue-600' :
+            'bg-purple-50 text-purple-600'}`}>
+          {icon}
+        </div>
+        <div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+            {title}
+          </p>
+          <h3 className="text-2xl font-black text-slate-800 tracking-tighter">
+            {value}
+          </h3>
+        </div>
       </div>
     </div>
   );
@@ -63,7 +64,7 @@ export function StatCard({
 
 export function Panel({ title, children }: PanelProps) {
   return (
-    <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-lg shadow-slate-200/40">
+    <div className="bg-white p-6 rounded-[2.5rem] border border-slate-400/40 shadow-lg shadow-slate-900/20">
       <div className="text-lg font-black text-slate-800 tracking-tight mb-6">
         {title}
       </div>

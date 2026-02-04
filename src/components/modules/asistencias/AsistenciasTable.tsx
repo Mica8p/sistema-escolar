@@ -11,6 +11,7 @@ interface Props {
   matriculas: any[];
   asistenciaByMatricula: [number, any][];
   readOnly?: boolean;
+  idAsignacion: number;
   onAsistenciaChange?: (idMatricula: number, estado: EstadoAsistencia) => void;
 }
 

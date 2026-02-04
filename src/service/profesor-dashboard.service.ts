@@ -212,7 +212,7 @@ export async function getComunicadosDashboard(idUsuario: number, idsCursos: numb
           }
         ]
       },
-      take: 3,
+      take: 2,
       orderBy: {
         fecha: 'desc'
       },
