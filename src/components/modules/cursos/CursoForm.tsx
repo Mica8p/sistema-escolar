@@ -108,7 +108,7 @@ export function CursoForm({ curso }: CursoFormProps) {
             defaultValue={curso?.turno || ""} // 3. Permitimos que cargue el turno si estamos editando
             className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           >
-            <option value="" disabled>Seleccionar turno...</option>
+            <option value="" disabled>Seleccionar turno....</option>
             <option value="Mañana">Mañana</option>
             <option value="Tarde">Tarde</option>
           </select>
