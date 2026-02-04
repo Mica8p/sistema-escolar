@@ -7,20 +7,43 @@ import { auth } from "@/auth";
 export default async function HorariosPage({ searchParams }: { searchParams: Promise<{ curso?: string }> }) {
   const session = await auth();
   const roles = session?.user?.roles ?? [];
-  const idProfesor = (session?.user as any)?.idProfesor;
+  let idProfesor = (session?.user as any)?.idProfesor;
   const esDocente = roles.includes("DOCENTE");
   const esAdmin = roles.includes("ADMIN");
 
   const { curso } = await searchParams;
   const idCiclo = await getCicloActual();
 
+  // Si es docente y no tenemos el idProfesor en la sesión, lo buscamos en la BD
+  if (esDocente && !idProfesor && session?.user?.idPersona) {
+    const profesor = await db.profesor.findUnique({
+      where: { idPersona: Number(session.user.idPersona) }
+    });
+    if (profesor) {
+      idProfesor = profesor.idProfesor;
+    }
+  }
+
   let horarios: any[] = [];
   let idCurso = curso ? parseInt(curso) : null;
 
-  if (esDocente && idProfesor) {
-    horarios = await getHorariosPorDocente(idProfesor, idCiclo);
-  } else if (idCurso) {
-    horarios = await getHorariosPorCurso(idCurso, idCiclo);
+  if (esDocente && !esAdmin) {
+    // Si es docente puro, forzamos ver SU agenda y anulamos la vista de curso
+    if (idProfesor) {
+      horarios = await getHorariosPorDocente(idProfesor, idCiclo);
+      // Filtramos solo las asignaciones activas (estado === true)
+      horarios = horarios.filter((h: any) => h.asignacion.estado);
+    }
+    idCurso = null; // Evitamos que la UI piense que hay un curso seleccionado
+  } else {
+    // Si es Admin, priorizamos la selección de curso
+    if (idCurso) {
+      horarios = await getHorariosPorCurso(idCurso, idCiclo);
+    } else if (esDocente && idProfesor) {
+      horarios = await getHorariosPorDocente(idProfesor, idCiclo);
+      // Filtramos solo las asignaciones activas (estado === true)
+      horarios = horarios.filter((h: any) => h.asignacion.estado);
+    }
   }
 
   const cursos = esAdmin ? await db.curso.findMany({ orderBy: { grado: 'asc' } }) : [];
@@ -54,7 +77,7 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
 
 
       {/* Grilla */}
-      {(idCurso || esDocente) ? (
+      {(idCurso || (esDocente && idProfesor)) ? (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <GrillaSemanal horarios={horarios} />
         </div>
