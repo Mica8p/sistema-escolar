@@ -33,7 +33,7 @@ export default async function ConfiguracionHorariosPage() {
       </header>
 
       <div className="space-y-8">
-        <HorarioConfigManager 
+        <HorarioConfigManager
             diasHabiles={dias}
             bloquesManana={bloquesManana}
             bloquesTarde={bloquesTarde}

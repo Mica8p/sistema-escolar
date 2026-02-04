@@ -42,17 +42,15 @@ export async function getClasesDeHoyDocente(idProfesor: number, date = new Date(
     orderBy: [{ horaInicio: "asc" }],
     include: {
       asignacion: {
-        include: { materia: true, curso: true, ciclo: true },
+        include: {
+          materia: true,
+          curso: true,
+        },
       },
     },
   });
 }
 
-/**
- * Asistencias pendientes reales:
- * compara total de matriculas activas vs asistencias cargadas hoy
- * (solo ciclo actual)
- */
 export async function getAsistenciasPendientesDocente(idProfesor: number, date = new Date()) {
   const idCiclo = await getCicloActual();
   const dia = getDiaSemanaEnum(date);
@@ -131,15 +129,11 @@ export async function getNotasRecientesDocente(idProfesor: number, take = 8) {
   });
 }
 
-/**
- * Próximos cierres del ciclo actual (DICIEMBRE / FEBRERO / JULIO_PREVIAS)
- * Solo del ciclo actual
- */
+
 export async function getProximosCierresDocente(idProfesor: number, take = 5) {
   const idCiclo = await getCicloActual();
   const ahora = new Date();
 
-  // ya lo filtramos por idCiclo
   return db.periodoAcademico.findMany({
     where: {
       idCiclo,
@@ -151,11 +145,85 @@ export async function getProximosCierresDocente(idProfesor: number, take = 5) {
           PeriodoNombre.JULIO_PREVIAS,
         ],
       },
-      // Filtro opcional: asegura que el profe tenga asignaciones en ese ciclo
       ciclo: { asignaciones: { some: { idProfesor, idCiclo, estado: true } } },
     },
     orderBy: { fechaInicio: "asc" },
     take,
     include: { ciclo: true },
   });
+}
+
+
+/**
+ * Calcula el % de asistencia promedio por curso del docente
+ */
+
+export async function getRendimientoAsistenciaDocente(idProfesor: number) {
+  const idCiclo = await getCicloActual();
+
+  const cursos = await db.curso.findMany({
+    where: { asignaciones: { some: { idProfesor, idCiclo, estado: true } } },
+    include: {
+      asignaciones: {
+        where: { idProfesor, idCiclo, estado: true },
+        include: { horarios: { include: { asistencias: true } } }
+      }
+    }
+  });
+
+  return cursos.map(curso => {
+    let presente = 0, ausente = 0, tarde = 0, justificado = 0;
+
+    curso.asignaciones.forEach(asig => {
+      asig.horarios.forEach(horario => {
+        horario.asistencias.forEach(a => {
+          if (a.estado === "Presente") presente++;
+          else if (a.estado === "Ausente") ausente++;
+          else if (a.estado === "Tarde") tarde++;
+          else if (a.estado === "Justificado") justificado++;
+        });
+      });
+    });
+
+    return {
+      name: `${curso.grado}° "${curso.seccion}"`,
+      presente,
+      ausente,
+      tarde,
+      justificado
+    };
+  });
+}
+
+
+export async function getComunicadosDashboard(idUsuario: number, idsCursos: number[]) {
+  try {
+    return await db.comunicado.findMany({
+      where: {
+        NOT: { idUsuario: idUsuario },
+        OR: [
+          { target: "TODOS" },
+          { target: "DOCENTES" },
+          {
+            AND: [
+              { idTarget: { in: idsCursos } },
+              { target: { in: ["CURSO", "CURSO_DOCENTES"] } }
+            ]
+          }
+        ]
+      },
+      take: 3,
+      orderBy: {
+        fecha: 'desc'
+      },
+      include: {
+        vistos: {
+          where: { idUsuario: idUsuario }
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Error en comunicados dashboard:", error);
+    return [];
+  }
 }

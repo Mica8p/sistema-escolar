@@ -60,6 +60,7 @@ export async function marcarComoLeido(idComunicado: number) {
       },
     });
 
+    revalidatePath("/dashboard");
     revalidatePath("/dashboard/comunicados");
     return { success: true };
   } catch (error) {
