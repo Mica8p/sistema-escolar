@@ -240,6 +240,7 @@ model PeriodoAcademico {
   nombre      PeriodoNombre
   fechaInicio DateTime
   fechaFin    DateTime
+  cerrado     Boolean       @default(false)
 
   ciclo CicloLectivo @relation(fields: [idCiclo], references: [idCiclo])
   notas Nota[]

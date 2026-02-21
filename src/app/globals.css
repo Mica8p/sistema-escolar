@@ -24,3 +24,26 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@media print {
+  aside,
+  header,
+  nav,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+
+  main,
+  body,
+  .min-h-screen {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .max-w-5xl {
+    max-width: 100% !important;
+  }
+}

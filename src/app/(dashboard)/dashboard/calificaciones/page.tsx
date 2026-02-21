@@ -33,6 +33,8 @@ export default async function CalificacionesPage({ searchParams }: { searchParam
   const periodos = asigElegida ? await getPeriodosByCiclo(asigElegida.idCiclo) : [];
   const idPeriodo = params.periodo ? Number(params.periodo) : (periodos[0]?.idPeriodo || 0);
 
+  const periodoElegido = periodos.find(p => p.idPeriodo === idPeriodo);
+
   const tipo = (params.tipo as TipoEvaluacion) ?? "Parcial";
   const tipoValido = TIPOS.includes(tipo) ? tipo : "Parcial";
 
@@ -213,10 +215,12 @@ export default async function CalificacionesPage({ searchParams }: { searchParam
               <CalificacionesTable
                 idAsignacion={idAsignacion}
                 idPeriodo={idPeriodo}
+                periodoActual={periodoElegido}
                 tipo={tipoValido}
                 matriculas={planilla.matriculas}
                 notaByMatricula={Array.from(planilla.notaByMatricula.entries())}
                 readOnly={isAdmin}
+                historialNotas={planilla.historialNotas}
               />
             </div>
           ) : (

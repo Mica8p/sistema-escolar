@@ -16,6 +16,7 @@ import {
     Phone,
     Home
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface PersonaFormProps {
     roles: any[];
@@ -39,17 +40,28 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
         null
     );
 
-    useEffect(() => {
-        if (state) {
-            if (state.success) {
-                alert(state.message);
+useEffect(() => {
+    if (state) {
+        if (state.success) {
+            toast.success(state.message || "Persona guardada correctamente", {
+                description: "Los datos se actualizaron en la base de datos.",
+                duration: 4000,
+            });
+
+            const timer = setTimeout(() => {
                 router.push("/dashboard/personas");
                 router.refresh();
-            } else if (!state.success && state.message) {
-                alert(state.message);
-            }
+            }, 1500);
+
+            return () => clearTimeout(timer);
+
+        } else if (!state.success && state.message) {
+            toast.error("Hubo un problema", {
+                description: state.message,
+            });
         }
-    }, [state, router]);
+    }
+}, [state, router]);
 
     return (
         <form action={formAction} className="space-y-6">
@@ -135,7 +147,6 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
                 </div>
             </div>
 
-            {/* SECCIÓN: DIRECCIÓN Y TELÉFONO (Nuevos campos de main) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -164,7 +175,6 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
                 </div>
             </div>
 
-            {/* SECCIÓN: ROL (Solo en creación) */}
             {!initialData && (
                 <div className="space-y-2">
                     <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -185,14 +195,12 @@ export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
                 </div>
             )}
 
-            {/* MENSAJE DE ERROR */}
             {state?.success === false && state?.message && (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
                     {state.message}
                 </div>
             )}
 
-            {/* BOTONES DE ACCIÓN */}
             <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-100">
 
                 <button

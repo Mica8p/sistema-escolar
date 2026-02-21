@@ -1,14 +1,13 @@
 "use client";
-// Componente de seguridad para primer login
 
 import { useActionState, useEffect, useState } from "react";
 import { changePasswordAction } from "@/lib/actions/auth-actions";
 import { LockKeyhole, Save } from "lucide-react";
+import { toast } from "sonner"; // 🚩 1. Importamos sonner
 
 export default function FirstLoginModal({ shouldForceChange }: { shouldForceChange?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Verificamos si la bandera isDefaultPassword está activa en la sesión
   useEffect(() => {
     if (shouldForceChange) {
       setIsOpen(true);
@@ -19,9 +18,23 @@ export default function FirstLoginModal({ shouldForceChange }: { shouldForceChan
 
   useEffect(() => {
     if (state?.success) {
-      alert("¡Contraseña actualizada! Tu sesión se reiniciará para aplicar los cambios.");
-      setIsOpen(false);
-      window.location.reload(); // Recarga para asegurar limpieza
+      toast.success("¡Contraseña actualizada!", {
+        description: "Tu sesión se reiniciará en breve para aplicar los cambios.",
+        duration: 3000,
+      });
+
+      const timer = setTimeout(() => {
+        setIsOpen(false);
+        window.location.reload();
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+
+    if (state && !state.success && state.message) {
+        toast.error("Error al cambiar contraseña", {
+            description: state.message
+        });
     }
   }, [state]);
 
@@ -29,21 +42,23 @@ export default function FirstLoginModal({ shouldForceChange }: { shouldForceChan
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="bg-blue-600 p-6 text-white text-center">
-          <div className="mx-auto bg-blue-500 w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-inner">
-            <LockKeyhole size={32} />
+      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
+        <div className="bg-indigo-600 p-8 text-white text-center relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+
+          <div className="mx-auto bg-white/20 w-16 h-16 rounded-3xl backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-white/30 rotate-3">
+            <LockKeyhole size={32} className="text-white" />
           </div>
-          <h2 className="text-xl font-bold">Bienvenido al Sistema</h2>
-          <p className="text-blue-100 text-sm mt-2 leading-relaxed">
-            Detectamos que estás usando tu contraseña temporal (DNI). 
-            <br/>Por seguridad, debés definir una nueva contraseña privada.
+          <h2 className="text-2xl font-black uppercase tracking-tight">Bienvenido</h2>
+          <p className="text-indigo-100 text-xs mt-2 font-medium leading-relaxed opacity-90">
+            Detectamos que estás usando tu contraseña temporal.
+            <br/>Por seguridad, definí una nueva contraseña privada.
           </p>
         </div>
 
-        <form action={formAction} className="p-6 space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+        <form action={formAction} className="p-8 space-y-6 bg-white">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
               Nueva Contraseña
             </label>
             <input
@@ -51,13 +66,13 @@ export default function FirstLoginModal({ shouldForceChange }: { shouldForceChan
               name="newPassword"
               required
               minLength={6}
-              className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-slate-900 placeholder:text-slate-500"
+              className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-slate-900 placeholder:text-slate-300 font-medium"
               placeholder="Mínimo 6 caracteres"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
               Repetir Contraseña
             </label>
             <input
@@ -65,23 +80,17 @@ export default function FirstLoginModal({ shouldForceChange }: { shouldForceChan
               name="confirmPassword"
               required
               minLength={6}
-              className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-slate-900 placeholder:text-slate-500"
+              className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-slate-900 placeholder:text-slate-300 font-medium"
               placeholder="Repetí la contraseña"
             />
           </div>
 
-          {state?.message && !state.success && (
-            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-100 flex items-center gap-2">
-              ⚠️ {state.message}
-            </div>
-          )}
-
           <button
             type="submit"
             disabled={isPending}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-200 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 shadow-xl shadow-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-95"
           >
-            {isPending ? "Guardando..." : "Establecer Contraseña Privada"}
+            {isPending ? "Guardando..." : "Actualizar Contraseña"}
             {!isPending && <Save size={18} />}
           </button>
         </form>

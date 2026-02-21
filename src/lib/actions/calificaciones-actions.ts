@@ -5,15 +5,13 @@ import { TipoEvaluacion } from "@prisma/client";
 import { auth } from "@/auth";
 import db from "@/lib/db";
 import { guardarNota, getAsignacionesParaUsuario } from "@/service/calificaciones.service";
+import { getCicloActual } from "@/lib/ciclo-session";
 
 function parseTipo(v: string): TipoEvaluacion {
   if (v === "Parcial" || v === "Final" || v === "Recuperatorio") return v;
   throw new Error("Tipo de evaluación inválido.");
 }
 
-/**
- * Guardar/editar nota (planilla)
- */
 export async function guardarNotaAction(_: any, formData: FormData) {
   const session = await auth();
   if (!session?.user) throw new Error("No autorizado");
@@ -32,10 +30,11 @@ export async function guardarNotaAction(_: any, formData: FormData) {
     throw new Error("La nota debe estar entre 0 y 10.");
   }
 
-  // Permisos: Docente solo puede guardar en sus asignaciones
   if (!isAdmin) {
     if (!idPersona) throw new Error("No autorizado");
-    const asigs = await getAsignacionesParaUsuario({ isAdmin, idPersona });
+    const idCiclo = await getCicloActual();
+    const asigs = await getAsignacionesParaUsuario({ isAdmin, idPersona, idCiclo });
+
     const permitida = asigs.some((a) => a.idAsignacion === idAsignacion);
     if (!permitida) throw new Error("No tenés permiso para esta asignación.");
   }
@@ -46,10 +45,6 @@ export async function guardarNotaAction(_: any, formData: FormData) {
   return { ok: true };
 }
 
-/**
- * Delete: ADMIN puede borrar cualquiera.
- * DOCENTE puede borrar solo si la nota pertenece a una asignación suya.
- */
 export async function deleteCalificacion(idNota: number) {
   const session = await auth();
   if (!session?.user) return { success: false, message: "No autorizado" };
@@ -58,7 +53,6 @@ export async function deleteCalificacion(idNota: number) {
   const idProfesor = session.user.idProfesor; // puede ser null
 
   try {
-    // Traemos la nota + asignación para validar dueño
     const nota = await db.nota.findUnique({
       where: { idNota },
       include: { asignacion: { select: { idProfesor: true } } },
@@ -82,4 +76,20 @@ export async function deleteCalificacion(idNota: number) {
   } catch {
     return { success: false, message: "No se pudo eliminar la calificación." };
   }
+}
+
+//para que el admin pueda congelar las notas
+export async function cambiarEstadoPeriodoAction(idPeriodo: number, cerrado: boolean) {
+  const session = await auth();
+  if (!session?.user.roles.includes("ADMIN")) {
+    throw new Error("Solo el personal administrativo puede cerrar periodos.");
+  }
+
+  await db.periodoAcademico.update({
+    where: { idPeriodo },
+    data: { cerrado }
+  });
+
+  revalidatePath("/dashboard/calificaciones");
+  return { success: true };
 }

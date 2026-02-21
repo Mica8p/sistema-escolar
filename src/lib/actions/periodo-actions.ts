@@ -80,3 +80,15 @@ export async function getPeriodosByCiclo(idCiclo: number) {
     return [];
   }
 }
+
+export async function togglePeriodoCerradoAction(idPeriodo: number, cerrado: boolean) {
+    try {
+        await db.periodoAcademico.update({
+            where: { idPeriodo },
+            data: { cerrado }
+        });
+        return { success: true };
+    } catch (error) {
+        return { success: false, message: 'No se pudo cambiar el estado' };
+    }
+}

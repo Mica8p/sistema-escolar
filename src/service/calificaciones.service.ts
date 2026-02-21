@@ -1,6 +1,5 @@
 import db from "@/lib/db";
 import { TipoEvaluacion } from "@prisma/client";
-import { getCicloActual } from "@/lib/ciclo-session";
 
 export async function getAsignacionesParaUsuario(params: {
   isAdmin: boolean;
@@ -35,9 +34,6 @@ export async function getAsignacionesParaUsuario(params: {
   });
 }
 
-/**
- * Trae los periodos (Trimestres/Etapas) de un año lectivo.
- */
 export async function getPeriodosByCiclo(idCiclo: number) {
   return db.periodoAcademico.findMany({
     where: { idCiclo },
@@ -65,26 +61,26 @@ export async function getPlanilla(params: {
       estadoAcademico: "Activo"
     },
     include: {
-      alumno: {
-        include: { persona: true }
-      }
+      alumno: { include: { persona: true } }
     },
     orderBy: { alumno: { persona: { apellido: "asc" } } }
   });
 
-  const notas = await db.nota.findMany({
+  const todasLasNotas = await db.nota.findMany({
     where: {
       idAsignacion: params.idAsignacion,
-      idPeriodo: params.idPeriodo,
-      tipo: params.tipo as any,
     },
+    include: { periodo: true }
   });
 
-  // Mapeo para que la tabla lo procese rápido
-  const notaByMatricula = new Map<number, number>();
-  notas.forEach((n) => notaByMatricula.set(n.idMatricula, n.nota));
+  const notaByMatricula = new Map<number, any>();
+  todasLasNotas
+    .filter(n => n.idPeriodo === params.idPeriodo && n.tipo === params.tipo)
+    .forEach((n) => notaByMatricula.set(n.idMatricula, n));
 
-  return { asig, matriculas, notaByMatricula };
+  const historialNotas = todasLasNotas;
+
+  return { asig, matriculas, notaByMatricula, historialNotas: todasLasNotas };
 }
 
 
@@ -96,7 +92,16 @@ export async function guardarNota(params: {
   nota: number;
   observacion?: string | null;
 }) {
-  // Primero necesitamos saber el contexto de esta asignación
+
+  const periodo = await db.periodoAcademico.findUnique({
+    where: { idPeriodo: params.idPeriodo },
+    select: { cerrado: true }
+  });
+
+  if (periodo?.cerrado) {
+    throw new Error("Operación no permitida: El periodo académico se encuentra cerrado.");
+  }
+
   const asigActual = await db.asignacionAcademica.findUnique({
     where: { idAsignacion: params.idAsignacion },
     select: { idMateria: true, idCurso: true, idCiclo: true }
@@ -104,7 +109,6 @@ export async function guardarNota(params: {
 
   if (!asigActual) throw new Error("Asignación no válida");
 
-  // Buscamos si ya existe una nota para este alumno/periodo en esta materia
   const existente = await db.nota.findFirst({
     where: {
       idMatricula: params.idMatricula,
@@ -121,19 +125,17 @@ export async function guardarNota(params: {
   const fechaRegistro = new Date();
 
   if (existente) {
-    // Si ya existe, actualizamos (sin importar quién la creó originalmente)
     return db.nota.update({
       where: { idNota: existente.idNota },
       data: {
         nota: params.nota,
         observacion: params.observacion ?? null,
-        idAsignacion: params.idAsignacion, // Queda registrado quién hizo la última edición
+        idAsignacion: params.idAsignacion,
         fechaRegistro,
       },
     });
   }
 
-  // Si no existe, se crea de cero
   return db.nota.create({
     data: {
       idMatricula: params.idMatricula,
@@ -158,15 +160,38 @@ export async function getCalificacionesHijo(idAlumno: number, idCiclo: number) {
     include: {
       asignacion: {
         include: {
-          materia: true // Para mostrar "Matemática", "Lengua", etc.
+          materia: true
         }
       },
-      periodo: true // Para saber si es "1° Trimestre", "Examen Final", etc.
+      periodo: true
     },
     orderBy: [
       { asignacion: { materia: { nombre: 'asc' } } },
       { periodo: { fechaInicio: 'asc' } },
       { fechaRegistro: 'desc' }
     ]
+  });
+}
+
+export async function getBoletinCompleto(idMatricula: number) {
+  if (!idMatricula || isNaN(idMatricula)) return null;
+  return await db.matricula.findUnique({
+    where: { idMatricula },
+    include: {
+      alumno: {
+        include: { persona: true }
+      },
+      curso: true,
+      ciclo: true,
+      notas: {
+        include: {
+          asignacion: {
+            include: { materia: true }
+          },
+          periodo: true
+        }
+      },
+      asistencias: true
+    }
   });
 }

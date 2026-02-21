@@ -2,13 +2,13 @@ import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 import { NextResponse } from "next/server";
 
-// 1. Rutas exclusivas para el Administrador (Configuración e Inventario)
+// 1. Rutas exclusivas para el Administrador
 const ADMIN_ONLY = [
   "/dashboard/ciclos",
   "/dashboard/cursos",
   "/dashboard/materias",
   "/dashboard/periodos",
-  "/dashboard/inventario" // ✅ Nueva ruta blindada
+  "/dashboard/inventario"
 ];
 
 // 2. Rutas académicas (Administrador y Docentes)
@@ -29,23 +29,25 @@ export default NextAuth(authConfig).auth((req) => {
 
   const path = nextUrl.pathname;
 
-  // REGLA DE ORO: El Administrador tiene acceso total a Escuela Pro
+  //El Administrador tiene acceso total
   if (isAdmin) {
     return NextResponse.next();
   }
 
-  const esRutaDetalleAsistencia = path.startsWith("/dashboard/asistencias/") && path.length > "/dashboard/asistencias/".length;
-
-  if (esRutaDetalleAsistencia && esPadre) {
-    return NextResponse.next(); // ✅ Deja pasar al padre al detalle de su hijo
+  const esRutaBoletin = path.startsWith("/dashboard/alumnos/") && path.endsWith("/boletin");
+  if (esRutaBoletin && esPadre) {
+    return NextResponse.next();
   }
 
-  // Protección de rutas de configuración e inventario
+  const esRutaDetalleAsistencia = path.startsWith("/dashboard/asistencias/") && path.length > "/dashboard/asistencias/".length;
+  if (esRutaDetalleAsistencia && esPadre) {
+    return NextResponse.next();
+  }
+
   if (ADMIN_ONLY.some(route => path.startsWith(route))) {
     return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 
-  // Protección de rutas de gestión académica
   if (ACADEMIC_ROUTES.some(route => path.startsWith(route)) && !isDocente) {
     return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }

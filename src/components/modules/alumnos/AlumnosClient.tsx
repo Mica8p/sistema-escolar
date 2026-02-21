@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { EstadoAcademico } from "@prisma/client";
 import { cn } from "@/lib/utils";
-import { Fingerprint, Settings2, GraduationCap, UserCog } from "lucide-react";
+import { Fingerprint, Settings2, GraduationCap, UserCog, FileText } from "lucide-react";
 import GenericDeleteButton from "@/components/shared/GenericDeletButton";
 import { deleteMatriculaAction } from "@/lib/actions/alumno-actions";
 
@@ -33,6 +33,7 @@ export function AlumnosClient({ alumnos }: { alumnos: any[] }) {
       );
     });
   }, [search, alumnos]);
+
 
   return (
     <>
@@ -107,7 +108,9 @@ export function AlumnosClient({ alumnos }: { alumnos: any[] }) {
                           <Settings2 size={14} />
                           Expediente
                         </Link>
+
                         {matriculaActual && (
+
                           <>
                             <div className="w-px h-4 bg-slate-200" />
                             <GenericDeleteButton
@@ -117,6 +120,13 @@ export function AlumnosClient({ alumnos }: { alumnos: any[] }) {
                               message={`Estás por eliminar la inscripción de ${alumno.persona.nombre} en este ciclo. Esto no borra al alumno del sistema, solo su matrícula actual.`}
                               variant="danger"
                             />
+
+                            <Link
+                              href={`/dashboard/alumnos/${matriculaActual.idMatricula}/boletin`}
+                              className="flex items-center gap-2 bg-slate-800 text-white px-3 py-1.5 rounded-xl font-bold text-[10px] uppercase hover:bg-slate-900 transition-all shadow-sm"
+                            >
+                              <FileText size={14} /> Boletín
+                            </Link>
                           </>
                         )}
                         </div>

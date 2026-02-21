@@ -9,7 +9,8 @@ import {
   User, Calendar, MapPin, Phone, Mail,
   GraduationCap, AlertTriangle, CheckCircle2,
   FileText, ArrowLeft, Ban, RotateCcw,
-  Users, Plus, Trash2, Pencil
+  Users, Plus, Trash2, Pencil,
+  Download
 } from "lucide-react";
 import Link from "next/link";
 import GenericDeleteButton from "@/components/shared/GenericDeletButton";
@@ -228,7 +229,14 @@ export default function AlumnoDetalle({ alumno, cicloId }: AlumnoDetalleProps) {
                     <button onClick={() => handleCambioEstadoTrigger(EstadoAcademico.Egresado)} className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium border border-indigo-200">
                       <GraduationCap size={16} /> Marcar como Egresado
                     </button>
+                    <Link
+                      href={`/dashboard/alumnos/${matriculaActual.idMatricula}/boletin`}
+                      className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2 rounded-xl font-black text-xs uppercase hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                    >
+                     <Download size={16} /> Generar Boletín Anual
+                   </Link>
                   </>
+
                 ) : (
                   <button onClick={() => handleCambioEstadoTrigger(EstadoAcademico.Activo)} className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-medium border border-emerald-200">
                     <RotateCcw size={16} /> Reincorporar / Activar
