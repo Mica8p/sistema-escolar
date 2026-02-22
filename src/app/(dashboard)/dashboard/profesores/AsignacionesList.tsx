@@ -2,6 +2,7 @@
 
 import { BookOpen, UserX, Pencil } from 'lucide-react';
 import { desactivarAsignacionAction } from '@/lib/actions/profesor-actions';
+import { darDeBajaAction } from '@/lib/actions/profesor-actions';
 
 export function AsignacionesList({ profesores }: { profesores: any[] }) {
   const profesoresConAsignacionesActivas = profesores.filter(
@@ -84,6 +85,12 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
                         >
                           <button
                             type='submit'
+                            onClick={async () => {
+                              const motivo = prompt("Motivo de la baja (ej: Suplencia finalizada, Licencia, Jubilación):");
+                              if (motivo) {
+                                  await darDeBajaAction(asig.idAsignacion, motivo);
+                              }
+                            }}
                             className='text-orange-500 hover:text-orange-700 transition-transform hover:scale-110'
                             title={`Dar de baja ${asig.materia.nombre}`}
                           >

@@ -71,9 +71,9 @@ export default function PagosList({ pagos, alumnoData }: PagosListProps) {
                       concepto: conceptoUnificado || "Pago General"
                     }}
                     alumno={{
-                      nombre: alumnoData.nombre,
-                      legajo: alumnoData.legajo || "S/L",
-                      curso: alumnoData.curso
+                      nombre: alumnoData?.nombre || "Cargando...",
+                      legajo: alumnoData?.legajo || "S/L",
+                      curso: alumnoData?.curso || "N/A"
                     }}
                   />
                 </td>

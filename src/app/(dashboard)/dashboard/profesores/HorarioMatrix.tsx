@@ -16,9 +16,9 @@ interface HorarioMatrixProps {
 }
 
 export default function HorarioMatrix({ horario, turno, loading, onSlotSelect, selectedSlots, idAsignacionActual, diasHabiles, bloquesHorario }: HorarioMatrixProps) {
-  
+
   const dias = diasHabiles.map(d => d.nombre);
-  
+
   const getHorasBase = () => {
     const bloquesTurno = bloquesHorario.filter(b => b.turno.toUpperCase() === turno.toUpperCase());
     return bloquesTurno.map(b => `${b.horaInicio} - ${b.horaFin}`);
@@ -30,10 +30,9 @@ export default function HorarioMatrix({ horario, turno, loading, onSlotSelect, s
     setHoras(getHorasBase());
   }, [turno, bloquesHorario]);
 
-  // Sincronizar las horas visuales con los slots guardados (para que aparezcan los horarios editados)
   useEffect(() => {
     if (selectedSlots.length === 0) return;
-    
+
     const horasBase = getHorasBase();
 
     setHoras((prevHoras) => {
@@ -64,7 +63,7 @@ export default function HorarioMatrix({ horario, turno, loading, onSlotSelect, s
       </div>
     );
   }
-  
+
   return (
     <div className="mt-4 p-4 border rounded-md bg-white">
       <h3 className="text-lg font-semibold text-gray-700 mb-4">
@@ -91,8 +90,7 @@ export default function HorarioMatrix({ horario, turno, loading, onSlotSelect, s
                   h.horaInicio.startsWith(horaInicio.split(":")[0])
               );
               const isSelected = selectedSlots.some(slot => slot.dia === dia && slot.hora === hora);
-              
-              // El slot está ocupado por OTRA asignación diferente a la que estamos editando
+
               const ocupadoPorOtro = ocupado && ocupado.idAsignacion !== idAsignacionActual;
 
 

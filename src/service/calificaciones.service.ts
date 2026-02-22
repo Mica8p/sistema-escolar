@@ -68,17 +68,22 @@ export async function getPlanilla(params: {
 
   const todasLasNotas = await db.nota.findMany({
     where: {
-      idAsignacion: params.idAsignacion,
+      asignacion: {
+        idMateria: asig.idMateria,
+        idCurso: asig.idCurso,
+        idCiclo: asig.idCiclo
+      }
     },
-    include: { periodo: true }
+    include: {
+      periodo: true,
+      asignacion: { include: { profesor: { include: { persona: true } } } }
+    }
   });
 
   const notaByMatricula = new Map<number, any>();
   todasLasNotas
     .filter(n => n.idPeriodo === params.idPeriodo && n.tipo === params.tipo)
     .forEach((n) => notaByMatricula.set(n.idMatricula, n));
-
-  const historialNotas = todasLasNotas;
 
   return { asig, matriculas, notaByMatricula, historialNotas: todasLasNotas };
 }
@@ -92,7 +97,6 @@ export async function guardarNota(params: {
   nota: number;
   observacion?: string | null;
 }) {
-
   const periodo = await db.periodoAcademico.findUnique({
     where: { idPeriodo: params.idPeriodo },
     select: { cerrado: true }
@@ -130,7 +134,7 @@ export async function guardarNota(params: {
       data: {
         nota: params.nota,
         observacion: params.observacion ?? null,
-        idAsignacion: params.idAsignacion,
+        idAsignacion: params.idAsignacion, // 🚩 Actualizamos la autoría
         fechaRegistro,
       },
     });

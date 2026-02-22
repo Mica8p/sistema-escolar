@@ -2,8 +2,7 @@ import db from "@/lib/db";
 import { getCicloActual } from "@/lib/ciclo-session";
 
 export const ProfesorService = {
-  // 1. Obtener profesores e incluir SOLO las asignaciones que están ACTIVAS
-async getAll(idCiclo: number) { // <--- Agregamos idCiclo como parámetro
+async getAll(idCiclo: number) {
     return await db.profesor.findMany({
       where: {
         persona: {
@@ -15,7 +14,7 @@ async getAll(idCiclo: number) { // <--- Agregamos idCiclo como parámetro
         asignaciones: {
           where: {
             estado: true,
-            idCiclo: idCiclo // <--- FILTRO DE SEGURIDAD 2
+            idCiclo: idCiclo
           },
           include: {
             materia: true,
@@ -30,7 +29,6 @@ async getAll(idCiclo: number) { // <--- Agregamos idCiclo como parámetro
     });
   },
 
-  // Personas con rol DOCENTE que aún no están dadas de alta como Profesores
   async getPersonasDisponibles() {
     return await db.persona.findMany({
       where: {
@@ -45,32 +43,39 @@ async getAll(idCiclo: number) { // <--- Agregamos idCiclo como parámetro
     });
   },
 
-  // Crear profesor y asignar su primera materia/curso
 async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idCiclo: number, slots: { dia: string, hora: string }[]) {
-
     return await db.$transaction(async (tx) => {
 
-      for (const slot of slots) {
-        const [horaInicio, horaFin] = slot.hora.split(" - ");
-        const asignacionActiva = await tx.asignacionAcademica.findFirst({
-          where: {
-            idMateria,
-            idCurso,
-            idCiclo: idCiclo,
-            estado: true,
-            horarios: {
-              some: {
-                diaSemana: slot.dia as any,
-                horaInicio: horaInicio,
-              }
-            }
-          }
-        });
+    const tronoOcupado = await tx.asignacionAcademica.findFirst({
+      where: { idMateria, idCurso, idCiclo, estado: true }
+    });
+    if (tronoOcupado) throw new Error("Esta materia ya tiene un docente activo.");
 
-        if (asignacionActiva) {
-          throw new Error(`Ya existe un docente activo en este ciclo, en el horario ${slot.dia} ${slot.hora}.`);
+    for (const slot of slots) {
+      const conflicto = await tx.horario.findFirst({
+        where: {
+          asignacion: { idProfesor: idPersona, idCiclo, estado: true },
+          diaSemana: slot.dia as any,
+          horaInicio: slot.hora.split(" - ")[0]
         }
+      });
+      if (conflicto) throw new Error(`El docente ya tiene otra clase el ${slot.dia} a esa hora.`);
+    }
+
+      const existeActiva = await tx.asignacionAcademica.findFirst({
+        where: {
+          idMateria,
+          idCurso,
+          idCiclo,
+          estado: true
+        },
+        include: { profesor: { include: { persona: true } } }
+      });
+
+      if (existeActiva) {
+        throw new Error(`¡Cuidado! ${existeActiva.profesor.persona.apellido} ya está activo en esta materia. Primero debés darle la baja.`);
       }
+
 
       const profesor = await tx.profesor.upsert({
         where: { idPersona: idPersona },
@@ -100,25 +105,17 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
           }
         });
       }
-
       return asignacion;
     });
   },
 
-  // CAMBIO: De "Borrado Lógico" a "Borrado Físico"
-  // Elimina la asignación y sus horarios asociados de la base de datos
-  async eliminarAsignacion(idAsignacion: number) {
-    return await db.$transaction(async (tx) => {
-      // 1. Primero borramos los horarios para no dejar huérfanos
-      await tx.horario.deleteMany({ where: { idAsignacion } });
-
-      // 2. Luego borramos la asignación
-      return await tx.asignacionAcademica.delete({ where: { idAsignacion } });
+async eliminarAsignacion(idAsignacion: number) {
+    return await db.asignacionAcademica.update({
+      where: { idAsignacion },
+      data: { estado: false }
     });
   },
 
-  // NUEVA FUNCIÓN: Editar Asignación
-  // Permite corregir si el secretario se equivocó de curso o materia
   async updateAsignacion(idAsignacion: number, data: { idMateria?: number, idCurso?: number }, slots: { dia: string, hora: string }[]) {
     return await db.$transaction(async (tx) => {
       await tx.horario.deleteMany({
@@ -147,18 +144,16 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
     });
   },
 
-  // Auxiliares para los selectores
   async getMaterias() {
     return await db.materia.findMany({ orderBy: { nombre: "asc" } });
   },
 
-  //Historial de asignaciones (bajas) de todos los profesores
   async getHistorialAsignaciones() {
-  const idCiclo = await getCicloActual(); // <--- DINÁMICO
+  const idCiclo = await getCicloActual();
   return await db.asignacionAcademica.findMany({
     where: {
-      estado: false, // Solo las que fueron dadas de baja
-      idCiclo: idCiclo // <--- FILTRADO POR AÑO
+      estado: false,
+      idCiclo: idCiclo
     },
     include: {
       profesor: {
@@ -168,9 +163,50 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
       curso: true
     },
     orderBy: {
-      idAsignacion: 'desc' // Las más recientes primero
+      idAsignacion: 'desc'
     }
+  });
+},
+
+async borrarAsignacionDefinitivamente(idAsignacion: number) {
+  return await db.$transaction(async (tx) => {
+    await tx.horario.deleteMany({ where: { idAsignacion } });
+
+    return await tx.asignacionAcademica.delete({ where: { idAsignacion } });
+  });
+},
+
+async darDeBaja(idAsignacion: number, motivo: string) {
+  return await db.asignacionAcademica.update({
+    where: { idAsignacion },
+    data: {
+      estado: false,
+      motivoBaja: motivo,
+      fechaBaja: new Date()
+    }
+  });
+},
+
+async reincorporarDocente(idAsignacion: number) {
+  return await db.$transaction(async (tx) => {
+    const asig = await tx.asignacionAcademica.findUnique({ where: { idAsignacion } });
+
+    if (!asig) throw new Error("Asignación no encontrada");
+
+    const ocupado = await tx.asignacionAcademica.findFirst({
+      where: { idMateria: asig.idMateria, idCurso: asig.idCurso, idCiclo: asig.idCiclo, estado: true }
+    });
+
+    if (ocupado) throw new Error("No se puede reincorporar: Ya hay otro docente activo en este cargo.");
+
+    return await tx.asignacionAcademica.update({
+      where: { idAsignacion },
+      data: { estado: true, motivoBaja: null, fechaBaja: null }
+    });
   });
 }
 
+
+
 };
+

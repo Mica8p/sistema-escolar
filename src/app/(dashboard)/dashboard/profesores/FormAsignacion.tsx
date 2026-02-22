@@ -12,7 +12,7 @@ interface Props {
   personas: any[];
   materias: any[];
   cursos: any[];
-  editData?: any; // Recibe la asignación a editar si existe
+  editData?: any;
   idCiclo: number;
   diasHabiles: DiaHabil[];
   bloquesHorario: BloqueHorario[];
@@ -28,7 +28,6 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
   const [selectedCurso, setSelectedCurso] = useState<number | null>(editData?.idCurso || null);
   const [selectedSlots, setSelectedSlots] = useState<{ dia: string, hora: string }[]>([]);
 
-  // Si hay editData, usamos la acción de editar; si no, la de asignar
   const actionToUse = editData ? editarDocenteAction : asignarDocenteAction;
   const [state, formAction, isPending] = useActionState(actionToUse, initialState);
 
@@ -62,7 +61,7 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
       setHorario([]);
     }
     if (!editData) {
-      setSelectedSlots([]); // Reset slot selection when course changes
+      setSelectedSlots([]);
     }
   }, [selectedCurso, idCiclo, editData]);
 
@@ -105,9 +104,7 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
       )}
 
       <form ref={formRef} action={formAction} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-        {/* CAMPO OCULTO PARA EL CICLO */}
         <input type="hidden" name="idCiclo" value={idCiclo} />
-        {/* Campo oculto para saber qué ID estamos editando */}
         {editData && <input type="hidden" name="idAsignacion" value={editData.idAsignacion} />}
         {selectedSlots.map((slot, i) => (
           <input type="hidden" name={`slots[${i}]dia`} value={slot.dia} key={`${i}-dia`} />
@@ -121,7 +118,7 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
           <select
             name="idPersona"
             required
-            disabled={!!editData} // No se cambia el docente, solo su materia/curso
+            disabled={!!editData}
             defaultValue={editData?.profesor?.idPersona || ""}
             className="w-full p-2 border rounded-md bg-white disabled:bg-gray-100 text-gray-600"
           >

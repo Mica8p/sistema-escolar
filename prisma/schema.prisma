@@ -281,6 +281,8 @@ model AsignacionAcademica {
   idCiclo      Int
   cargaHoraria Int
   estado       Boolean @default(true)
+  motivoBaja   String?
+  fechaBaja    DateTime?
 
   profesor Profesor     @relation(fields: [idProfesor], references: [idProfesor])
   materia  Materia      @relation(fields: [idMateria], references: [idMateria])

@@ -1,11 +1,13 @@
 import { ProfesorService } from "@/service/profesor.service";
 import { AlumnoService } from "@/service/alumno.service";
-import { Briefcase, History, Clock } from "lucide-react";
+import { Briefcase, History, Clock, Trash2 } from "lucide-react";
 import FormAsignacion from "./FormAsignacion";
 import { getCicloActual } from "@/lib/ciclo-session";
 import db from "@/lib/db";
 import { ImportarAsignaciones } from "@/components/modules/profesores/ImportarAsignaciones";
 import { AsignacionesList } from "./AsignacionesList";
+import { borrarErrorAsignacionAction } from "@/lib/actions/profesor-actions";
+import DeleteErrorButton from "@/components/modules/profesores/DeleteErrorButton";
 
 interface PageProps {
   searchParams: Promise<{ editId?: string }>;
@@ -77,33 +79,35 @@ export default async function DocentesPage({ searchParams }: PageProps) {
       <AsignacionesList profesores={profesores} />
 
       <div className="mt-12 space-y-4">
-        <h2 className="text-xl font-bold text-gray-400 flex items-center gap-2 px-2">
-          <History className="h-6 w-6" />
+        <h2 className="text-xl font-bold text-slate-500 flex items-center gap-2 px-2 italic">
+          <History className="h-6 w-6 text-slate-400" />
           Memoria Académica (Bajas y Reemplazos)
         </h2>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <table className="w-full text-left opacity-70">
-            <thead className="bg-gray-100 border-b border-gray-200">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="p-4 text-xs font-bold text-gray-400 uppercase">Ex Docente</th>
-                <th className="p-4 text-xs font-bold text-gray-400 uppercase">Materia / Curso</th>
-                <th className="p-4 text-xs font-bold text-gray-400 uppercase text-center">Referencia</th>
+                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Ex Docente</th>
+                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Materia / Curso</th>
+                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Referencia</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-slate-100">
               {historial.map((reg) => (
-                <tr key={reg.idAsignacion} className="bg-gray-50/30">
+                <tr key={reg.idAsignacion} className="bg-slate-50/30 hover:bg-slate-50 transition-colors">
                   <td className="p-4">
-                    <p className="text-gray-600 font-medium">{reg.profesor.persona.apellido}, {reg.profesor.persona.nombre}</p>
+                    <p className="text-slate-700 font-semibold">{reg.profesor.persona.apellido}, {reg.profesor.persona.nombre}</p>
                   </td>
-                  <td className="p-4 text-gray-500 text-sm">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
+                  <td className="p-4 text-slate-600 text-sm">
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="h-3 w-3 text-slate-400" />
                       {reg.materia.nombre} — {reg.curso.grado}° {reg.curso.seccion} ({reg.curso.turno})
                     </span>
                   </td>
-                  <td className="p-4 text-center">
-                    <span className="px-2 py-1 bg-gray-200 text-gray-500 text-[10px] font-bold rounded">HISTÓRICO</span>
+                  <td className="p-4 text-center flex items-center justify-center gap-3">
+                    <span className="px-2.5 py-1 bg-slate-200 text-slate-600 text-[9px] font-black rounded-lg uppercase tracking-tighter">HISTÓRICO</span>
+
+                    <DeleteErrorButton id={reg.idAsignacion} />
                   </td>
                 </tr>
               ))}

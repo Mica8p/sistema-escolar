@@ -4,7 +4,6 @@ import { ProfesorService } from "@/service/profesor.service";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-// Definimos el tipo de estado para el formulario
 export type FormState = {
   error?: string;
   success?: boolean;
@@ -89,19 +88,17 @@ export async function editarDocenteAction(prevState: FormState, formData: FormDa
   }
 }
 
-    
+
 
     export async function desactivarAsignacionAction(idAsignacion: number) {
 
       try {
-        // Ahora llamamos a la función de eliminación física
         await ProfesorService.eliminarAsignacion(idAsignacion);
         revalidatePath('/dashboard/profesores');
         return { success: true };
       } catch (error: any) {
         console.error(error);
-        // Si falla (probablemente por tener asistencias vinculadas), avisamos al usuario
-        if (error.code === 'P2003') { // Código de error de Prisma para restricción de clave foránea
+        if (error.code === 'P2003') {
             return { success: false, message: 'No se puede eliminar: Esta materia ya tiene asistencias registradas.' };
         }
         return {
@@ -112,4 +109,32 @@ export async function editarDocenteAction(prevState: FormState, formData: FormDa
 
     }
 
-    
+export async function borrarErrorAsignacionAction(idAsignacion: number) {
+  try {
+    await ProfesorService.borrarAsignacionDefinitivamente(idAsignacion);
+    revalidatePath("/dashboard/profesores");
+    return { success: true };
+  } catch (error) {
+    return { success: false, message: "No se puede borrar: Probablemente ya tiene notas cargadas." };
+  }
+}
+
+export async function darDeBajaAction(idAsignacion: number, motivo: string) {
+  try {
+    await ProfesorService.darDeBaja(idAsignacion, motivo);
+    revalidatePath("/dashboard/profesores");
+    return { success: true };
+  } catch (error) {
+    return { success: false, message: "Error al procesar la baja." };
+  }
+}
+
+export async function reincorporarDocenteAction(idAsignacion: number) {
+  try {
+    await ProfesorService.reincorporarDocente(idAsignacion);
+    revalidatePath("/dashboard/profesores");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
