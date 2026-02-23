@@ -14,7 +14,10 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
   const { curso } = await searchParams;
   const idCiclo = await getCicloActual();
 
-  // Si es docente y no tenemos el idProfesor en la sesión, lo buscamos en la BD
+  const cicloActualObj = await db.cicloLectivo.findUnique({
+    where: { idCiclo }
+  });
+
   if (esDocente && !idProfesor && session?.user?.idPersona) {
     const profesor = await db.profesor.findUnique({
       where: { idPersona: Number(session.user.idPersona) }
@@ -28,20 +31,16 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
   let idCurso = curso ? parseInt(curso) : null;
 
   if (esDocente && !esAdmin) {
-    // Si es docente puro, forzamos ver SU agenda y anulamos la vista de curso
     if (idProfesor) {
       horarios = await getHorariosPorDocente(idProfesor, idCiclo);
-      // Filtramos solo las asignaciones activas (estado === true)
       horarios = horarios.filter((h: any) => h.asignacion.estado);
     }
-    idCurso = null; // Evitamos que la UI piense que hay un curso seleccionado
+    idCurso = null;
   } else {
-    // Si es Admin, priorizamos la selección de curso
     if (idCurso) {
       horarios = await getHorariosPorCurso(idCurso, idCiclo);
     } else if (esDocente && idProfesor) {
       horarios = await getHorariosPorDocente(idProfesor, idCiclo);
-      // Filtramos solo las asignaciones activas (estado === true)
       horarios = horarios.filter((h: any) => h.asignacion.estado);
     }
   }
@@ -54,11 +53,12 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
         <h1 className="text-3xl font-black text-slate-800 tracking-tighter">
           {esDocente ? "Mi Agenda Semanal" : "Gestión de Horarios"}
         </h1>
-        <p className="text-slate-500 font-medium italic">Ciclo Lectivo 2026</p>
+        <p className="text-slate-500 font-medium italic">
+          Ciclo Lectivo {cicloActualObj?.anio || 2026}
+        </p>
       </header>
 
 
-      {/* Solo mostramos el selector si es Admin */}
       {esAdmin && (
         <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm flex gap-6 items-center">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Seleccionar Curso:</span>

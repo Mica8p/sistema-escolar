@@ -1,4 +1,4 @@
-'use client'; // ✅ ESTO LO HACE INTERACTIVO
+'use client';
 
 import { useRouter } from 'next/navigation';
 import { Calendar as CalendarIcon, RotateCcw } from "lucide-react";
@@ -14,7 +14,6 @@ export default function AsistenciasHeader({ fechaISO, hoyISO, idAsignacion, nomb
   const router = useRouter();
 
   const handleDateChange = (nuevaFecha: string) => {
-    // Redireccionamos usando el router de Next.js
     router.push(`?asig=${idAsignacion}&fecha=${nuevaFecha}`);
   };
 

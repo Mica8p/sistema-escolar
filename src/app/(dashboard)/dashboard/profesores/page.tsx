@@ -8,6 +8,7 @@ import { ImportarAsignaciones } from "@/components/modules/profesores/ImportarAs
 import { AsignacionesList } from "./AsignacionesList";
 import { borrarErrorAsignacionAction } from "@/lib/actions/profesor-actions";
 import DeleteErrorButton from "@/components/modules/profesores/DeleteErrorButton";
+import ReincorporarButton from "@/components/modules/profesores/ReincorporarButton";
 
 interface PageProps {
   searchParams: Promise<{ editId?: string }>;
@@ -106,6 +107,11 @@ export default async function DocentesPage({ searchParams }: PageProps) {
                   </td>
                   <td className="p-4 text-center flex items-center justify-center gap-3">
                     <span className="px-2.5 py-1 bg-slate-200 text-slate-600 text-[9px] font-black rounded-lg uppercase tracking-tighter">HISTÓRICO</span>
+
+                    <ReincorporarButton
+                      id={reg.idAsignacion}
+                      profeNombre={`${reg.profesor.persona.apellido}, ${reg.profesor.persona.nombre}`}
+                    />
 
                     <DeleteErrorButton id={reg.idAsignacion} />
                   </td>

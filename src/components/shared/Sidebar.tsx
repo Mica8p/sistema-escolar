@@ -20,7 +20,7 @@ export default function Sidebar({ userRoles, noLeidos }: SidebarProps) {
   return (
     <aside className="w-64 bg-slate-900 text-white flex flex-col h-screen font-medium">
       <div className="p-6 text-xl font-bold border-b border-slate-800">
-        Escuela <span className="text-blue-400">Pro</span>
+        Escuela <span className="text-blue-400">Digital</span>
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -43,7 +43,6 @@ export default function Sidebar({ userRoles, noLeidos }: SidebarProps) {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* Badge pequeño en el padre si está cerrado y hay notificaciones */}
                     {!isOpen && isComunicados && noLeidos > 0 && (
                       <span className="bg-blue-500 w-2 h-2 rounded-full animate-ping" />
                     )}

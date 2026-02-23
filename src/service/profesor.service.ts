@@ -189,19 +189,36 @@ async darDeBaja(idAsignacion: number, motivo: string) {
 
 async reincorporarDocente(idAsignacion: number) {
   return await db.$transaction(async (tx) => {
-    const asig = await tx.asignacionAcademica.findUnique({ where: { idAsignacion } });
+  const asig = await tx.asignacionAcademica.findUnique({
+      where: { idAsignacion },
+      include: { materia: true, curso: true }
+    });
 
     if (!asig) throw new Error("Asignación no encontrada");
 
-    const ocupado = await tx.asignacionAcademica.findFirst({
-      where: { idMateria: asig.idMateria, idCurso: asig.idCurso, idCiclo: asig.idCiclo, estado: true }
+    const reemplazante = await tx.asignacionAcademica.findFirst({
+      where: {
+        idMateria: asig.idMateria,
+        idCurso: asig.idCurso,
+        idCiclo: asig.idCiclo,
+        estado: true
+      },
+      include: { profesor: { include: { persona: true } } }
     });
 
-    if (ocupado) throw new Error("No se puede reincorporar: Ya hay otro docente activo en este cargo.");
+    if (reemplazante) {
+      throw new Error(
+        `No se puede reincorporar: El cargo está ocupado por ${reemplazante.profesor.persona.apellido}, ${reemplazante.profesor.persona.nombre}. Primero debés darle la baja al reemplazante.`
+      );
+    }
 
     return await tx.asignacionAcademica.update({
       where: { idAsignacion },
-      data: { estado: true, motivoBaja: null, fechaBaja: null }
+      data: {
+        estado: true,
+        motivoBaja: null,
+        fechaBaja: null
+      }
     });
   });
 }

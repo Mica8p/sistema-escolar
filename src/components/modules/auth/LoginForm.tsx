@@ -1,52 +1,94 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { authenticate } from "@/lib/actions/auth-actions";
-import { Loader2 } from "lucide-react"; // Recordá tener lucide-react instalado
+import { Loader2, User, Lock, Eye, EyeOff, Info } from "lucide-react";
+import ConfirmModal from "@/components/shared/ConfirmModal";
 
 export default function LoginForm() {
-  // useActionState nos permite manejar el estado del error que devuelve el server action
   const [errorMessage, formAction, isPending] = useActionState(authenticate, undefined);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   return (
-    <form action={formAction} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-slate-700">DNI</label>
-        <input
-          name="dni"
-          type="text"
-          required
-          placeholder="Tu número de documento"
-          className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:ring-blue-500 sm:text-sm outline-none"
-        />
+    <>
+    <form action={formAction} className="space-y-5">
+      <div className="space-y-1.5">
+        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">
+          Documento (DNI)
+        </label>
+        <div className="relative group">
+          <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+          <input
+            name="dni"
+            type="text"
+            required
+            placeholder="Ej: 12345678"
+            className="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-slate-50 rounded-xl text-sm text-slate-700 font-bold outline-none focus:bg-white focus:border-indigo-500 transition-all"
+          />
+        </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-slate-700">Contraseña</label>
-        <input
-          name="password"
-          type="password"
-          required
-          placeholder="••••••••"
-          className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:ring-blue-500 sm:text-sm outline-none"
-        />
+      {/* CAMPO CONTRASEÑA */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between items-center px-1">
+            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+              Contraseña
+            </label>
+            <button
+              type="button"
+              className="text-[8px] font-black text-indigo-500 uppercase hover:underline"
+              onClick={() => setIsHelpOpen(true)}
+            >
+              ¿Olvidaste tu clave?
+            </button>
+          </div>
+          <div className="relative group">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+            <input
+              name="password"
+              type={showPassword ? "text" : "password"}
+              required
+              placeholder="••••••••"
+              className="w-full pl-11 pr-11 py-3 bg-slate-50 border-2 border-slate-50 rounded-xl text-sm text-slate-700 font-bold outline-none focus:bg-white focus:border-indigo-500 transition-all shadow-inner"
+            />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300">
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+
+      <div className="flex gap-2.5 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 text-indigo-700">
+        <Info size={18} className="shrink-0" />
+        <p className="text-[10px] font-medium leading-snug">
+          <b>¿Primera vez?</b> Tu contraseña es tu número de DNI.
+        </p>
       </div>
 
       {errorMessage && (
-        <p className="text-sm font-medium text-red-600 bg-red-50 p-2 rounded">{errorMessage}</p>
+        <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-[10px] font-bold text-center">
+          {errorMessage}
+        </div>
       )}
 
       <button
         type="submit"
         disabled={isPending}
-        className="flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline- focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:bg-blue-300"
+        className="w-full rounded-xl bg-slate-900 py-3.5 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-lg hover:bg-indigo-600 transition-all disabled:bg-slate-300"
       >
-        {isPending ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
-        ) : (
-          "Iniciar Sesión"
-        )}
+        {isPending ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "Ingresar al Portal"}
       </button>
     </form>
+
+    <ConfirmModal
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+        onConfirm={() => setIsHelpOpen(false)} // Solo cierra
+        title="Recuperar Acceso"
+        message="Por razones de seguridad, para resetear tu clave debes acercarte presencialmente a la Secretaría del establecimiento con tu DNI."
+        variant="info"
+      />
+     </>
   );
 }

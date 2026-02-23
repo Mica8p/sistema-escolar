@@ -26,7 +26,7 @@ export default async function Header({ userName }: HeaderProps) {
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 shadow-sm">
       <div className="text-sm text-slate-400 font-medium">
-        SISTEMA DE GESTIÓN ESCOLAR <span className="text-blue-500">PRO</span>
+        SISTEMA DE GESTIÓN ESCOLAR <span className="text-blue-500">DIGITAL</span>
       </div>
 
       <div className="flex items-center gap-6">

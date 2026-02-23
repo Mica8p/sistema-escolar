@@ -27,7 +27,8 @@ export async function getAsignacionesParaUsuario(params: {
   return db.asignacionAcademica.findMany({
     where: {
       idProfesor: prof.idProfesor,
-      idCiclo: params.idCiclo
+      idCiclo: params.idCiclo,
+      estado: true
     },
     include: { curso: true, materia: true, ciclo: true },
     orderBy: [{ idCiclo: "desc" }, { idCurso: "asc" }],

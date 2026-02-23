@@ -9,6 +9,7 @@ import {
 } from "@/service/calificaciones.service";
 import CalificacionesTable from "@/components/modules/calificaciones/CalificacionesForm";
 import { getCicloActual } from "@/lib/ciclo-session";
+import CalificacionesSidebar from "@/components/modules/calificaciones/CalificacionesSidebar";
 
 const TIPOS: TipoEvaluacion[] = ["Parcial", "Final", "Recuperatorio"];
 
@@ -73,81 +74,57 @@ export default async function CalificacionesPage({ searchParams }: { searchParam
 
       {/* FILTROS SUPERIORES (1, 2, 3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 1. ASIGNACIÓN */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-            <GraduationCap size={16} className="text-indigo-500" />
-            <span className="text-xs font-bold text-slate-700 uppercase">1. Materia y Curso</span>
+        {/* 1. ASIGNACIÓN (SIDEBAR DINÁMICO) */}
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 bg-slate-900 text-white flex items-center gap-2">
+            <GraduationCap size={16} />
+            <span className="text-[10px] font-black uppercase tracking-widest">1. Materia y Curso</span>
           </div>
-          <div className="p-3 flex flex-col gap-2 max-h-[320px overflow-y-auto">
-            {asignaciones.map((a) => (
-              <Link
-              key={a.idAsignacion}
-              href={qs({ asig: a.idAsignacion })}
-              className={`px-4 py-3 rounded-xl border transition-all ${
-                a.idAsignacion === idAsignacion
-                  ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100"
-                  : "bg-white border-slate-100 hover:border-indigo-200 text-slate-600 hover:bg-indigo-50/30"
-              }`}
-            >
-              <div className="flex flex-col gap-1">
-                <div className={`font-bold text-sm ${a.idAsignacion === idAsignacion ? 'text-white' : 'text-slate-800'}`}>
-                  {a.materia.nombre}
-                </div>
 
-                <div className="flex items-center gap-2">
-                  {/* Badge de Turno para diferenciar secciones duplicadas */}
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-black uppercase ${
-                    a.idAsignacion === idAsignacion
-                      ? "bg-white/20 text-white" // Estilo cuando la tarjeta está seleccionada
-                      : a.curso.turno === 'Mañana'
-                        ? "bg-orange-100 text-orange-700" // Estilo para Mañana
-                        : "bg-blue-100 text-blue-700"    // Estilo para Tarde
-                  }`}>
-                    {a.curso.turno}
-                  </span>
-
-                    <div className={`text-[11px] font-medium ${a.idAsignacion === idAsignacion ? 'text-indigo-100' : 'text-slate-400'}`}>
-                      {a.curso.grado}° {a.curso.seccion} • {a.curso.nivel}
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <CalificacionesSidebar
+            asignaciones={asignaciones}
+            idAsignacion={idAsignacion}
+            idPeriodo={idPeriodo}
+            tipo={tipoValido}
+          />
         </div>
 
-        {/* 2. PERIODO */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-            <Calendar size={16} className="text-indigo-500" />
-            <span className="text-xs font-bold text-slate-700 uppercase">2. Periodo Lectivo</span>
+{/* 2. PERIODO LECTIVO */}
+<div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
+  {/* Cabecera fija */}
+  <div className="px-6 py-4 border-b border-slate-100 bg-slate-900 text-white flex items-center gap-2 shrink-0">
+    <Calendar size={16} className="text-indigo-400" />
+    <span className="text-[10px] font-black uppercase tracking-widest">2. Periodo Lectivo</span>
+  </div>
+
+  {/* Contenedor con scroll */}
+  <div className="p-4 flex-1 overflow-y-auto custom-scrollbar space-y-3">
+    {periodos.length === 0 ? (
+      <div className="py-12 text-center text-slate-400 italic text-[10px] uppercase font-black tracking-widest px-8">
+        Seleccioná una materia primero para ver los trimestres.
+      </div>
+    ) : (
+      periodos.map((p) => (
+        <Link
+          key={p.idPeriodo}
+          href={qs({ periodo: p.idPeriodo })}
+          className={`block w-full px-5 py-4 rounded-2xl border-2 transition-all ${
+            p.idPeriodo === idPeriodo
+              ? "bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-100"
+              : "bg-white border-slate-50 text-slate-600 hover:border-indigo-100"
+          }`}
+        >
+          <div className="font-black text-sm uppercase tracking-tight">
+            {p.nombre.replace('_', ' ')}
           </div>
-          <div className="p-3 flex flex-col gap-2">
-            {periodos.length === 0 ? (
-              <div className="py-12 text-center text-slate-400 italic text-xs">
-                Seleccioná una materia primero.
-              </div>
-            ) : (
-              periodos.map((p) => (
-                <Link
-                  key={p.idPeriodo}
-                  href={qs({ periodo: p.idPeriodo })}
-                  className={`px-4 py-3 rounded-xl border transition-all ${
-                    p.idPeriodo === idPeriodo
-                      ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100"
-                      : "bg-white border-slate-100 hover:border-indigo-200 text-slate-600 hover:bg-indigo-50/30"
-                  }`}
-                >
-                  <div className="font-bold text-sm">{p.nombre.replace('_', ' ')}</div>
-                  <div className={`text-[11px] font-medium ${p.idPeriodo === idPeriodo ? 'text-indigo-100' : 'text-slate-400'}`}>
-                    {new Date(p.fechaInicio).toLocaleDateString()} al {new Date(p.fechaFin).toLocaleDateString()}
-                  </div>
-                </Link>
-              ))
-            )}
+          <div className={`text-[10px] font-bold mt-1 ${p.idPeriodo === idPeriodo ? 'text-indigo-100' : 'text-slate-400'}`}>
+            {new Date(p.fechaInicio).toLocaleDateString()} al {new Date(p.fechaFin).toLocaleDateString()}
           </div>
-        </div>
+        </Link>
+      ))
+    )}
+  </div>
+</div>
 
         {/* 3. EVALUACIÓN */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">

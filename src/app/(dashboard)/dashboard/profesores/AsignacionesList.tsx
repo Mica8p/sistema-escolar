@@ -1,13 +1,42 @@
 'use client';
 
+import { useState } from 'react';
 import { BookOpen, UserX, Pencil } from 'lucide-react';
 import { desactivarAsignacionAction } from '@/lib/actions/profesor-actions';
 import { darDeBajaAction } from '@/lib/actions/profesor-actions';
+import { toast } from 'sonner';
+import BajaMateriaModal from '@/components/modules/profesores/BajaMateriaModal';
 
 export function AsignacionesList({ profesores }: { profesores: any[] }) {
+ const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [selectedAsignacion, setSelectedAsignacion] = useState<{id: number, materia: string} | null>(null);
+
   const profesoresConAsignacionesActivas = profesores.filter(
     (profe) => profe.asignaciones.some((asig: any) => asig.estado)
   );
+
+  const handleBajaClick = (id: number, materia: string) => {
+    setSelectedAsignacion({ id, materia });
+    setIsModalOpen(true);
+  };
+
+  const onConfirmBaja = async (motivo: string) => {
+  if (!selectedAsignacion) return;
+
+    setLoading(true);
+
+    const res = await darDeBajaAction(selectedAsignacion.id, motivo);
+
+    setLoading(false);
+    setIsModalOpen(false);
+
+  if (res.success) {
+    toast.success("Baja procesada correctamente. Se movió a Memoria Académica.");
+  } else {
+    toast.error(res.message);
+  }
+  };
 
   return (
     <>
@@ -76,27 +105,13 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
                         >
                           <Pencil size={18} />
                         </a>
-                        <form
-                          action={async () => {
-                            await desactivarAsignacionAction(
-                              asig.idAsignacion
-                            );
-                          }}
+                        <button
+                          onClick={() => handleBajaClick(asig.idAsignacion, asig.materia.nombre)}
+                          className='text-orange-500 hover:text-orange-700 transition-transform hover:scale-110'
+                          title={`Dar de baja ${asig.materia.nombre}`}
                         >
-                          <button
-                            type='submit'
-                            onClick={async () => {
-                              const motivo = prompt("Motivo de la baja (ej: Suplencia finalizada, Licencia, Jubilación):");
-                              if (motivo) {
-                                  await darDeBajaAction(asig.idAsignacion, motivo);
-                              }
-                            }}
-                            className='text-orange-500 hover:text-orange-700 transition-transform hover:scale-110'
-                            title={`Dar de baja ${asig.materia.nombre}`}
-                          >
-                            <UserX size={18} />
-                          </button>
-                        </form>
+                          <UserX size={18} />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -106,6 +121,14 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
           </tbody>
         </table>
       </div>
+      <BajaMateriaModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={onConfirmBaja}
+        loading={loading}
+        title="Dar de Baja Materia"
+        materia={selectedAsignacion?.materia || ""}
+      />
     </>
   );
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { Users, Clock, CheckCircle, CalendarDays } from "lucide-react";
+import { Users, Clock, CheckCircle, CalendarDays, Sun, Moon } from "lucide-react";
 import AsistenciasHeader from "./AsistenciasHeader";
 import { Materia, EstadoAsistencia } from "@prisma/client";
 import { useState, useMemo, useEffect } from "react";
@@ -22,6 +22,8 @@ export default function AsistenciasClient({
 }: any) {
   const [asistenciaMap, setAsistenciaMap] = useState(new Map<number, any>());
 
+  const [busqueda, setBusqueda] = useState("");
+
   useEffect(() => {
     if (planilla?.asistenciaByMatricula) {
       setAsistenciaMap(new Map(planilla.asistenciaByMatricula));
@@ -40,6 +42,12 @@ export default function AsistenciasClient({
     return { presentes: p, ausentes: a, tardes: t, justificados: j };
   }, [asistenciaMap]);
 
+  const materiasFiltradas = useMemo(() => {
+    return materiasUnicas.filter((m: any) =>
+      m.nombre.toLowerCase().includes(busqueda.toLowerCase())
+    );
+  }, [materiasUnicas, busqueda]);
+
   const handleAsistenciaChange = (idMatricula: number, nuevoEstado: EstadoAsistencia) => {
     setAsistenciaMap(prev => {
       const newMap = new Map(prev);
@@ -49,46 +57,111 @@ export default function AsistenciasClient({
     });
   };
 
+  function setBusquedaMateria(value: string): void {
+    throw new Error("Function not implemented.");
+  }
+
   return (
     <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">
       <AsistenciasHeader fechaISO={fechaISO} hoyISO={hoyISO} idAsignacion={idAsignacion} nombreDia={nombreDiaSeleccionado} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* PANEL 1: MATERIA */}
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-          <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2">
-            <Users size={16} /> <span className="text-[10px] font-black uppercase tracking-widest">1. Materia</span>
+       <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
+          <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2 shrink-0">
+            <Users size={16} />
+            <span className="text-[10px] font-black uppercase tracking-widest">1. Materia</span>
           </div>
-          <div className="p-4 space-y-2 overflow-y-auto max-h-[400px]">
-            {materiasUnicas.map((m: any) => (
-              <a key={m.idMateria} href={`?mat=${m.idMateria}&fecha=${fechaISO}`} className={`block px-5 py-4 rounded-2xl border-2 transition-all ${m.idMateria === idMateria ? "bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-100" : "bg-white border-slate-50 text-slate-600 hover:border-slate-200"}`}>
-                <div className="font-black text-sm uppercase tracking-tight">{m.nombre}</div>
-              </a>
-            ))}
+
+          <div className="p-4 border-b border-slate-50 bg-slate-50/30">
+            <input
+              type="text"
+              placeholder="🔍 Buscar materia..."
+              value={busqueda}
+              className="w-full text-[10px] font-black uppercase p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 ring-indigo-500 transition-all"
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+          </div>
+
+          <div className="p-4 space-y-2 overflow-y-auto custom-scrollbar flex-1">
+            {materiasFiltradas.length > 0 ? (
+              materiasFiltradas.map((m: any) => (
+                <a
+                  key={m.idMateria}
+                  href={`?mat=${m.idMateria}&fecha=${fechaISO}`}
+                  className={`block px-5 py-4 rounded-2xl border-2 transition-all ${
+                    m.idMateria === idMateria
+                      ? "bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-100"
+                      : "bg-white border-slate-50 text-slate-600 hover:border-slate-200"
+                  }`}
+                >
+                  <div className="font-black text-sm uppercase tracking-tight">{m.nombre}</div>
+                </a>
+              ))
+            ) : (
+              <div className="text-center py-10 text-slate-400 text-[10px] font-bold uppercase italic">
+                No se encontraron materias
+              </div>
+            )}
           </div>
         </div>
 
         {/* PANEL 2: BLOQUES */}
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-          <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2">
-            <Clock size={16} /> <span className="text-[10px] font-black uppercase tracking-widest">2. Bloques del {nombreDiaSeleccionado}</span>
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
+  <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2 shrink-0">
+    <Clock size={16} />
+    <span className="text-[10px] font-black uppercase tracking-widest">2. Cursos y Horarios</span>
+  </div>
+
+  <div className="p-4 space-y-6 overflow-y-auto custom-scrollbar">
+    {["Mañana", "Tarde"].map((turnoLabel) => {
+      const cursosDelTurno = Object.entries(horariosPorCurso || {}).filter(([idCursoStr]) => {
+        const curso = asignaciones.find((a: any) => a.idCurso === Number(idCursoStr))?.curso;
+        return curso?.turno === turnoLabel;
+      });
+
+      if (cursosDelTurno.length === 0) return null;
+
+      return (
+        <div key={turnoLabel} className="space-y-3">
+          <div className="flex items-center gap-2 px-2">
+            {turnoLabel === "Mañana" ? <Sun size={14} className="text-amber-500" /> : <Moon size={14} className="text-indigo-400" />}
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Turno {turnoLabel}</span>
           </div>
-          <div className="p-4 space-y-2">
-            {Object.entries(horariosPorCurso || {}).map(([idCursoStr, horarios]: any) => {
-              const cursoAsig = asignaciones.find((a: any) => a.idCurso === Number(idCursoStr) && a.materia.idMateria === idMateria);
-              if (!cursoAsig) return null;
-              const isSelected = horarios.some((h: any) => h.idHorario === idHorario);
-              return (
-                <a key={idCursoStr} href={`?mat=${idMateria}&horario=${horarios[0].idHorario}&fecha=${fechaISO}`} className={`block px-5 py-4 rounded-2xl border-2 transition-all ${isSelected ? "bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-100" : "bg-white border-slate-50 text-slate-600 hover:border-slate-200"}`}>
-                  <div className="font-black text-sm uppercase tracking-tight">{cursoAsig.curso.grado}° {cursoAsig.curso.seccion}</div>
-                  <div className={`text-[10px] font-bold mt-1 ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>
-                    {horarios.map((h: any) => `${h.horaInicio.slice(0,5)} a ${h.horaFin.slice(0,5)}`).join(' - ')}
+
+          {cursosDelTurno.map(([idCursoStr, horarios]: any) => {
+            const cursoAsig = asignaciones.find((a: any) => a.idCurso === Number(idCursoStr) && a.materia.idMateria === idMateria);
+            const isSelected = horarios.some((h: any) => h.idHorario === idHorario);
+
+            return (
+              <a
+                key={idCursoStr}
+                href={`?mat=${idMateria}&horario=${horarios[0].idHorario}&fecha=${fechaISO}`}
+                className={`block px-5 py-4 rounded-2xl border-2 transition-all group ${
+                  isSelected
+                    ? "bg-indigo-600 border-indigo-600 text-white shadow-lg"
+                    : "bg-white border-slate-50 text-slate-600 hover:border-indigo-100"
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="font-black text-sm uppercase tracking-tight">
+                    {cursoAsig.curso.grado}° {cursoAsig.curso.seccion}
                   </div>
-                </a>
-              );
-            })}
-          </div>
+                  <div className={`text-[8px] px-2 py-0.5 rounded-full font-black ${isSelected ? 'bg-indigo-400 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                    {turnoLabel}
+                  </div>
+                </div>
+                <div className={`text-[10px] font-bold mt-1 ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>
+                  {horarios.map((h: any) => `${h.horaInicio.slice(0,5)} a ${h.horaFin.slice(0,5)}`).join(' - ')}
+                </div>
+              </a>
+            );
+          })}
         </div>
+      );
+    })}
+  </div>
+</div>
 
         {/* 🚩 PANEL 3: RESUMEN DETALLADO (DISEÑO MEJORADO) */}
         <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">

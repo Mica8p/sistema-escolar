@@ -17,10 +17,8 @@ export type BloqueHorarioState = {
 export async function guardarConfiguracionDias(dias: DiaHabilState) {
     try {
         await db.$transaction(async (tx) => {
-            // Clear existing config
             await tx.diaHabil.deleteMany({});
 
-            // Create new config
             for (let i = 0; i < dias.length; i++) {
                 await tx.diaHabil.create({
                     data: {
@@ -43,13 +41,11 @@ export async function guardarConfiguracionDias(dias: DiaHabilState) {
 export async function guardarConfiguracionBloques(turno: Turno, bloques: BloqueHorarioState) {
      try {
         await db.$transaction(async (tx) => {
-            // Clear existing config for the given turn
             await tx.bloqueHorario.deleteMany({ where: { turno } });
 
-            // Create new config
             for (let i = 0; i < bloques.length; i++) {
                 if(!bloques[i].horaInicio || !bloques[i].horaFin) continue; // Skip empty rows
-                
+
                 await tx.bloqueHorario.create({
                     data: {
                         turno: turno,
@@ -61,7 +57,7 @@ export async function guardarConfiguracionBloques(turno: Turno, bloques: BloqueH
             }
         });
         revalidatePath('/dashboard/configuraciones/horarios');
-        revalidatePath('/dashboard/profesores'); // Also revalidate the professors page
+        revalidatePath('/dashboard/profesores');
         return { success: true };
     } catch (error) {
         console.error(error);

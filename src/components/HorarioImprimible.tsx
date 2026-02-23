@@ -13,6 +13,7 @@ interface Props {
 
 export default function HorarioImprimible({ horarios, nombreAlumno, curso }: Props) {
   const horarioRef = useRef<HTMLDivElement>(null);
+  const anio = horarios[0]?.asignacion?.ciclo?.anio || "2026";
 
   return (
     <div className="space-y-4">
@@ -31,7 +32,7 @@ export default function HorarioImprimible({ horarios, nombreAlumno, curso }: Pro
               <GraduationCap size={32} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">Escuela Pro 2026 </h1>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">Escuela Pro {anio} </h1>
               <p className="text-xs font-bold text-slate-500 tracking-widest uppercase">Gestión Educativa Digital</p>
             </div>
           </div>

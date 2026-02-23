@@ -4,6 +4,7 @@ import { getHorariosByAsignaciones, getPlanillaAsistencia } from "@/service/asis
 import { getCicloActual } from "@/lib/ciclo-session";
 import { Materia } from "@prisma/client";
 import AsistenciasClient from "./AsistenciasClient";
+import db from "@/lib/db";
 
 export default async function AsistenciasPage({
   searchParams
@@ -28,7 +29,6 @@ export default async function AsistenciasPage({
   }, [] as Materia[]);
 
 
-  // 1. GESTIÓN DE FECHAS (Server Side)
   const hoy = new Date();
   const hoyISO = hoy.toISOString().split('T')[0];
   const fechaSeleccionada = params.fecha ? new Date(params.fecha + 'T12:00:00') : hoy;
@@ -37,7 +37,6 @@ export default async function AsistenciasPage({
   const diasMapping = ["DOMINGO", "LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO"];
   const nombreDiaSeleccionado = diasMapping[fechaSeleccionada.getDay()];
 
-  // 2. SELECCIÓN Y FILTRADO
   const idMateria = params.mat ? Number(params.mat) : (materiasUnicas[0]?.idMateria || 0);
   const asignacionesDeMateria = asignaciones.filter(a => a.materia.idMateria === idMateria);
   const idsAsignaciones = asignacionesDeMateria.map(a => a.idAsignacion);
@@ -45,8 +44,6 @@ export default async function AsistenciasPage({
   const horariosRaw = await getHorariosByAsignaciones(idsAsignaciones);
   const horariosFiltrados = horariosRaw.filter(h => h.diaSemana === nombreDiaSeleccionado);
 
-  // CAMBIO: Agrupamos por CURSO en lugar de por ASIGNACIÓN
-  // Esto fusiona visualmente si el profesor tiene 2 asignaciones de la misma materia en el mismo curso
   const horariosPorCurso = horariosFiltrados.reduce((acc, h) => {
     const asig = asignacionesDeMateria.find(a => a.idAsignacion === h.idAsignacion);
     if (!asig) return acc;
@@ -65,6 +62,9 @@ export default async function AsistenciasPage({
   const idAsignacion = horarioElegido?.idAsignacion || 0;
 
 
+  const cicloObj = await db.cicloLectivo.findUnique({ where: { idCiclo } });
+  const anioActual = cicloObj?.anio || 2026;
+
   const planilla = (idAsignacion > 0 && idHorario > 0)
     ? await getPlanillaAsistencia({ idAsignacion, idHorario, fecha: fechaSeleccionada })
     : null;
@@ -82,5 +82,6 @@ export default async function AsistenciasPage({
     idHorario={idHorario}
     planilla={planilla}
     isAdmin={isAdmin}
+    anioActual={anioActual}
   />;
 }

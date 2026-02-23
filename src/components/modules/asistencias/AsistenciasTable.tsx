@@ -86,7 +86,9 @@ export default function AsistenciasTable({
                       }`}>
                         {estadoActual}
                       </span>
-                   ) : <span className="text-slate-300 text-[10px] font-bold">PENDIENTE</span>}
+                   ) : <span className="px-3 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-full text-[9px] font-black uppercase tracking-tighter">
+                        ● Sin Registrar
+                      </span>}
                 </td>
 
                 {/* BOTONES */}
