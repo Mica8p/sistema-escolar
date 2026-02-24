@@ -6,24 +6,23 @@ import db from "@/lib/db";
 import { getCicloActual } from "@/lib/ciclo-session";
 import { crearCargoMasivo } from "@/service/finanzas.service";
 
-// Esquema de validación para una nueva deuda (Cargo)
 const CreateDeudaSchema = z.object({
-  alumnoId: z.coerce.number().int().positive("El ID del alumno es requerido."),
-  conceptoId: z.coerce.number().int().positive("Debe seleccionar un concepto de pago."),
+  alumnoId: z.coerce.number().positive("El ID del alumno es requerido."),
+  conceptoId: z.coerce.number().positive("Debe seleccionar un concepto de pago."),
   monto: z.coerce.number().positive("El monto debe ser un número positivo."),
-  fechaVencimiento: z.coerce.date({
-    required_error: "La fecha de vencimiento es requerida.",
-    invalid_type_error: "El formato de la fecha no es válido.",
-  }),
+  fechaVencimiento: z.preprocess(
+    (arg) => (typeof arg === "string" || arg instanceof Date ? new Date(arg) : arg),
+    z.date({ message: "La fecha de vencimiento es requerida y debe ser válida." })
+  ),
 });
 
 const CreateDeudaMasivaSchema = z.object({
   conceptoId: z.coerce.number().int().positive("Debe seleccionar un concepto."),
   monto: z.coerce.number().positive("El monto debe ser positivo."),
-  fechaVencimiento: z.coerce.date({
-    required_error: "La fecha de vencimiento es requerida.",
-    invalid_type_error: "Formato de fecha inválido.",
-  }),
+  fechaVencimiento: z.preprocess(
+    (arg) => (typeof arg === "string" || arg instanceof Date ? new Date(arg) : arg),
+    z.date({ message: "Formato de fecha inválido." })
+  ),
 });
 
 export type State = {
@@ -33,22 +32,25 @@ export type State = {
     monto?: string[];
     fechaVencimiento?: string[];
   };
-  message?: string | null;
+  message?: string;
 };
 
-export async function createDeuda(prevState: State, formData: FormData) {
+// src/app/(dashboard)/dashboard/finanzas/finanzas-actions.ts
+
+export async function createDeuda(prevState: State, formData: FormData): Promise<State> { // 🚩 Agregamos el tipo de retorno explícito
   // 1. Validar los datos del formulario
   const validatedFields = CreateDeudaSchema.safeParse({
     alumnoId: formData.get("alumnoId"),
     conceptoId: formData.get("conceptoId"),
     monto: formData.get("monto"),
-    fechaVencimiento: new Date(formData.get("fechaVencimiento") as string),
+    fechaVencimiento: formData.get("fechaVencimiento"), // 🚩 Dejá que el Schema (con preprocess) se encargue del Date
   });
 
   if (!validatedFields.success) {
     return {
+      // 🚩 Convertimos los errores a un objeto que siempre cumpla con el tipo State
       errors: validatedFields.error.flatten().fieldErrors,
-      message: "Campos inválidos. No se pudo crear la deuda.",
+      message: "Campos inválidos. Revisá los datos ingresados.",
     };
   }
 
@@ -57,23 +59,26 @@ export async function createDeuda(prevState: State, formData: FormData) {
   try {
     // 2. Obtener el ciclo lectivo actual
     const cicloId = await getCicloActual();
+
     if (!cicloId) {
-      throw new Error("No se pudo determinar el ciclo lectivo actual.");
+      return {
+        errors: {},
+        message: "No se pudo determinar el ciclo lectivo actual. Verificá la configuración.",
+      };
     }
 
-    // Verificar que el ciclo exista en la base de datos
     const ciclo = await db.cicloLectivo.findUnique({
       where: { idCiclo: cicloId },
     });
 
     if (!ciclo) {
       return {
-        message: "El ciclo lectivo actual no es válido o ha sido eliminado. Seleccione otro ciclo.",
         errors: {},
+        message: "El ciclo lectivo actual no es válido. Por favor, seleccioná uno nuevo.",
       };
     }
 
-    // 3. Crear el Cargo en la base de datos
+    // 3. Crear el Cargo
     await db.cargo.create({
       data: {
         alumnoId,
@@ -81,24 +86,26 @@ export async function createDeuda(prevState: State, formData: FormData) {
         monto,
         fechaVencimiento,
         cicloId,
-        estado: "Pendiente", // El estado por defecto definido en el schema
+        estado: "Pendiente",
       },
     });
-  } catch (error) {
-    console.error(error);
+
+    // 4. Revalidar caché
+    revalidatePath(`/dashboard/finanzas/${alumnoId}`);
+    revalidatePath(`/dashboard/finanzas`); // 🚩 Revalidamos también la lista general por si cambió la deuda total
+
     return {
-      message: "Error de base de datos: No se pudo crear la deuda.",
+      message: "Deuda creada exitosamente.",
+      errors: {}
+    };
+
+  } catch (error) {
+    console.error("❌ ERROR AL CREAR DEUDA:", error);
+    return {
+      message: "Error de servidor: No se pudo registrar la deuda.",
       errors: {},
     };
   }
-
-  // 4. Revalidar el cache para la página de detalles del alumno
-  revalidatePath(`/dashboard/finanzas/${alumnoId}`);
-  
-  // Devolver un estado exitoso
-  return {
-    message: "Deuda creada exitosamente.",
-  };
 }
 
 export async function generarDeudaMasiva(prevState: State, formData: FormData) {

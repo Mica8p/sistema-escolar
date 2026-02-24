@@ -3,160 +3,118 @@
 import { useFormState, useFormStatus } from "react-dom";
 import { useEffect, useState } from "react";
 import { createDeuda, type State } from "./finanzas-actions";
-
-// Asumimos que tienes estos componentes de UI (estilo shadcn)
-// Si los nombres son diferentes, habría que ajustarlos.
-import { Button } from "../../../../components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "../../../../components/ui/dialog";
-import { Input } from "../../../../components/ui/input";
-import { Label } from "../../../../components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../../components/ui/select";
 import { toast } from "sonner";
+import { X, DollarSign, Calendar, Loader2 } from "lucide-react";
 
-// El tipo para los conceptos de pago, inferido de tu schema.prisma
 interface ConceptoDePago {
   id: number;
   nombre: string;
   montoFijo: number | null;
 }
 
-interface CrearDeudaDialogProps {
-  alumnoId: number;
-  conceptos: ConceptoDePago[];
-}
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? "Creando Deuda..." : "Crear Deuda"}
-    </Button>
-  );
-}
-
-export function CrearDeudaDialog({ alumnoId, conceptos }: CrearDeudaDialogProps) {
-  const initialState: State = { message: null, errors: {} };
-  const [state, dispatch] = useFormState(createDeuda, initialState);
+export function CrearDeudaDialog({ alumnoId, conceptos }: { alumnoId: number; conceptos: any[] }) {
+  const initialState: State = {
+    message: "",
+    errors: {}
+  };
 
   const [open, setOpen] = useState(false);
-  const [selectedConceptoId, setSelectedConceptoId] = useState<string>("");
-  const [monto, setMonto] = useState<string>("");
+  const [selectedConceptoId, setSelectedConceptoId] = useState("");
+  const [monto, setMonto] = useState("");
 
-  // Efecto para actualizar el monto cuando se selecciona un concepto con monto fijo
+  const [state, dispatch] = useFormState(createDeuda, initialState);
+
   useEffect(() => {
-    const selectedConcepto = conceptos.find(c => c.id === Number(selectedConceptoId));
-    if (selectedConcepto && selectedConcepto.montoFijo) {
-      setMonto(String(selectedConcepto.montoFijo));
-    } else {
-      setMonto(""); // Resetea si no hay monto fijo
-    }
+    const selected = conceptos.find(c => c.id === Number(selectedConceptoId));
+    if (selected?.montoFijo) setMonto(String(selected.montoFijo));
   }, [selectedConceptoId, conceptos]);
 
-  // Efecto para cerrar el modal y mostrar notificación en éxito
   useEffect(() => {
-    if (state.message && !state.errors) {
+    if (state.message && !Object.keys(state.errors || {}).length) {
       setOpen(false);
       toast.success(state.message);
-    } else if (state.message && state.errors) {
-      toast.error(state.message)
     }
   }, [state]);
 
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+      >
+        Crear Deuda
+      </button>
+    );
+  }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>Crear Deuda</Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Crear Nueva Deuda</DialogTitle>
-          <DialogDescription>
-            Asigna un nuevo cargo o deuda al alumno. Selecciona un concepto y define los detalles.
-          </DialogDescription>
-        </DialogHeader>
-        <form action={dispatch}>
-          <input type="hidden" name="alumnoId" value={alumnoId} />
-          <div className="grid gap-4 py-4">
-            
-            {/* Selector de Concepto */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="conceptoId" className="text-right">
-                Concepto
-              </Label>
-              <div className="col-span-3">
-                <Select name="conceptoId" value={selectedConceptoId} onValueChange={setSelectedConceptoId}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Seleccione un concepto" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {conceptos.map((concepto) => (
-                            <SelectItem key={concepto.id} value={String(concepto.id)}>
-                                {concepto.nombre}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                {state.errors?.conceptoId && <p className="text-sm text-red-500 mt-1">{state.errors.conceptoId[0]}</p>}
-              </div>
-            </div>
-
-            {/* Campo de Monto */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="monto" className="text-right">
-                Monto
-              </Label>
-              <Input
-                id="monto"
-                name="monto"
-                type="number"
-                step="0.01"
-                value={monto}
-                onChange={(e) => setMonto(e.target.value)}
-                className="col-span-3"
-                placeholder="Ej: 1500.00"
-              />
-               {state.errors?.monto && <p className="col-start-2 col-span-3 text-sm text-red-500 mt-1">{state.errors.monto[0]}</p>}
-            </div>
-
-            {/* Campo de Fecha de Vencimiento */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fechaVencimiento" className="text-right">
-                Vencimiento
-              </Label>
-              <Input
-                id="fechaVencimiento"
-                name="fechaVencimiento"
-                type="date"
-                className="col-span-3"
-              />
-              {state.errors?.fechaVencimiento && <p className="col-start-2 col-span-3 text-sm text-red-500 mt-1">{state.errors.fechaVencimiento[0]}</p>}
-            </div>
-
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95">
+        <div className="p-8 pb-0 flex flex-col items-center text-center relative">
+          <button onClick={() => setOpen(false)} className="absolute top-0 right-0 p-2 text-slate-400 hover:bg-slate-50 rounded-full">
+            <X size={20} />
+          </button>
+          <div className="w-16 h-16 rounded-3xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4">
+            <DollarSign size={32} />
           </div>
-          <DialogFooter>
-            <DialogClose asChild>
-                <Button type="button" variant="ghost">Cancelar</Button>
-            </DialogClose>
-            <SubmitButton />
-          </DialogFooter>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tighter mb-2">Nueva Deuda</h2>
+          <p className="text-slate-500 text-sm font-medium">Asigna un nuevo cargo al alumno.</p>
+        </div>
+
+        <form action={dispatch} className="p-8 space-y-4">
+          <input type="hidden" name="alumnoId" value={alumnoId} />
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Concepto</label>
+            <select
+              name="conceptoId"
+              value={selectedConceptoId}
+              onChange={(e) => setSelectedConceptoId(e.target.value)}
+              className="w-full p-4 bg-slate-50 border-2 border-slate-50 rounded-2xl text-slate-700 font-bold outline-none focus:border-indigo-500 transition-all appearance-none"
+            >
+              <option value="">Seleccionar...</option>
+              {conceptos.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Monto</label>
+            <input
+              name="monto"
+              type="number"
+              step="0.01"
+              value={monto}
+              onChange={(e) => setMonto(e.target.value)}
+              className="w-full p-4 bg-slate-50 border-2 border-slate-50 rounded-2xl text-slate-700 font-bold outline-none focus:border-indigo-500 transition-all"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Vencimiento</label>
+            <input
+              name="fechaVencimiento"
+              type="date"
+              className="w-full p-4 bg-slate-50 border-2 border-slate-50 rounded-2xl text-slate-700 font-bold outline-none focus:border-indigo-500 transition-all"
+            />
+          </div>
+
+          <div className="pt-4 flex gap-3">
+            <button type="button" onClick={() => setOpen(false)} className="flex-1 py-4 rounded-2xl bg-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest hover:bg-slate-200">
+              Cancelar
+            </button>
+            <SubmitBtn />
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
+  );
+}
+
+function SubmitBtn() {
+  const { pending } = useFormStatus();
+  return (
+    <button disabled={pending} className="flex-1 py-4 rounded-2xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 shadow-lg shadow-indigo-100 disabled:opacity-50">
+      {pending ? <Loader2 className="animate-spin mx-auto" size={16} /> : "Crear Deuda"}
+    </button>
   );
 }

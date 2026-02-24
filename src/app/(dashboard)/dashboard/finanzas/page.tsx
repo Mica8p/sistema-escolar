@@ -24,7 +24,7 @@ export default async function FinanzasPage() {
 
     // 1. Buscamos los hijos del padre
     const hijos = await AlumnoService.getAlumnosDePadre(Number(idPadre));
-    
+
     // 2. Para cada hijo, buscamos su estado de cuenta completo
     const estadosDeCuenta = await Promise.all(
         hijos.map(h => getDetalleCuenta(h.idAlumno))
@@ -36,7 +36,7 @@ export default async function FinanzasPage() {
           <Wallet className="h-8 w-8 text-blue-600" />
           Mis Pagos y Cuotas
         </h1>
-        
+
         {estadosDeCuenta.length > 0 ? (
             estadosDeCuenta.map((estado) => (
                 <div key={estado.idAlumno} className="space-y-4 border-b border-gray-200 pb-8 last:border-0 last:pb-0">
@@ -51,9 +51,9 @@ export default async function FinanzasPage() {
                             <p className="text-sm text-gray-500">Legajo: {estado.legajo}</p>
                         </div>
                     </div>
-                    
+
                     <EstadoCuentaSummary alumno={estado} />
-                    
+
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="bg-white p-4 rounded-lg shadow border border-gray-100">
                             <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
@@ -65,7 +65,16 @@ export default async function FinanzasPage() {
                             <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
                                 <Wallet className="w-4 h-4" /> Historial de Pagos
                             </h3>
-                            <PagosList pagos={estado.pagos} />
+                            <PagosList
+                                pagos={estado.pagos}
+                                alumnoData={{
+                                    nombre: `${estado.persona.nombre} ${estado.persona.apellido}`,
+                                    legajo: estado.legajo,
+                                    curso: estado.matriculas?.[0]?.curso
+                                    ? `${estado.matriculas[0].curso.grado}° "${estado.matriculas[0].curso.seccion}"`
+                                    : "Sin curso asignado"
+                                }}
+                            />
                         </div>
                     </div>
                 </div>
@@ -88,9 +97,9 @@ export default async function FinanzasPage() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <AdminFinanzasView 
-        conceptos={conceptos} 
-        alumnosDeudores={alumnosDeudores} 
+      <AdminFinanzasView
+        conceptos={conceptos}
+        alumnosDeudores={alumnosDeudores}
       />
     </div>
   );

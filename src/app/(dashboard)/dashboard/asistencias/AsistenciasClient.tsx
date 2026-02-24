@@ -78,7 +78,7 @@ export default function AsistenciasClient({
               type="text"
               placeholder="🔍 Buscar materia..."
               value={busqueda}
-              className="w-full text-[10px] font-black uppercase p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 ring-indigo-500 transition-all"
+              className="w-full text-[10px] font-black uppercase p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 ring-indigo-500 transition-all text-slate-700 placeholder:text-slate-300"
               onChange={(e) => setBusqueda(e.target.value)}
             />
           </div>
@@ -108,19 +108,19 @@ export default function AsistenciasClient({
 
         {/* PANEL 2: BLOQUES */}
         <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
-  <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2 shrink-0">
-    <Clock size={16} />
-    <span className="text-[10px] font-black uppercase tracking-widest">2. Cursos y Horarios</span>
-  </div>
+            <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2 shrink-0">
+              <Clock size={16} />
+              <span className="text-[10px] font-black uppercase tracking-widest">2. Cursos y Horarios</span>
+            </div>
 
-  <div className="p-4 space-y-6 overflow-y-auto custom-scrollbar">
-    {["Mañana", "Tarde"].map((turnoLabel) => {
-      const cursosDelTurno = Object.entries(horariosPorCurso || {}).filter(([idCursoStr]) => {
-        const curso = asignaciones.find((a: any) => a.idCurso === Number(idCursoStr))?.curso;
-        return curso?.turno === turnoLabel;
-      });
+            <div className="p-4 space-y-6 overflow-y-auto custom-scrollbar">
+              {["Mañana", "Tarde"].map((turnoLabel) => {
+                const cursosDelTurno = Object.entries(horariosPorCurso || {}).filter(([idCursoStr]) => {
+                  const curso = asignaciones.find((a: any) => a.idCurso === Number(idCursoStr))?.curso;
+                  return curso?.turno === turnoLabel;
+                });
 
-      if (cursosDelTurno.length === 0) return null;
+               if (cursosDelTurno.length === 0) return null;
 
       return (
         <div key={turnoLabel} className="space-y-3">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ConceptoForm } from "@/components/modules/finanzas/ConceptoForm";
 import ConceptosList from "@/components/modules/finanzas/ConceptosList";
 import { GenerarCuotaMasivaDialog } from "@/components/modules/finanzas/generar-cuota-masiva-dialog";
@@ -12,6 +13,8 @@ interface Props {
 }
 
 export default function AdminFinanzasView({ conceptos, alumnosDeudores }: Props) {
+  const [conceptoAEditar, setConceptoAEditar] = useState<any | null>(null);
+
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
@@ -22,7 +25,10 @@ export default function AdminFinanzasView({ conceptos, alumnosDeudores }: Props)
       {/* Panel de Control de Conceptos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">
-          <ConceptoForm />
+          <ConceptoForm
+            conceptoAEditar={conceptoAEditar}
+            onCancel={() => setConceptoAEditar(null)}
+          />
         </div>
         <div className="md:col-span-2 bg-white p-6 rounded-lg shadow border border-gray-100">
           <div className="flex justify-between items-center mb-4">
@@ -30,9 +36,9 @@ export default function AdminFinanzasView({ conceptos, alumnosDeudores }: Props)
               <Settings className="w-5 h-5" /> Conceptos de Pago
             </h2>
           </div>
-          <ConceptosList 
-            conceptos={conceptos} 
-            onEdit={(c) => console.log("Editar concepto no implementado aún", c)} 
+          <ConceptosList
+            conceptos={conceptos}
+            onEdit={(c) => setConceptoAEditar(c)}
           />
         </div>
       </div>

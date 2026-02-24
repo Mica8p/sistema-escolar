@@ -30,7 +30,7 @@ export default function CalificacionesSidebar({ asignaciones, idAsignacion, idPe
           <input
             type="text"
             placeholder="Buscar materia..."
-            className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-bold uppercase outline-none focus:ring-2 ring-indigo-500 transition-all"
+            className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-bold uppercase outline-none focus:ring-2 ring-indigo-500 transition-all text-slate-700"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
           />

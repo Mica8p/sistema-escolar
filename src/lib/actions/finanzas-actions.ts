@@ -1,8 +1,8 @@
 'use server';
 
 import { auth } from "@/auth";
-import { 
-    registrarPago, 
+import {
+    registrarPago,
     RegistrarPagoData,
     createConceptoDePago as createConcepto,
     updateConceptoDePago as updateConcepto,
@@ -23,10 +23,10 @@ export async function registrarPagoAction(data: Omit<RegistrarPagoData, 'usuario
     };
 
     const pago = await registrarPago(dataCompleta);
-    
+
     // Revalidar la página del alumno para que vea los cambios
     revalidatePath(`/dashboard/finanzas/${data.alumnoId}`);
-    
+
     return pago;
 }
 
@@ -38,19 +38,31 @@ export async function registrarPagoAction(data: Omit<RegistrarPagoData, 'usuario
  */
 
 export async function createConceptoAction(data: ConceptoDePagoData) {
-    const newConcepto = await createConcepto(data);
-    revalidatePath('/dashboard/finanzas/conceptos');
-    return newConcepto;
+    try {
+        await createConcepto(data);
+        revalidatePath('/dashboard/finanzas/conceptos');
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, message: error.message || "Error al crear el concepto" };
+    }
 }
 
 export async function updateConceptoAction(id: number, data: ConceptoDePagoData) {
-    const updatedConcepto = await updateConcepto(id, data);
-    revalidatePath('/dashboard/finanzas/conceptos');
-    return updatedConcepto;
+    try {
+        await updateConcepto(id, data);
+        revalidatePath('/dashboard/finanzas/conceptos');
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, message: error.message || "Error al actualizar el concepto" };
+    }
 }
 
 export async function deleteConceptoAction(id: number) {
-    const deletedConcepto = await deleteConcepto(id);
-    revalidatePath('/dashboard/finanzas/conceptos');
-    return deletedConcepto;
+    try {
+        await deleteConcepto(id);
+        revalidatePath('/dashboard/finanzas/conceptos');
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, message: error.message || "No se pudo eliminar el concepto" };
+    }
 }
