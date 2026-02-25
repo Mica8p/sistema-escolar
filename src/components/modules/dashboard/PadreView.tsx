@@ -41,7 +41,7 @@ export default async function PadreView({ idPersona, idUsuario, idCiclo, idPadre
 
     return {
       ...hijo,
-      idMatricula: matricula?.idMatricula, // 🚩 ID fundamental para el boletín
+      idMatricula: matricula?.idMatricula,
       idCurso: matricula?.idCurso,
       notas,
       horarios,
@@ -98,7 +98,6 @@ export default async function PadreView({ idPersona, idUsuario, idCiclo, idPadre
                  </div>
                </div>
 
-               {/* 🚩 BOTÓN BOLETÍN: Ahora con idMatricula y acceso directo */}
                <Link
                   href={`/dashboard/alumnos/${hijo.idMatricula}/boletin`}
                   className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 px-4 py-2 rounded-xl transition-all group z-20"

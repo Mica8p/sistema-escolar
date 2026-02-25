@@ -1,12 +1,12 @@
 import { CicloService } from "@/service/ciclo.service";
 import { getCicloActual } from "@/lib/ciclo-session";
-import PeriodosManager from "@/components/ciclos/periodos-manager";
+import PeriodosManager from "@/lib/actions/periodos-manager";
 import { Calendar } from "lucide-react";
 
 export default async function PeriodosPage() {
   const idCiclo = await getCicloActual();
   const ciclo = await CicloService.getById(idCiclo);
-  
+
   if (!ciclo) {
     return (
         <div className="p-8 text-center text-gray-500">
@@ -38,7 +38,7 @@ export default async function PeriodosPage() {
                 Definí las fechas de inicio y fin para cada trimestre o instancia de recuperación.
             </p>
         </div>
-        
+
         <PeriodosManager idCiclo={ciclo.idCiclo} periodos={periodos} />
       </div>
     </div>

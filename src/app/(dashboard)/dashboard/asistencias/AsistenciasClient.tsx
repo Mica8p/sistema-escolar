@@ -30,7 +30,6 @@ export default function AsistenciasClient({
     }
   }, [planilla]);
 
-  // 🚩 LÓGICA AMPLIADA: Ahora contamos los 4 estados posibles
   const { presentes, ausentes, tardes, justificados } = useMemo(() => {
     let p = 0, a = 0, t = 0, j = 0;
     asistenciaMap.forEach((reg) => {
@@ -163,7 +162,7 @@ export default function AsistenciasClient({
   </div>
 </div>
 
-        {/* 🚩 PANEL 3: RESUMEN DETALLADO (DISEÑO MEJORADO) */}
+        {/*  PANEL 3: RESUMEN DETALLADO */}
         <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
           <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2">
             <CheckCircle size={16} /> <span className="text-[10px] font-black uppercase tracking-widest">3. Resumen de Clase</span>

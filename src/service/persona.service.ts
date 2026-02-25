@@ -5,7 +5,6 @@ import type { PersonaWithRelations } from "@/types/persona";
 export type { PersonaWithRelations };
 
 export const PersonaService = {
-  // Obtener todas las personas con sus usuarios y roles
   async getAll(rol?: string, idCiclo?: number) {
     const conditions: any[] = [];
 
@@ -71,8 +70,7 @@ export const PersonaService = {
     password?: string;
     idRol: number;
   }) {
-    // La contraseña se establecerá al habilitar el acceso.
-    // Se guarda un hash inválido para prevenir el login.
+
     const passwordHash = "NO_PASSWORD_SET";
 
     return await db.$transaction(async (tx) => {
@@ -89,7 +87,7 @@ export const PersonaService = {
           usuario: {
             create: {
               passwordHash,
-              estado: false, // El usuario se crea inactivo por defecto
+              estado: false,
               // 3. Asignamos el Rol
               roles: {
                 create: { idRol: data.idRol },
@@ -142,24 +140,20 @@ export const PersonaService = {
         email: data.email,
         telefono: data.telefono,
         direccion: data.direccion,
-        // Aquí podrías actualizar el rol también si fuera necesario
       },
     });
   },
 
   async getTutoresDisponibles(idAlumno: number) {
-    // 1. Obtener los padres ya vinculados a este alumno
     const vinculaciones = await db.alumnoPadre.findMany({
       where: { idAlumno },
       include: {
         padre: true
       }
     });
-    
-    // Extraemos los IDs de Persona de los padres ya vinculados
+
     const idsPersonasVinculadas = vinculaciones.map(v => v.padre.idPersona);
 
-    // 2. Buscar personas con rol PADRE que NO estén en la lista de vinculados
     return await db.persona.findMany({
       where: {
         usuario: {
@@ -168,13 +162,12 @@ export const PersonaService = {
           },
           estado: true
         },
-        // Excluimos por idPersona. Así aparecen aunque no tengan registro en tabla 'Padre' todavía.
         idPersona: {
           notIn: idsPersonasVinculadas
         }
       },
       include: {
-        padre: true, // Incluimos el modelo 'Padre' para tener el 'idPadre'
+        padre: true,
       },
       orderBy: {
         apellido: 'asc',

@@ -32,7 +32,7 @@ export default function HorarioImprimible({ horarios, nombreAlumno, curso }: Pro
               <GraduationCap size={32} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">Escuela Pro {anio} </h1>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">Escuela Digital {anio} </h1>
               <p className="text-xs font-bold text-slate-500 tracking-widest uppercase">Gestión Educativa Digital</p>
             </div>
           </div>
@@ -50,7 +50,7 @@ export default function HorarioImprimible({ horarios, nombreAlumno, curso }: Pro
             Documento generado el {new Date().toLocaleDateString()}
           </p>
           <p className="text-[9px] font-black text-indigo-500 uppercase">
-            escuelapro.com.ar
+            escueladigital.com.ar
           </p>
         </div>
       </div>

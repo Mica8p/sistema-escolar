@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import db from "@/lib/db";
 import { z } from "zod";
 
-// Esquema de validación con Zod
 const cicloSchema = z.object({
   anio: z.coerce.number().int().min(2000, "El año debe ser mayor a 2000."),
   estado: z.boolean(),
@@ -13,15 +12,13 @@ const cicloSchema = z.object({
 
 export async function cambiarCiclo(idCiclo: number) {
   const cookieStore = await cookies();
-  
-  // Guardamos la elección por 1 año
+
   cookieStore.set("cicloSeleccionado", String(idCiclo), {
     expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
     path: "/",
   });
-  
-  // Recargamos toda la aplicación para que los datos se actualicen al instante
-  revalidatePath("/"); 
+
+  revalidatePath("/");
 }
 
 export async function createCiclo(data: { anio: number, estado: boolean }) {
@@ -35,7 +32,6 @@ export async function createCiclo(data: { anio: number, estado: boolean }) {
 
   try {
     if (estado) {
-      // Si este ciclo será el activo, desactivamos todos los demás
       await db.cicloLectivo.updateMany({
         where: { estado: true },
         data: { estado: false },
@@ -45,7 +41,7 @@ export async function createCiclo(data: { anio: number, estado: boolean }) {
     await db.cicloLectivo.create({
       data: { anio, estado },
     });
-    
+
     revalidatePath("/dashboard/ciclos");
     return { success: true };
   } catch (error) {
@@ -64,7 +60,6 @@ export async function updateCiclo(id: number, data: { anio: number, estado: bool
 
     try {
         if (estado) {
-            // Si este ciclo será el activo, desactivamos todos los demás
             await db.cicloLectivo.updateMany({
                 where: { estado: true, NOT: { idCiclo: id } },
                 data: { estado: false },
@@ -75,7 +70,7 @@ export async function updateCiclo(id: number, data: { anio: number, estado: bool
             where: { idCiclo: id },
             data: { anio, estado },
         });
-        
+
         revalidatePath("/dashboard/ciclos");
         return { success: true };
     } catch (error) {
@@ -91,8 +86,7 @@ export async function deleteCiclo(id: number) {
     revalidatePath("/dashboard/ciclos");
     return { success: true };
   } catch (error) {
-    // Prisma tira un error conocido (P2025) si no se encuentra el registro
-    // Podríamos manejarlo específicamente si quisiéramos
+
     return { success: false, message: "Error al eliminar el ciclo lectivo." };
   }
 }

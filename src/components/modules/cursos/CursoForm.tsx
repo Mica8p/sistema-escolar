@@ -1,7 +1,7 @@
 'use client';
 
 import { createCurso, updateCurso } from '@/lib/actions/curso-actions';
-import { Curso, Nivel, Turno } from '@prisma/client'; // 1. Agregamos Turno a la importación
+import { Curso, Nivel, Turno } from '@prisma/client';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 
@@ -18,12 +18,11 @@ export function CursoForm({ curso }: CursoFormProps) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
 
-    // 2. Capturamos el Turno del formData para que TypeScript no de error
     const data = {
       grado: formData.get('grado') as string,
       seccion: formData.get('seccion') as string,
       nivel: formData.get('nivel') as Nivel,
-      turno: formData.get('turno') as Turno, // <-- ESTA LÍNEA FALTABA
+      turno: formData.get('turno') as Turno,
     };
 
     startTransition(async () => {
@@ -96,7 +95,7 @@ export function CursoForm({ curso }: CursoFormProps) {
           </select>
         </div>
 
-        {/* Turno - ACTUALIZADO */}
+        {/* Turno */}
         <div className="mb-4">
           <label htmlFor="turno" className="block text-gray-700 text-sm font-bold mb-2">
             Turno
@@ -105,7 +104,7 @@ export function CursoForm({ curso }: CursoFormProps) {
             id="turno"
             name="turno"
             required
-            defaultValue={curso?.turno || ""} // 3. Permitimos que cargue el turno si estamos editando
+            defaultValue={curso?.turno || ""}
             className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           >
             <option value="" disabled>Seleccionar turno....</option>

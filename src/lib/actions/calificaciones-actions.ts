@@ -50,7 +50,7 @@ export async function deleteCalificacion(idNota: number) {
   if (!session?.user) return { success: false, message: "No autorizado" };
 
   const isAdmin = session.user.roles.includes("ADMIN");
-  const idProfesor = session.user.idProfesor; // puede ser null
+  const idProfesor = session.user.idProfesor;
 
   try {
     const nota = await db.nota.findUnique({
@@ -78,7 +78,6 @@ export async function deleteCalificacion(idNota: number) {
   }
 }
 
-//para que el admin pueda congelar las notas
 export async function cambiarEstadoPeriodoAction(idPeriodo: number, cerrado: boolean) {
   const session = await auth();
   if (!session?.user.roles.includes("ADMIN")) {

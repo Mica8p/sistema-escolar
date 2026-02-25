@@ -14,7 +14,6 @@ export async function getDashboardAdminData(idCiclo: number) {
       orderBy: { fecha: 'desc' },
       include: { usuario: { include: { persona: { select: { nombre: true, apellido: true } } } } }
     }),
-    // 1. Recaudación Real
     db.pago.aggregate({
       where: { fechaPago: { gte: primerDiaMes } },
       _sum: { montoTotal: true }
@@ -47,7 +46,7 @@ export async function getDashboardAdminData(idCiclo: number) {
     asistenciaGlobal,
     promedioAsis,
     recaudacionMes: pagosMes._sum.montoTotal || 0,
-    morosidadTotal: morosidad._sum.monto || 0, // 🚩 El dato que le falta a tu Dashboard
+    morosidadTotal: morosidad._sum.monto || 0,
     totalDeudores: morosidad._count.alumnoId || 0
   };
 }

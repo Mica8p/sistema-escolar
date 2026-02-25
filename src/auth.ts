@@ -1,4 +1,3 @@
-// src/auth.ts
 import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 import db from "@/lib/db";
@@ -22,7 +21,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!usuario || !usuario.passwordHash) return null;
 
-        // Verificar explícitamente si el usuario está activo antes de validar contraseña
         if (!usuario.estado) return null;
 
         const isPasswordValid = await bcrypt.compare(
@@ -31,12 +29,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
         if (!isPasswordValid) return null;
 
-        // Detectar si está usando la contraseña por defecto (DNI)
         const isDefaultPassword = usuario.defaultPassword;
 
         const rolesArray = usuario.roles.map((r) => r.rol.nombre);
 
-        // BUSQUEDA DE PERFILES ESPECIFICOS (Docente y Padre)
         const [prof, padre] = await Promise.all([
           db.profesor.findUnique({ where: { idPersona: usuario.idPersona }, select: { idProfesor: true } }),
           rolesArray.includes("PADRE")
@@ -52,7 +48,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           idUsuario: usuario.idUsuario,
           idPersona: usuario.idPersona,
           idProfesor: prof?.idProfesor ?? null,
-          idPadre: padre?.idPadre ?? null, // Ahora idPadre viaja en la sesión
+          idPadre: padre?.idPadre ?? null,
           isDefaultPassword,
         };
       },
@@ -69,10 +65,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.isDefaultPassword = user.isDefaultPassword;
       }
 
-      // Solución al bucle del modal:
-      // En cada request que lee el token, verificamos el estado REAL en la BD.
-      // Esto evita que el token JWT "viejo" persista con isDefaultPassword=true
-      // después de que ya se cambió la clave en la BD.
+
       if (token.idUsuario) {
         const dbUser = await db.usuario.findUnique({
           where: { idUsuario: token.idUsuario as number },
@@ -83,7 +76,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       }
 
-      // Permitir actualizar el token desde el cliente (cuando cambia la clave)
       if (trigger === "update" && session?.isDefaultPassword === false) {
         token.isDefaultPassword = false;
       }

@@ -3,7 +3,6 @@ import { EstadoAcademico, Prisma } from "@prisma/client";
 import { getCicloActual } from "@/lib/ciclo-session";
 
 export const AlumnoService = {
-  // 1. Obtener alumnos para la tabla (incluyendo su curso actual)
   async getAll(idCiclo: number, estado?: string) {
 
     const matriculaWhere: any = {
@@ -22,7 +21,6 @@ export const AlumnoService = {
 
     return await db.alumno.findMany({
       where: {
-        // Solo alumnos que tienen matricula que cumple la condición
         matriculas: {
           some: matriculaWhere
         }
@@ -31,7 +29,7 @@ export const AlumnoService = {
         persona: true,
         matriculas: {
           where: {
-            idCiclo: idCiclo // Nos aseguramos de traer la matrícula del ciclo correcto para mostrarla
+            idCiclo: idCiclo
           },
           include: {
             curso: true
@@ -42,13 +40,11 @@ export const AlumnoService = {
     });
   },
 
-  // 2. Para el SELECT del formulario: Personas con rol ALUMNO que aún NO están inscritas en el CICLO ACTUAL
   async getPersonasDisponibles(idCiclo: number) {
     return await db.persona.findMany({
       where: {
         usuario: {
           roles: { some: { rol: { nombre: 'ALUMNO' } } },
-          // No requerimos estado: true para alumnos, ya que no se loguean.
           passwordHash: { not: "DELETED_USER" }, // Pero evitamos los eliminados.
         },
         NOT: {
@@ -65,45 +61,40 @@ export const AlumnoService = {
     });
   },
 
-  // 3. Para el SELECT del formulario: Cursos disponibles (lo que hace Gabriel)
   async getCursosDisponibles() {
   return await db.curso.findMany({
     orderBy: [
       { nivel: "asc" },
       { grado: "asc" },
-      { seccion: "asc" }, // Agregamos sección para que no aparezcan mezcladas
-      { turno: "asc" }   // Agregamos turno para que el administrativo los vea ordenados
+      { seccion: "asc" },
+      { turno: "asc" }
     ]
   });
 },
 
-  // 4. La transacción de inscripción (que ya arreglamos antes)
   async enroll(idPersona: number, idCurso: number) {
-    const idCiclo = await getCicloActual(); // <--- DINÁMICO
+    const idCiclo = await getCicloActual();
 
     return await db.$transaction(async (tx) => {
-      // CAMBIO 1: Buscamos si la persona ya existe en la tabla 'alumno'
       let alumno = await tx.alumno.findUnique({
         where: { idPersona }
       });
 
-      // CAMBIO 2: Si NO existe, lo creamos. Si existe, usamos el que ya está.
       if (!alumno) {
         alumno = await tx.alumno.create({
           data: {
             idPersona: idPersona,
             legajo: `LEG-${idPersona}-${new Date().getFullYear()}`,
-            fechaNacimiento: new Date(), // Esto luego lo traeremos de la Persona
+            fechaNacimiento: new Date(),
           }
         });
       }
 
-      // CAMBIO 3: Creamos la Matrícula vinculando el Alumno con el Curso
       const matricula = await tx.matricula.create({
         data: {
           idAlumno: alumno.idAlumno,
           idCurso: idCurso,
-          idCiclo: idCiclo, // <--- USAMOS EL SELECCIONADO
+          idCiclo: idCiclo,
           fechaInscripcion: new Date(),
           estadoAcademico: EstadoAcademico.Activo,
         }
@@ -154,7 +145,6 @@ export const AlumnoService = {
     });
   },
 
-  // 5. Obtener alumnos asociados a un padre
   async getAlumnosDePadre(idPadre: number) {
     return await db.alumno.findMany({
       where: {
@@ -166,7 +156,6 @@ export const AlumnoService = {
     });
   },
 
-  // 6. Cambiar estado de matrícula (Para Bajas o Egresos sin borrar a la persona)
   async updateEstadoMatricula(idMatricula: number, nuevoEstado: EstadoAcademico) {
     return await db.matricula.update({
       where: { idMatricula },

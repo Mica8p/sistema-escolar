@@ -2,24 +2,19 @@
 import db from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
-// src/lib/actions/asignacion-actions.ts
 
 export async function clonarAsignacionesYHorarios(cicloOrigenId: number, cicloDestinoId: number) {
   try {
     return await db.$transaction(async (tx) => {
-      // 🚩 PASO 1: "Hoja en blanco" para el ciclo nuevo
-      // Buscamos lo que ya existe en el 2027 para borrarlo antes de clonar
       const asignacionesDestino = await tx.asignacionAcademica.findMany({
         where: { idCiclo: cicloDestinoId },
         select: { idAsignacion: true }
       });
       const idsBorrar = asignacionesDestino.map(a => a.idAsignacion);
 
-      // Limpiamos horarios y asignaciones viejas del ciclo destino
       await tx.horario.deleteMany({ where: { idAsignacion: { in: idsBorrar } } });
       await tx.asignacionAcademica.deleteMany({ where: { idCiclo: cicloDestinoId } });
 
-      // 🚩 PASO 2: Traer solo lo que terminó ACTIVO el año pasado
       const asignacionesAnteriores = await tx.asignacionAcademica.findMany({
         where: { idCiclo: cicloOrigenId, estado: true },
         include: { horarios: true }

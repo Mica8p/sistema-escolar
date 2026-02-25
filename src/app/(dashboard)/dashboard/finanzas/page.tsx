@@ -22,10 +22,8 @@ export default async function FinanzasPage() {
     const idPadre = session.user.idPadre;
     if (!idPadre) return <div className="p-6 text-red-600">Error: No se encontró información del perfil de padre.</div>;
 
-    // 1. Buscamos los hijos del padre
     const hijos = await AlumnoService.getAlumnosDePadre(Number(idPadre));
 
-    // 2. Para cada hijo, buscamos su estado de cuenta completo
     const estadosDeCuenta = await Promise.all(
         hijos.map(h => getDetalleCuenta(h.idAlumno))
     );

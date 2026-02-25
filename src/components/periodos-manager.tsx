@@ -6,9 +6,9 @@ import { getAllCiclos } from '@/lib/actions/ciclo-actions';
 import { PeriodoNombre } from '@prisma/client';
 import { useActionState, useEffect, useState } from 'react';
 import { PeriodoAcademico, CicloLectivo } from '@prisma/client';
-import { Lock, Unlock, Trash2 } from 'lucide-react'; // 🚩 Importamos los iconos
+import { Lock, Unlock, Trash2 } from 'lucide-react';
 
-// 1. Botón para el formulario de creación
+
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -18,7 +18,6 @@ function SubmitButton() {
   );
 }
 
-// 2. Botón para Cerrar/Abrir el periodo (El "Candado")
 function ToggleStatusButton({ idPeriodo, cerrado }: { idPeriodo: number, cerrado: boolean }) {
     const handleToggle = async () => {
         const mensaje = cerrado
@@ -50,7 +49,6 @@ function ToggleStatusButton({ idPeriodo, cerrado }: { idPeriodo: number, cerrado
     );
 }
 
-// 3. Botón para Eliminar
 function DeletePeriodoButton({ idPeriodo }: { idPeriodo: number }) {
     const handleDelete = async () => {
         if (confirm('¿Estás seguro de que quieres eliminar este periodo? Esta acción no se puede deshacer.')) {
@@ -70,7 +68,6 @@ function DeletePeriodoButton({ idPeriodo }: { idPeriodo: number }) {
     );
 }
 
-// COMPONENTE PRINCIPAL
 export default function PeriodosManager() {
   const [state, formAction] = useActionState(createPeriodoAction, {
     success: false,

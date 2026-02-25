@@ -30,7 +30,7 @@ export function ToggleEstadoMatriculaButton({
 
 
   if (estadoActual !== 'Activo' && estadoActual !== 'Suspendido') {
-    return null; // Don't show the button for 'Retirado' or 'Egresado'
+    return null;
   }
 
   return (

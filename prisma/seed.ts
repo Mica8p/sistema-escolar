@@ -3,7 +3,6 @@ import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import bcrypt from "bcryptjs";
 import "dotenv/config";
 
-// 🚩 IMPORTANTE: Mantenemos tu lógica de adaptador para que SQLite funcione
 const adapter = new PrismaBetterSqlite3({
   url: "file:./prisma/dev.db",
 });
@@ -15,7 +14,6 @@ const prisma = new PrismaClient({
 async function main() {
   console.log("🌱 Iniciando reseteo de acceso (Solo Admin)...");
 
-  // 1. SEMBRAR ROLES (Fundamentales para que el sistema no rompa)
   const rolesADefinir = ["ADMIN", "DOCENTE", "PADRE", "ALUMNO"];
   for (const nombre of rolesADefinir) {
     await prisma.rol.upsert({
@@ -28,8 +26,6 @@ async function main() {
   const rolAdmin = await prisma.rol.findUnique({ where: { nombre: "ADMIN" } });
   if (!rolAdmin) throw new Error("No se pudo crear el rol ADMIN");
 
-  // 2. SEMBRAR ADMINISTRADOR (DNI: 12345678 / Pass: admin123)
-  // He usado 'admin123' como en tu seed anterior para que te sea familiar
   const hashedAdminPassword = await bcrypt.hash("admin123", 10);
 
   await prisma.persona.upsert({

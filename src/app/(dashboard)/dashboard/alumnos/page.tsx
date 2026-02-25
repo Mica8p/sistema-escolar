@@ -19,15 +19,14 @@ export default async function AlumnosPage({
 
   const currentStatusParam = estado;
   const validStatuses = Object.values(EstadoAcademico);
-  
+
   let statusToFilter: EstadoAcademico | undefined;
-  
+
   if (currentStatusParam === undefined) {
     statusToFilter = EstadoAcademico.Activo;
   } else if (validStatuses.includes(currentStatusParam as EstadoAcademico)) {
     statusToFilter = currentStatusParam as EstadoAcademico;
   }
-  // If param is 'Todos' or invalid, statusToFilter remains undefined, so the service fetches all.
 
   const [alumnos, personasSinInscribir, cursos, cicloActivo] = await Promise.all([
     AlumnoService.getAll(cicloId, statusToFilter),
@@ -55,7 +54,7 @@ export default async function AlumnosPage({
           <p className="text-sm">Cambiá el año en el selector superior para ver otros listados.</p>
         </div>
       )}
-      
+
       <StatusFilter currentStatus={activeFilter} />
 
       <AlumnosClient alumnos={alumnos} />

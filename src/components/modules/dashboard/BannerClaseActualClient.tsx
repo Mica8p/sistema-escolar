@@ -19,7 +19,7 @@ export default function BannerClaseActualClient({ clasesHoy }: { clasesHoy: any[
     };
 
     chequearClase();
-    const intervalo = setInterval(chequearClase, 30000); // Chequea cada 30 segundos
+    const intervalo = setInterval(chequearClase, 30000);
     return () => clearInterval(intervalo);
   }, [clasesHoy]);
 

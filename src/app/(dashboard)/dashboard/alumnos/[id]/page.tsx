@@ -8,10 +8,9 @@ export default async function AlumnoPage({ params }: { params: { id: string } })
   const id = Number(resolvedParams.id);
 
   if (isNaN(id)) {
-    // If the ID is not a valid number, we can't find the student.
     return notFound();
   }
-  
+
   const cicloId = await getCicloActual();
   const alumno = await AlumnoService.getById(id);
 

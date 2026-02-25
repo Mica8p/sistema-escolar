@@ -30,7 +30,6 @@ export default async function CursosPage() {
                 <td className="py-3 px-6 text-left whitespace-nowrap font-medium">{curso.grado}</td>
                 <td className="py-3 px-6 text-left">{curso.seccion}</td>
 
-                {/* Agregamos la celda del Turno con un estilo de etiqueta (badge) */}
                 <td className="py-3 px-6 text-left">
                   <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
                     curso.turno === 'Mañana' ? 'bg-orange-100 text-orange-700' :
@@ -56,7 +55,6 @@ export default async function CursosPage() {
             ))}
             {cursos.length === 0 && (
               <tr>
-                {/* Actualizamos colSpan a 5 porque ahora hay 5 columnas */}
                 <td colSpan={5} className="py-3 px-6 text-center">No hay cursos registrados.</td>
               </tr>
             )}

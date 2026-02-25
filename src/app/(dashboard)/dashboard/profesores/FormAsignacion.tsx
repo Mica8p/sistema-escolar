@@ -140,7 +140,7 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
           <select
             name="idMateria"
             required
-            key={editData?.idMateria} // Fuerza el refresco del valor al cambiar de edición
+            key={editData?.idMateria}
             defaultValue={editData?.idMateria || ""}
             className="w-full p-2 border rounded-md bg-white text-gray-600"
           >

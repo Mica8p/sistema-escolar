@@ -11,7 +11,6 @@ export async function darDeBajaAlumno(idAlumno: number) {
       return { success: false, error: "No se encontró el ciclo lectivo actual." };
     }
 
-    // 1. Buscar la matrícula del alumno en el ciclo actual
     const matricula = await db.matricula.findFirst({
       where: {
         idAlumno: idAlumno,
@@ -23,13 +22,11 @@ export async function darDeBajaAlumno(idAlumno: number) {
       return { success: false, error: "El alumno no está inscripto en este ciclo lectivo." };
     }
 
-    // 2. Actualizar estado de la matrícula a 'Retirado'
     await db.matricula.update({
       where: { idMatricula: matricula.idMatricula },
       data: { estadoAcademico: "Retirado" },
     });
 
-    // 3. Desactivar el usuario para impedir acceso al sistema
     const alumno = await db.alumno.findUnique({
       where: { idAlumno },
       select: { idPersona: true }
@@ -46,7 +43,6 @@ export async function darDeBajaAlumno(idAlumno: number) {
       }
     }
 
-    // 4. IMPORTANTE: Revalidar las rutas para que la UI se actualice
     revalidatePath("/dashboard/alumnos");
     revalidatePath(`/dashboard/alumnos/${idAlumno}`);
     revalidatePath("/dashboard/personas");

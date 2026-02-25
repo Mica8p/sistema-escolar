@@ -1,7 +1,7 @@
 'use server';
 
 import { cursoService } from '@/service/curso.service';
-import { Curso, Turno, Nivel } from '@prisma/client'; // Importamos los Enums
+import { Curso, Turno, Nivel } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 export async function getAllCursos() {
@@ -12,13 +12,9 @@ export async function getCursoById(id: number) {
   return await cursoService.getById(id);
 }
 
-/**
- * Crea un nuevo curso.
- * El objeto 'data' ahora debe incluir obligatoriamente 'turno' y 'nivel'.
- */
+
 export async function createCurso(data: Omit<Curso, 'idCurso'>) {
   try {
-    // Aquí TypeScript te avisará si falta data.turno o data.nivel
     const nuevoCurso = await cursoService.create(data);
 
     revalidatePath('/dashboard/cursos');
@@ -29,9 +25,7 @@ export async function createCurso(data: Omit<Curso, 'idCurso'>) {
   }
 }
 
-/**
- * Actualiza un curso existente.
- */
+
 export async function updateCurso(id: number, data: Partial<Omit<Curso, 'idCurso'>>) {
   try {
     const cursoActualizado = await cursoService.update(id, data);

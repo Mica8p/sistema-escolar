@@ -1,4 +1,3 @@
-// src/components/modules/comunicados/BotonLeido.tsx
 "use client";
 
 import { marcarComoLeido } from "@/lib/actions/comunicado-actions";

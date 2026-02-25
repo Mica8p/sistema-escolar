@@ -7,28 +7,24 @@ export default function Search({ placeholder }: { placeholder: string }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
-  
-  // Usamos useRef para guardar el temporizador entre renderizados
+
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSearch = (term: string) => {
-    // Si el usuario sigue escribiendo, cancelamos el temporizador anterior
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
-    // Esperamos 300ms después de que deje de escribir para hacer la búsqueda
     timeoutRef.current = setTimeout(() => {
       const params = new URLSearchParams(searchParams);
-      params.set('page', '1'); // Reseteamos a la página 1
-      
+      params.set('page', '1');
+
       if (term) {
         params.set('query', term);
       } else {
         params.delete('query');
       }
-      
-      // Esto actualiza la URL sin recargar la página
+
       replace(`${pathname}?${params.toString()}`);
     }, 300);
   };
@@ -44,7 +40,6 @@ export default function Search({ placeholder }: { placeholder: string }) {
         onChange={(e) => handleSearch(e.target.value)}
         defaultValue={searchParams.get('query')?.toString()}
       />
-      {/* Icono de lupa opcional */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"

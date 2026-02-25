@@ -35,20 +35,17 @@ export type State = {
   message?: string;
 };
 
-// src/app/(dashboard)/dashboard/finanzas/finanzas-actions.ts
 
-export async function createDeuda(prevState: State, formData: FormData): Promise<State> { // 🚩 Agregamos el tipo de retorno explícito
-  // 1. Validar los datos del formulario
+export async function createDeuda(prevState: State, formData: FormData): Promise<State> {
   const validatedFields = CreateDeudaSchema.safeParse({
     alumnoId: formData.get("alumnoId"),
     conceptoId: formData.get("conceptoId"),
     monto: formData.get("monto"),
-    fechaVencimiento: formData.get("fechaVencimiento"), // 🚩 Dejá que el Schema (con preprocess) se encargue del Date
+    fechaVencimiento: formData.get("fechaVencimiento"),
   });
 
   if (!validatedFields.success) {
     return {
-      // 🚩 Convertimos los errores a un objeto que siempre cumpla con el tipo State
       errors: validatedFields.error.flatten().fieldErrors,
       message: "Campos inválidos. Revisá los datos ingresados.",
     };
@@ -57,7 +54,6 @@ export async function createDeuda(prevState: State, formData: FormData): Promise
   const { alumnoId, conceptoId, monto, fechaVencimiento } = validatedFields.data;
 
   try {
-    // 2. Obtener el ciclo lectivo actual
     const cicloId = await getCicloActual();
 
     if (!cicloId) {
@@ -78,7 +74,6 @@ export async function createDeuda(prevState: State, formData: FormData): Promise
       };
     }
 
-    // 3. Crear el Cargo
     await db.cargo.create({
       data: {
         alumnoId,
@@ -90,9 +85,8 @@ export async function createDeuda(prevState: State, formData: FormData): Promise
       },
     });
 
-    // 4. Revalidar caché
     revalidatePath(`/dashboard/finanzas/${alumnoId}`);
-    revalidatePath(`/dashboard/finanzas`); // 🚩 Revalidamos también la lista general por si cambió la deuda total
+    revalidatePath(`/dashboard/finanzas`);
 
     return {
       message: "Deuda creada exitosamente.",

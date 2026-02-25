@@ -63,7 +63,6 @@ export default function Sidebar({ userRoles, noLeidos }: SidebarProps) {
                         >
                           <span>{sub.title}</span>
 
-                          {/* 🔔 BADGE DINÁMICO EN SUBMÉNU */}
                           {sub.title === "Bandeja de Entrada" && noLeidos > 0 && (
                             <span className="bg-blue-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black animate-pulse">
                               {noLeidos}
@@ -78,7 +77,6 @@ export default function Sidebar({ userRoles, noLeidos }: SidebarProps) {
             );
           }
 
-          // CASO B: Ítem simple (Inicio, Inventario)
           return (
             <Link
               key={item.href}

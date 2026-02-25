@@ -9,19 +9,16 @@ import { EstadoAcademico } from "@prisma/client";
 export async function vincularPadre(idAlumno: number, idPersona: number, relacion: string) {
   try {
     await db.$transaction(async (tx) => {
-      // 1. Verificar si la Persona ya tiene un registro en la tabla Padre
       let padre = await tx.padre.findUnique({
         where: { idPersona }
       });
 
-      // 2. Si no existe, lo creamos automáticamente
       if (!padre) {
         padre = await tx.padre.create({
           data: { idPersona }
         });
       }
 
-      // 3. Crear la vinculación en AlumnoPadre usando el ID del padre (existente o nuevo)
       await tx.alumnoPadre.create({
         data: {
           idAlumno,

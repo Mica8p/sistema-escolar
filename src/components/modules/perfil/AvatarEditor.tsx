@@ -63,7 +63,6 @@ export default function AvatarEditor({
 
   const pickFile = () => fileRef.current?.click();
 
-  // flash auto-hide
   useEffect(() => {
     if (!flashMsg) return;
     const t = setTimeout(() => setFlashMsg(null), 2500);
@@ -115,7 +114,6 @@ export default function AvatarEditor({
         title={`${nombre} ${apellido}`}
       >
         {preview ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={preview} alt="Avatar" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -139,7 +137,7 @@ export default function AvatarEditor({
                 const f = e.target.files?.[0];
                 if (!f) return;
                 handleUpload(f);
-                e.currentTarget.value = ""; 
+                e.currentTarget.value = "";
               }}
             />
 

@@ -1,11 +1,9 @@
-// src/auth.config.ts
 import type { NextAuthConfig } from "next-auth";
 
 export const authConfig = {
   pages: {
     signIn: "/login",
   },
-  // ESTO ES LO QUE ARREGLA EL ERROR:
   session: {
     strategy: "jwt",
   },
@@ -32,5 +30,5 @@ export const authConfig = {
       return session;
     },
   },
-  providers: [], // Se llena en auth.ts
+  providers: [],
 } satisfies NextAuthConfig;

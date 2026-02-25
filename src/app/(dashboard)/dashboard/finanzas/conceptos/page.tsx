@@ -7,7 +7,7 @@ export default async function ConceptosPage() {
 
   return (
     <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">
-      {/* 🔝 CABECERA */}
+      {/*  CABECERA */}
       <div>
         <h1 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">
           Configuración de Conceptos
@@ -18,7 +18,7 @@ export default async function ConceptosPage() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* 📋 COLUMNA IZQUIERDA: LISTADO */}
+        {/*  COLUMNA IZQUIERDA: LISTADO */}
         <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-fit">
           <div className="px-6 py-4 border-b border-slate-100 bg-slate-900 text-white flex items-center gap-2 shrink-0">
             <ListOrdered size={18} className="text-indigo-400" />
@@ -57,7 +57,7 @@ export default async function ConceptosPage() {
           </div>
         </div>
 
-        {/* 📝 COLUMNA DERECHA: FORMULARIO */}
+        {/*  COLUMNA DERECHA: FORMULARIO */}
         <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden h-fit">
           <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/80 flex items-center gap-2">
             <Receipt size={18} className="text-indigo-600" />

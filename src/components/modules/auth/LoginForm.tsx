@@ -84,7 +84,7 @@ export default function LoginForm() {
     <ConfirmModal
         isOpen={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
-        onConfirm={() => setIsHelpOpen(false)} // Solo cierra
+        onConfirm={() => setIsHelpOpen(false)}
         title="Recuperar Acceso"
         message="Por razones de seguridad, para resetear tu clave debes acercarte presencialmente a la Secretaría del establecimiento con tu DNI."
         variant="info"

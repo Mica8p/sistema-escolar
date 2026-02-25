@@ -46,7 +46,6 @@ export function GenerarCuotaMasivaDialog({ conceptos }: Props) {
     }
   }, [selectedConceptoId, conceptos]);
 
-  // Manejar respuesta del servidor
   useEffect(() => {
     if (state.message && !state.errors) {
       setOpen(false);
@@ -78,7 +77,7 @@ export function GenerarCuotaMasivaDialog({ conceptos }: Props) {
 
             <form action={dispatch} className="mt-4">
               <div className="grid gap-4 py-4">
-                
+
                 {/* Selector de Concepto */}
                 <div className="grid grid-cols-4 items-center gap-4">
                   <label htmlFor="conceptoId" className="text-right text-sm font-medium text-gray-900">Concepto</label>

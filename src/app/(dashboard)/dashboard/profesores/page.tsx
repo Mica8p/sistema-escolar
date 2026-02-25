@@ -21,7 +21,6 @@ export default async function DocentesPage({ searchParams }: PageProps) {
 
   let cicloActualInfo = await db.cicloLectivo.findUnique({ where: { idCiclo: idCicloActual } });
 
-  // Si el ciclo de la sesión no existe (por el reset de DB), buscar uno válido automáticamente
   if (!cicloActualInfo) {
     const cicloFallback = await db.cicloLectivo.findFirst({
       where: { estado: true },

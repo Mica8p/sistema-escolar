@@ -19,7 +19,6 @@ const CreatePersonaSchema = PersonaSchema.extend({
     idRol: z.string().min(1, "Debe seleccionar un rol")
 });
 
-// ... (other code)
 
 export async function createPersonaAction(prevState: any, formData: FormData) {
     const validatedFields = CreatePersonaSchema.safeParse(Object.fromEntries(formData.entries()));
@@ -166,7 +165,6 @@ export async function inhabilitarAccesoAction(idPersona: number) {
 export async function deletePersona(idPersona: number) {
     try {
         await db.$transaction(async (prisma) => {
-            // Step 1: Find the Persona and its relations
             const persona = await prisma.persona.findUnique({
                 where: { idPersona },
                 include: {
@@ -222,7 +220,6 @@ export async function deletePersona(idPersona: number) {
                 throw new Error('Persona not found');
             }
 
-            // Verificación de seguridad: No eliminar al último ADMIN
             const esAdmin = persona.usuario?.roles.some(r => r.rol.nombre === 'ADMIN');
 
             if (esAdmin) {
@@ -237,7 +234,6 @@ export async function deletePersona(idPersona: number) {
                 }
             }
 
-            // Step 2: Delete related Usuario data
             if (persona.usuario) {
                 await prisma.comunicadoVisto.deleteMany({
                     where: { idUsuario: persona.usuario.idUsuario },
@@ -265,7 +261,6 @@ export async function deletePersona(idPersona: number) {
                 });
             }
 
-            // Step 3: Delete related Alumno data
             if (persona.alumno) {
                 for (const matricula of persona.alumno.matriculas) {
                     await prisma.nota.deleteMany({
@@ -303,7 +298,6 @@ export async function deletePersona(idPersona: number) {
                 });
             }
 
-            // Step 4: Delete related Profesor data
             if (persona.profesor) {
                 for (const asignacion of persona.profesor.asignaciones) {
                     await prisma.horario.deleteMany({
@@ -321,7 +315,6 @@ export async function deletePersona(idPersona: number) {
                 });
             }
 
-            // Step 5: Delete related Padre data
             if (persona.padre) {
                 await prisma.alumnoPadre.deleteMany({
                     where: { idPadre: persona.padre.idPadre },
@@ -329,7 +322,6 @@ export async function deletePersona(idPersona: number) {
                 await prisma.padre.delete({ where: { idPadre: persona.padre.idPadre } });
             }
 
-            // Step 6: Delete the Persona
             await prisma.persona.delete({
                 where: { idPersona },
             });

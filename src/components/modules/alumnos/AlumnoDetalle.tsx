@@ -24,7 +24,6 @@ interface AlumnoDetalleProps {
 export default function AlumnoDetalle({ alumno, cicloId }: AlumnoDetalleProps) {
   const [isPending, startTransition] = useTransition();
 
-  // 🚩 Estado para el ConfirmModal de cambio de estado
   const [modalEstado, setModalEstado] = useState<{ open: boolean, nuevo: EstadoAcademico | null }>({
     open: false,
     nuevo: null
@@ -85,7 +84,7 @@ export default function AlumnoDetalle({ alumno, cicloId }: AlumnoDetalleProps) {
     });
   };
 
-  // 🚩 Lógica para el ConfirmModal
+  //  Lógica para el ConfirmModal
   const handleCambioEstadoTrigger = (nuevo: EstadoAcademico) => {
     setModalEstado({ open: true, nuevo });
   };
@@ -125,7 +124,7 @@ export default function AlumnoDetalle({ alumno, cicloId }: AlumnoDetalleProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* Columna Izquierda: Datos Personales (CON TUS ICONOS DE VUELTA) */}
+        {/* Columna Izquierda: Datos Personales */}
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
             <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">

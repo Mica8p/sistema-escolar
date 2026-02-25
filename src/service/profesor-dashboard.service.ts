@@ -23,9 +23,6 @@ function getDiaSemanaEnum(date = new Date()): DiaSemana {
   return map[date.getDay()];
 }
 
-/**
- * Clases de hoy del docente (solo ciclo actual)
- */
 export async function getClasesDeHoyDocente(idProfesor: number, date = new Date()) {
   const idCiclo = await getCicloActual();
   const dia = getDiaSemanaEnum(date);
@@ -105,9 +102,7 @@ export async function getAsistenciasPendientesDocente(idProfesor: number, date =
   return pendientes;
 }
 
-/**
- * Notas recientes cargadas por el docente (solo ciclo actual)
- */
+
 export async function getNotasRecientesDocente(idProfesor: number, take = 8) {
   const idCiclo = await getCicloActual();
 
@@ -154,9 +149,6 @@ export async function getProximosCierresDocente(idProfesor: number, take = 5) {
 }
 
 
-/**
- * Calcula el % de asistencia promedio por curso del docente
- */
 
 export async function getRendimientoAsistenciaDocente(idProfesor: number) {
   const idCiclo = await getCicloActual();

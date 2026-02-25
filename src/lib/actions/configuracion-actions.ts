@@ -30,7 +30,7 @@ export async function guardarConfiguracionDias(dias: DiaHabilState) {
             }
         });
         revalidatePath('/dashboard/configuraciones/horarios');
-        revalidatePath('/dashboard/profesores'); // Also revalidate the professors page
+        revalidatePath('/dashboard/profesores');
         return { success: true };
     } catch (error) {
         console.error(error);
@@ -44,7 +44,7 @@ export async function guardarConfiguracionBloques(turno: Turno, bloques: BloqueH
             await tx.bloqueHorario.deleteMany({ where: { turno } });
 
             for (let i = 0; i < bloques.length; i++) {
-                if(!bloques[i].horaInicio || !bloques[i].horaFin) continue; // Skip empty rows
+                if(!bloques[i].horaInicio || !bloques[i].horaFin) continue;
 
                 await tx.bloqueHorario.create({
                     data: {

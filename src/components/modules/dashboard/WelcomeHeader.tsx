@@ -1,4 +1,3 @@
-// src/components/modules/dashboard/WelcomeHeader.tsx
 import { Sparkles, Zap, UserCheck } from "lucide-react";
 import Link from "next/link";
 

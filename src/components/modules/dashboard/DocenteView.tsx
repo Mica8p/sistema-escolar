@@ -35,7 +35,6 @@ export default async function DocenteView({ idProfesor, idUsuario, userName, use
   const clasesFinalizadas = clasesHoy.filter(h => h.horaFin < horaActual).length;
   const progresoDia = clasesHoy.length > 0 ? (clasesFinalizadas / clasesHoy.length) * 100 : 0;
 
-  // Detectamos la clase que está ocurriendo AHORA
   const claseActual = clasesHoy.find(h => horaActual >= h.horaInicio && horaActual <= h.horaFin);
 
   return (
@@ -119,7 +118,6 @@ export default async function DocenteView({ idProfesor, idUsuario, userName, use
                             {esAhora ? (
                               <span className="bg-indigo-100 text-indigo-600 text-[9px] font-black px-4 py-2 rounded-xl uppercase tracking-widest">En curso</span>
                             ) : (
-                              // 🚩 CORRECCIÓN DE RUTA 2: Enlace directo al registro para clases futuras
                               <Link
                                 href={`/dashboard/asistencias?mat=${h.asignacion.idMateria}&horario=${h.idHorario}`}
                                 className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${yaPaso ? 'text-slate-400 hover:text-indigo-600' : 'bg-slate-50 text-slate-600 hover:bg-indigo-600 hover:text-white'}`}

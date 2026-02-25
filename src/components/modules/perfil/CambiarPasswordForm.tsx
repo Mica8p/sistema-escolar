@@ -27,10 +27,8 @@ export default function CambiarPasswordForm() {
   const formRef = useRef<HTMLFormElement | null>(null);
   const confirmingRef = useRef(false);
 
-  // Estado derivado para modal éxito
   const successOpen = state.ok;
 
-  // Validación en vivo
   const [actual, setActual] = useState("");
   const [nueva, setNueva] = useState("");
   const [confirmar, setConfirmar] = useState("");
@@ -53,7 +51,6 @@ export default function CambiarPasswordForm() {
   const serverActualIncorrect =
     !state.ok && state.message?.toLowerCase().includes("actual es incorrecta");
 
-  // Bloquear submit si hay errores client-side
   const canSubmit = useMemo(() => {
     if (!actual || !nueva || !confirmar) return false;
     if (mismatch) return false;
@@ -76,22 +73,18 @@ export default function CambiarPasswordForm() {
             ref={formRef}
             action={formAction}
             onSubmit={(e) => {
-              // Si viene del modal, dejamos pasar
               if (confirmingRef.current) {
                 confirmingRef.current = false;
                 return;
               }
 
-              // Marcamos campos como tocados para mostrar errores si faltan cosas
               setTouched({ actual: true, nueva: true, confirmar: true });
 
-              // Si hay errores client-side, no abrimos modal
               if (!canSubmit) {
                 e.preventDefault();
                 return;
               }
 
-              // Si está OK, abrimos confirmación
               e.preventDefault();
               setConfirmOpen(true);
             }}

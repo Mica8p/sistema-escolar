@@ -21,7 +21,6 @@ export default async function EnviadosPage() {
       </header>
 
       <main>
-        {/* 🚩 FIJATE: Aquí también, solo data e isEnviados */}
         <FiltroComunicados data={enviados} isEnviados={true} />
       </main>
     </div>

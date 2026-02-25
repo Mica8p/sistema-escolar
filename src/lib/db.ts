@@ -2,7 +2,6 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
 const prismaClientSingleton = () => {
-  // Usamos el objeto de configuración que el adaptador espera (BetterSQLite3InputParams)
   const adapter = new PrismaBetterSqlite3({
     url: "file:./prisma/dev.db",
   });
@@ -11,7 +10,6 @@ const prismaClientSingleton = () => {
 };
 
 declare global {
-  // Esto previene múltiples instancias de Prisma en desarrollo durante el Hot Reload
   var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
 }
 

@@ -17,11 +17,7 @@ function normalizeText(value: unknown) {
   return String(value ?? "").trim();
 }
 
-// Normaliza texto para comparación:
-// - trim
-// - espacios simples
-// - lowercase
-// - sin tildes
+
 function normalizeKey(value: unknown) {
   return normalizeText(value)
     .replace(/\s+/g, " ")
@@ -60,7 +56,6 @@ export async function createInsumo(formData: FormData) {
   if (stockActual < 0) return { success: false, message: "El stock actual no puede ser negativo." };
   if (stockMinimo < 0) return { success: false, message: "El stock mínimo no puede ser negativo." };
 
-  // Anti-duplicados
   const key = normalizeKey(nombre);
 
   const existentes = await db.inventario.findMany({
@@ -107,7 +102,6 @@ export async function updateInsumo(formData: FormData) {
   if (!unidadMedida) return { success: false, message: "La unidad de medida es obligatoria." };
   if (stockMinimo < 0) return { success: false, message: "El stock mínimo no puede ser negativo." };
 
-  // Anti-duplicados (excluye el actual)
   const key = normalizeKey(nombre);
 
   const existentes = await db.inventario.findMany({

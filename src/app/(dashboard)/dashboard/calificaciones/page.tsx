@@ -18,16 +18,13 @@ export default async function CalificacionesPage({ searchParams }: { searchParam
   const session = await auth();
   if (!session?.user) throw new Error("No autorizado");
 
-  // 1. OBTENER EL CICLO DESDE LA COOKIE
   const idCiclo = await getCicloActual();
 
   const isAdmin = session.user.roles.includes("ADMIN");
   const idPersona = session.user.idPersona ?? 0;
 
-  // 2. PASAR EL ID DEL CICLO AL SERVICIO
   const asignaciones = await getAsignacionesParaUsuario({ isAdmin, idPersona, idCiclo });
 
-  // Lógica de IDs para filtros
   const idAsignacion = params.asig ? Number(params.asig) : (asignaciones[0]?.idAsignacion || 0);
   const asigElegida = asignaciones.find((a) => a.idAsignacion === idAsignacion);
 
@@ -43,7 +40,6 @@ export default async function CalificacionesPage({ searchParams }: { searchParam
       ? await getPlanilla({ idAsignacion, idPeriodo, tipo: tipoValido })
       : null;
 
-  // Helper para construir la URL de los botones
   const qs = (next: { asig?: number; periodo?: number; tipo?: TipoEvaluacion }) => {
     const p = new URLSearchParams();
     const finalAsig = next.asig ?? idAsignacion;
@@ -72,9 +68,8 @@ export default async function CalificacionesPage({ searchParams }: { searchParam
         </div>
       </div>
 
-      {/* FILTROS SUPERIORES (1, 2, 3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 1. ASIGNACIÓN (SIDEBAR DINÁMICO) */}
+        {/* 1. ASIGNACIÓN  */}
         <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 bg-slate-900 text-white flex items-center gap-2">
             <GraduationCap size={16} />
@@ -91,13 +86,11 @@ export default async function CalificacionesPage({ searchParams }: { searchParam
 
 {/* 2. PERIODO LECTIVO */}
 <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
-  {/* Cabecera fija */}
   <div className="px-6 py-4 border-b border-slate-100 bg-slate-900 text-white flex items-center gap-2 shrink-0">
     <Calendar size={16} className="text-indigo-400" />
     <span className="text-[10px] font-black uppercase tracking-widest">2. Periodo Lectivo</span>
   </div>
 
-  {/* Contenedor con scroll */}
   <div className="p-4 flex-1 overflow-y-auto custom-scrollbar space-y-3">
     {periodos.length === 0 ? (
       <div className="py-12 text-center text-slate-400 italic text-[10px] uppercase font-black tracking-widest px-8">
@@ -168,7 +161,6 @@ export default async function CalificacionesPage({ searchParams }: { searchParam
         </div>
       </div>
 
-      {/* SECCIÓN DE LA PLANILLA (CORREGIDA PARA MEJOR CONTRASTE) */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/50 overflow-hidden">
         {/* CABECERA DE LA PLANILLA */}
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">

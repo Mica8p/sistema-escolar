@@ -10,13 +10,11 @@ export default function EnviadoCard({ msg }: { msg: any }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // 1. Función para abrir el modal (evita que se abra/cierre la card)
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowConfirm(true);
   };
 
-  // 2. Función que ejecuta el borrado real (se pasa al Modal)
   const onConfirmDelete = async () => {
     setIsDeleting(true);
     const res = await eliminarComunicado(msg.idComunicado);

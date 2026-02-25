@@ -8,7 +8,7 @@ declare module "next-auth" {
       idUsuario: number;
       idPersona: number;
       idProfesor: number | null;
-      idPadre: number | null; // Agregamos el ID del padre
+      idPadre: number | null;
       isDefaultPassword?: boolean;
     } & DefaultSession["user"];
   }

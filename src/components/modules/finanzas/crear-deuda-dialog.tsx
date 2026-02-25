@@ -5,7 +5,6 @@ import { useActionState, useEffect, useState } from "react";
 import { createDeuda, type State } from "@/app/(dashboard)/dashboard/finanzas/finanzas-actions";
 import { toast } from "sonner";
 
-// El tipo para los conceptos de pago, inferido de tu schema.prisma
 interface ConceptoDePago {
   id: number;
   nombre: string;
@@ -38,17 +37,15 @@ export function CrearDeudaDialog({ alumnoId, conceptos }: CrearDeudaDialogProps)
   const [selectedConceptoId, setSelectedConceptoId] = useState<string>("");
   const [monto, setMonto] = useState<string>("");
 
-  // Efecto para actualizar el monto cuando se selecciona un concepto con monto fijo
   useEffect(() => {
     const selectedConcepto = conceptos.find(c => c.id === Number(selectedConceptoId));
     if (selectedConcepto && selectedConcepto.montoFijo) {
       setMonto(String(selectedConcepto.montoFijo));
     } else {
-      setMonto(""); // Resetea si no hay monto fijo
+      setMonto("");
     }
   }, [selectedConceptoId, conceptos]);
 
-  // Efecto para cerrar el modal y mostrar notificación en éxito
   useEffect(() => {
     if (state.message && !state.errors) {
       setOpen(false);
@@ -81,7 +78,7 @@ export function CrearDeudaDialog({ alumnoId, conceptos }: CrearDeudaDialogProps)
             <form action={dispatch} className="mt-4">
               <input type="hidden" name="alumnoId" value={alumnoId} />
               <div className="grid gap-4 py-4">
-                
+
                 {/* Selector de Concepto */}
                 <div className="grid grid-cols-4 items-center gap-4">
                   <label htmlFor="conceptoId" className="text-right text-sm font-medium text-gray-900">Concepto</label>

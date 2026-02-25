@@ -27,7 +27,6 @@ export default function AsistenciasHeader({ fechaISO, hoyISO, idAsignacion, nomb
       </div>
 
       <div className="flex items-center gap-3">
-        {/* BOTÓN "HOY" */}
         {fechaISO !== hoyISO && (
           <button
             onClick={() => handleDateChange(hoyISO)}

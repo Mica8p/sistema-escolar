@@ -37,7 +37,6 @@ export function ConfiguracionesButton({ ciclos, cicloActual, isAdmin }: Props) {
 
       {isOpen && (
         <>
-          {/* Overlay invisible para cerrar al hacer click fuera */}
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
 
           <div className="absolute right-0 z-20 w-64 mt-2 origin-top-right bg-white rounded-xl shadow-xl ring-1 ring-black/5 focus:outline-none animate-in fade-in zoom-in-95 duration-100">
@@ -67,7 +66,6 @@ export function ConfiguracionesButton({ ciclos, cicloActual, isAdmin }: Props) {
                 </button>
               ))}
 
-              {/* 2. PROTECCIÓN DE ROL: Solo el admin ve lo siguiente */}
               {isAdmin && (
                 <>
 
@@ -112,7 +110,7 @@ export function ConfiguracionesButton({ ciclos, cicloActual, isAdmin }: Props) {
                 <Calendar className="w-4 h-4 mr-3 text-gray-400" />
                 <span>Administrar Periodos</span>
               </Link>
-              
+
               <Link
                 href="/dashboard/configuraciones/horarios"
                 className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"

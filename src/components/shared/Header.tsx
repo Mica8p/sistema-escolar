@@ -30,7 +30,6 @@ export default async function Header({ userName }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-6">
-        {/* Info del Usuario -> Link al Perfil */}
         <Link
           href="/perfil"
           className="flex items-center gap-2 px-3 py-1 bg-slate-50 rounded-full border border-slate-100 hover:bg-slate-100 transition"
@@ -49,7 +48,6 @@ export default async function Header({ userName }: HeaderProps) {
           isAdmin={isAdmin}
         />
 
-        {/* Botón de Salir (Server Action) */}
         <form action={logout}>
           <button
             type="submit"

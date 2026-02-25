@@ -1,9 +1,7 @@
 import { Alumno } from "@prisma/client";
 
-// This is a type definition for the extended Alumno object that we're getting from the service
 type AlumnoExtendido = Alumno & {
-  matriculas: any[]; // Define this more accurately based on your data
-  // Add other extended properties here
+  matriculas: any[];
 };
 
 
@@ -13,12 +11,12 @@ export default function AcademicInfo({ alumno }: { alumno: AlumnoExtendido }) {
   return (
     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
       <h2 className="text-xl font-bold text-gray-800 mb-4">Información Académica</h2>
-      
+
       {matriculaActual ? (
         <div>
           <p className="text-gray-800"><strong>Curso:</strong> {matriculaActual.curso.grado}° "{matriculaActual.curso.seccion}" - {matriculaActual.curso.turno}</p>
           <p className="text-gray-800"><strong>Estado:</strong> {matriculaActual.estadoAcademico}</p>
-          
+
           <h3 className="text-lg font-semibold text-gray-700 mt-4 mb-2">Calificaciones</h3>
           {matriculaActual.notas.length > 0 ? (
             <ul className="space-y-2">

@@ -91,7 +91,7 @@ async function main() {
     },
   });
 
-  // 5. NUEVO: SEMBRAR PADRE DE PRUEBA (Para el perfil de familia)
+  // 5. SEMBRAR PADRE DE PRUEBA (Para el perfil de familia)
   await prisma.persona.upsert({
     where: { dni: "55555444" },
     update: {},
@@ -101,7 +101,7 @@ async function main() {
       dni: "55555444",
       email: "padre@escuela.com",
       padre: {
-        create: {} // Relacionamos con el modelo Padre
+        create: {}
       },
       usuario: {
         create: {
@@ -123,7 +123,7 @@ async function main() {
     create: { nombre: "Lengua", descripcion: "Lengua y Literatura" }
   });
 
-  // CORRECCIÓN: Curso ahora necesita Turno obligatorio
+
   const curso2B = await prisma.curso.upsert({
     where: { idCurso: 1 },
     update: {},
@@ -131,7 +131,7 @@ async function main() {
       grado: "2",
       seccion: "B",
       nivel: Nivel.Secundario,
-      turno: Turno.Mañana // Usamos el Enum
+      turno: Turno.Mañana
     }
   });
 
@@ -152,14 +152,13 @@ async function main() {
     }
   });
 
-  // CORRECCIÓN: Horario usa DiaSemana Enum y String para horas
   await prisma.horario.upsert({
     where: { idHorario: 1 },
     update: {},
     create: {
       idAsignacion: asignacionJuan.idAsignacion,
-      diaSemana: DiaSemana.LUNES, // Usamos Enum
-      horaInicio: "08:00", // String, no DateTime
+      diaSemana: DiaSemana.LUNES,
+      horaInicio: "08:00",
       horaFin: "09:20",
       aula: "Aula 5"
     }
@@ -208,7 +207,7 @@ async function main() {
         }
       }
     },
-    include: { alumno: true } // Traemos el ID del alumno creado
+    include: { alumno: true }
   });
 
   // 9. VINCULAR ALUMNO CON EL PADRE (Relación familiar)

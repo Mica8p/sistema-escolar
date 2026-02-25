@@ -33,27 +33,32 @@ export function ConceptoForm({ conceptoAEditar, onCancel }: { conceptoAEditar?: 
   }, [conceptoAEditar, reset]);
 
   const onSubmit = (data: any) => {
-    startTransition(async () => {
-      try {
-        let res;
-        if (isEditing) {
-          res = await updateConceptoAction(conceptoAEditar.id, data);
-        } else {
-          res = await createConceptoAction(data);
-        }
+  startTransition(async () => {
+    try {
+      const dataFormateada = {
+        ...data,
+        montoFijo: data.montoFijo ? Number(data.montoFijo) : 0
+      };
 
-        if (res.success) {
-          toast.success(isEditing ? "Concepto actualizado" : "Concepto creado");
-          reset();
-          onCancel?.();
-        } else {
-          toast.error(res.message);
-        }
-      } catch (error) {
-        toast.error("Ocurrió un error inesperado");
+      let res;
+      if (isEditing) {
+        res = await updateConceptoAction(conceptoAEditar.id, dataFormateada);
+      } else {
+        res = await createConceptoAction(dataFormateada);
       }
-    });
-  };
+
+      if (res.success) {
+        toast.success(isEditing ? "Concepto actualizado" : "Concepto creado");
+        reset();
+        onCancel?.();
+      } else {
+        toast.error(res.message);
+      }
+    } catch (error) {
+      toast.error("Ocurrió un error inesperado");
+    }
+  });
+};
 
   return (
     <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden animate-in fade-in duration-500">

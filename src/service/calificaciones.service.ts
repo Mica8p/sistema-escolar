@@ -135,7 +135,7 @@ export async function guardarNota(params: {
       data: {
         nota: params.nota,
         observacion: params.observacion ?? null,
-        idAsignacion: params.idAsignacion, // 🚩 Actualizamos la autoría
+        idAsignacion: params.idAsignacion,
         fechaRegistro,
       },
     });

@@ -24,7 +24,6 @@ export async function registrarPagoAction(data: Omit<RegistrarPagoData, 'usuario
 
     const pago = await registrarPago(dataCompleta);
 
-    // Revalidar la página del alumno para que vea los cambios
     revalidatePath(`/dashboard/finanzas/${data.alumnoId}`);
 
     return pago;

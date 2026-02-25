@@ -1,14 +1,13 @@
 
 type AlumnoExtendido = {
-  cargos: any[]; // Define this more accurately based on your data
-  // Add other extended properties here
+  cargos: any[];
 };
 
 export default function PaymentInfo({ alumno }: { alumno: AlumnoExtendido }) {
   return (
     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
       <h2 className="text-xl font-bold text-gray-800 mb-4">Estado de Cuenta</h2>
-      
+
       {alumno.cargos.length > 0 ? (
         <ul className="space-y-3">
           {alumno.cargos.map((cargo) => (

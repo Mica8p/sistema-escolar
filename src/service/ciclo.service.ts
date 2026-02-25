@@ -19,7 +19,6 @@ export const CicloService = {
     });
   },
 
-  // Obtener los periodos (trimestres) de un ciclo específico
   async getPeriodos(idCiclo: number) {
     return await db.periodoAcademico.findMany({
       where: { idCiclo },

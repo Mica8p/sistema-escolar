@@ -80,7 +80,7 @@ export default function CalificacionesTable({
               const promedioAnual = suma > 0 ? (suma / 3).toFixed(2) : null;
               const esPromocionado = suma >= 18 && n1 >= 6 && n2 >= 6 && n3 >= 6;
 
-              // Lógica de "Recuperado ✅"
+              // Lógica de "Recuperado "
               const tieneRecuperatorioAprobado = historialNotas.some((n: any) =>
                 n.idMatricula === m.idMatricula &&
                 n.idPeriodo === idPeriodo &&
@@ -139,7 +139,7 @@ export default function CalificacionesTable({
                         </div>
                       )}
 
-                      {/* 🚩 ETIQUETA INTELIGENTE (LA QUE TE GUSTABA) */}
+                      {/* ETIQUETA INTELIGENTE (LA QUE TE GUSTABA) */}
                       {tieneNota && !aprobado && tipo === "Parcial" && !isEditMode && (
                         <span className={`text-[7px] font-black uppercase px-1.5 py-0.5 rounded-md border ${
                           tieneRecuperatorioAprobado

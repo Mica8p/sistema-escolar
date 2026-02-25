@@ -33,7 +33,7 @@ export default function HorarioConfigManager({ diasHabiles, bloquesManana, bloqu
 
     // --- FUNCIONES DE GUARDADO ---
 
-    // 1. Guardar Días (Específico)
+    // 1. Guardar Días
     const handleGuardarDias = () => {
         startTransition(async () => {
             const res = await guardarConfiguracionDias(dias);
@@ -52,7 +52,6 @@ export default function HorarioConfigManager({ diasHabiles, bloquesManana, bloqu
         });
     }
 
-    // 3. 🚩 FUNCIÓN MAESTRA: Guardar Todo
     const handleGuardarTodo = () => {
         startTransition(async () => {
             try {
@@ -95,7 +94,6 @@ export default function HorarioConfigManager({ diasHabiles, bloquesManana, bloqu
 
     return (
         <div className="space-y-8">
-            {/* 🚩 BOTÓN PRINCIPAL PARA GUARDAR TODO */}
             <div className="flex justify-end">
                 <button
                     onClick={handleGuardarTodo}

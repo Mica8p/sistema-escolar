@@ -9,8 +9,6 @@ interface Props {
 }
 
 export default async function EditarMateriaPage({ params }: Props) {
-  // HACK: The params object is a Promise due to NextAuth middleware issues.
-  // See: https://github.com/nextauthjs/next-auth/issues/9030
   const resolvedParams = await Promise.resolve(params);
   const id = parseInt(resolvedParams.id, 10);
   if (isNaN(id)) {

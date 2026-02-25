@@ -55,7 +55,6 @@ export default async function ComunicadosPage() {
       </header>
 
       <main className="max-w-6xl mx-auto w-full">
-        {/* 🚩 FIJATE: Solo pasamos 'data', nada de renderItem */}
         <FiltroComunicados data={comunicados} isEnviados={false} />
       </main>
     </div>

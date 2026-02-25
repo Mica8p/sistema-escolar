@@ -2,7 +2,6 @@ import db from '@/lib/db';
 import { Curso } from '@prisma/client';
 
 export const cursoService = {
-  // 1. Agregamos ordenamiento para que la secretaria vea 1°, 2°, 3° en orden
   getAll: async () => {
     try {
       return await db.curso.findMany({
@@ -28,7 +27,6 @@ export const cursoService = {
     }
   },
 
-  // 2. Aquí Prisma ya sabe que 'data' debe incluir turno y nivel obligatoriamente
   create: async (data: Omit<Curso, 'idCurso'>) => {
     try {
       return await db.curso.create({
@@ -40,7 +38,6 @@ export const cursoService = {
     }
   },
 
-  // 3. CAMBIO CLAVE: Usamos 'Partial' para poder editar solo el Turno o solo el Grado
   update: async (id: number, data: Partial<Omit<Curso, 'idCurso'>>) => {
     try {
       return await db.curso.update({
@@ -59,7 +56,6 @@ export const cursoService = {
         where: { idCurso: id },
       });
     } catch (error) {
-      // 4. Mejoramos el mensaje de error por si el curso tiene alumnos matriculados
       console.error('Error al eliminar el curso:', error);
       throw new Error('No se puede eliminar un curso que ya tiene alumnos o materias asignadas.');
     }
@@ -68,20 +64,17 @@ export const cursoService = {
 
 export async function getCursosParaComunicado(rol: string, idProfesor?: number | null) {
   if (rol === "ADMIN") {
-    // El Admin ve todos los cursos
     return await db.curso.findMany({
       orderBy: [{ grado: 'asc' }, { seccion: 'asc' }]
     });
   }
 
   if (rol === "DOCENTE" && idProfesor) {
-    // El Docente solo ve sus cursos asignados
     const asignaciones = await db.asignacionAcademica.findMany({
       where: { idProfesor },
       select: { curso: true }
     });
 
-    // Quitamos duplicados si el docente tiene varias materias en el mismo curso
     const cursosUnicos = Array.from(new Map(asignaciones.map(a => [a.curso.idCurso, a.curso])).values());
     return cursosUnicos;
   }

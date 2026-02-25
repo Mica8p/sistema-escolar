@@ -5,8 +5,8 @@ import {
   Wallet,
   Package,
   Megaphone,
-  ClipboardList, // Ahora se usará abajo
-  UserCheck,      // Ahora se usará abajo
+  ClipboardList,
+  UserCheck,
   CalendarDays
 } from "lucide-react";
 
@@ -32,7 +32,6 @@ export const menuItems = [
     roles: ["ADMIN", "DOCENTE"],
     subItems: [
       { title: "Asignación Docente", href: "/dashboard/profesores", roles: ["ADMIN"] },
-      // Al usar el nombre aquí, el import dejará de estar en gris
       {
         title: "Calificaciones",
         href: "/dashboard/calificaciones",

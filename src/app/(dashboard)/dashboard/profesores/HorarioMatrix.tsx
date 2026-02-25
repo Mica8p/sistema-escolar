@@ -43,7 +43,6 @@ export default function HorarioMatrix({ horario, turno, loading, onSlotSelect, s
         if (newHoras.includes(slot.hora)) return;
 
         const slotStart = parseInt(slot.hora.split(":")[0]);
-        // Buscamos la fila por defecto que corresponde a este horario (mismo rango de hora)
         const matchIndex = horasBase.findIndex((def) => Math.abs(parseInt(def.split(":")[0]) - slotStart) < 2);
 
         if (matchIndex !== -1 && newHoras[matchIndex] !== slot.hora) {
@@ -99,10 +98,10 @@ export default function HorarioMatrix({ horario, turno, loading, onSlotSelect, s
                   key={`${i}-${j}`}
                   className={`border rounded-md p-2 text-center text-xs cursor-pointer ${
                     ocupadoPorOtro
-                      ? "bg-red-400 text-white cursor-not-allowed" // Bloqueado por otro
+                      ? "bg-red-400 text-white cursor-not-allowed"
                       : isSelected
-                      ? "bg-indigo-600 text-white" // Lo seleccioné yo AHORA
-                      : "bg-gray-100 hover:bg-gray-200" // Libre
+                      ? "bg-indigo-600 text-white"
+                      : "bg-gray-100 hover:bg-gray-200"
                   }`}
                   onClick={() => !ocupadoPorOtro && onSlotSelect(dia, hora)}
                 >

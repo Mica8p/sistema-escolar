@@ -13,11 +13,9 @@ export default function CalificacionesSidebar({ asignaciones, idAsignacion, idPe
     );
   }, [asignaciones, busqueda]);
 
-  // 🚩 MOVEMOS LA LÓGICA DE URL AQUÍ ADENTRO
   const getUrl = (asigId: number) => {
     const p = new URLSearchParams();
     p.set("asig", String(asigId));
-    // Al cambiar de materia, reseteamos el periodo para evitar errores
     p.set("tipo", String(tipo));
     return `?${p.toString()}`;
   };
@@ -41,7 +39,7 @@ export default function CalificacionesSidebar({ asignaciones, idAsignacion, idPe
         {filtradas.map((a: any) => (
           <Link
             key={a.idAsignacion}
-            href={getUrl(a.idAsignacion)} // 🚩 USAMOS LA FUNCIÓN LOCAL
+            href={getUrl(a.idAsignacion)}
             className={`block px-4 py-3 rounded-xl border transition-all ${
               a.idAsignacion === idAsignacion
                 ? "bg-indigo-600 border-indigo-600 text-white shadow-lg"

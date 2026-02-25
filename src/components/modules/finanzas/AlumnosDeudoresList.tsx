@@ -3,7 +3,6 @@
 import { AlumnoConDeuda } from "@/service/finanzas.service";
 import Link from "next/link";
 
-// Componente para mostrar un badge de estado
 const EstadoBadge = ({ estado }: { estado: "Al día" | "Con Deuda" }) => {
   const className = estado === "Al día"
     ? "bg-green-100 text-green-800"

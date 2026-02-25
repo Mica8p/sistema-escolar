@@ -26,7 +26,7 @@ export default function ComprobantePago({ pago, alumno }: any) {
         >
           <div className="text-center border-b-2 border-dashed border-slate-300 pb-4 mb-4">
             <GraduationCap className="mx-auto text-slate-800 mb-2" size={40} />
-            <h1 className="text-xl font-black uppercase tracking-tighter">Escuela Pro 2026</h1>
+            <h1 className="text-xl font-black uppercase tracking-tighter">Escuela Digital</h1>
             <p className="text-[10px] font-bold text-slate-500 uppercase">Cuit: 30-71234567-8</p>
           </div>
 
@@ -65,7 +65,7 @@ export default function ComprobantePago({ pago, alumno }: any) {
               Gracias por su compromiso con la educación.<br/>
               Conserve este ticket como comprobante legal.
             </p>
-            <p className="text-[10px] font-black mt-3">escuelapro.com.ar</p>
+            <p className="text-[10px] font-black mt-3">escueladigital.com.ar</p>
           </div>
         </div>
       </div>

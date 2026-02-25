@@ -15,7 +15,7 @@ export async function getMateriaById(id: number) {
 export async function createMateria(data: Omit<Materia, 'idMateria'>) {
   try {
     const nuevaMateria = await materiaService.create(data);
-    revalidatePath('/dashboard/materias'); // Actualiza la lista de materias en la UI
+    revalidatePath('/dashboard/materias');
     return { success: true, data: nuevaMateria };
   } catch (error) {
     return { success: false, message: 'Error al crear la materia.' };

@@ -77,7 +77,6 @@ export default function InsumoFormModal({
         return;
       }
       setOk(res.message);
-      // cerramos con una mini demora para que el usuario vea el ok (opcional)
       onClose();
     });
   };

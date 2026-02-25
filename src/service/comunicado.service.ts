@@ -18,7 +18,7 @@ export async function getComunicadosRecibidos(idUsuario: number, rol: string, id
 
         {
           AND: [
-            { idTarget: { in: idsCursos } }, // ✅ Filtra por múltiples cursos simultáneamente
+            { idTarget: { in: idsCursos } },
             {
               target: {
                 in: [

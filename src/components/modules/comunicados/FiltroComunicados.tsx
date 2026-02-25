@@ -34,10 +34,9 @@ export default function FiltroComunicados({ data, isEnviados }: FiltroProps) {
 
   return (
     <div className="space-y-8">
-      {/* --- BARRA DE BUSQUEDA Y FILTROS POTENCIADA --- */}
+      {/* --- BARRA DE BUSQUEDA Y FILTROS --- */}
       <div className="bg-white p-5 rounded-[2.5rem] border border-slate-200 shadow-2xl shadow-slate-200/60 flex flex-col md:flex-row gap-4 items-center">
 
-        {/* 1. Buscador con acento Indigo */}
         <div className="relative w-full md:flex-1 group">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-indigo-400 group-focus-within:text-indigo-600 transition-colors" size={20} />
           <input
@@ -49,7 +48,6 @@ export default function FiltroComunicados({ data, isEnviados }: FiltroProps) {
           />
         </div>
 
-        {/* 2. Filtro Destinatarios con tono Indigo suave */}
         <div className="relative w-full md:w-56 group">
           <Users className="absolute left-5 top-1/2 -translate-y-1/2 text-indigo-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
           <select
@@ -65,7 +63,7 @@ export default function FiltroComunicados({ data, isEnviados }: FiltroProps) {
           </select>
         </div>
 
-        {/* 3. Filtro Fecha */}
+        {/*  Filtro Fecha */}
         <div className="relative w-full md:w-52 group">
           <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-indigo-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
           <input
@@ -76,7 +74,7 @@ export default function FiltroComunicados({ data, isEnviados }: FiltroProps) {
           />
         </div>
 
-        {/* 4. Botón Limpiar con Sombra de color */}
+        {/*  Botón Limpiar */}
         {(search || targetFilter !== "TODOS_FILTRO" || dateFilter) && (
           <button
             onClick={() => {setSearch(""); setTargetFilter("TODOS_FILTRO"); setDateFilter("");}}
@@ -88,7 +86,7 @@ export default function FiltroComunicados({ data, isEnviados }: FiltroProps) {
         )}
       </div>
 
-      {/* --- LISTADO (Con más espacio entre cards) --- */}
+      {/* --- LISTADO --- */}
       <div className="grid gap-6">
         {filteredData.length > 0 ? (
           filteredData.map((msg) => (
@@ -111,7 +109,7 @@ export default function FiltroComunicados({ data, isEnviados }: FiltroProps) {
   );
 }
 
-// Sub-componente de tarjeta (reutiliza el estilo de las cards chiquitas)
+// Sub-componente de tarjeta
 function ComunicadoRecibidoCard({ msg }: { msg: any }) {
   const isRead = msg.vistos.length > 0;
   return (

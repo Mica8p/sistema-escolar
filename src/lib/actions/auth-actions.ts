@@ -1,4 +1,3 @@
-// src/lib/actions/auth-actions.ts
 "use server";
 
 import { signIn, signOut, auth } from "@/auth";
@@ -6,7 +5,6 @@ import { AuthError } from "next-auth";
 import db from "@/lib/db";
 import bcrypt from "bcryptjs";
 
-// Agregamos 'prevState' como primer argumento
 export async function authenticate(
   prevState: string | undefined,
   formData: FormData
@@ -17,8 +15,6 @@ export async function authenticate(
 
     if (!dni || !password) return "Faltan credenciales";
 
-    // Importante: No envolver el signIn en un try/catch que no relance el error
-    // porque NextAuth usa excepciones para manejar las redirecciones.
     await signIn("credentials", {
       dni,
       password,
@@ -34,7 +30,6 @@ export async function authenticate(
           return "Algo salió mal. Intentá de nuevo.";
       }
     }
-    // Si no es un error de Auth, lo relanzamos (para que el redirect funcione)
     throw error;
   }
 }
@@ -62,9 +57,9 @@ export async function changePasswordAction(prevState: any, formData: FormData) {
 
     await db.usuario.update({
       where: { idUsuario: Number(session.user.idUsuario) },
-      data: { 
+      data: {
         passwordHash,
-        defaultPassword: false 
+        defaultPassword: false
       },
     });
 

@@ -76,7 +76,7 @@ export default async function DetalleComunicadoPage({
 
         <div className="px-10 py-6 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">
-             Escuela Pro • Sistema de Gestión Académica
+             Escuela Digital • Sistema de Gestión Académica
            </p>
            <Tag size={16} className="text-slate-300" />
         </div>

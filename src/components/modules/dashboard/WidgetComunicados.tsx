@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default async function WidgetComunicados({ idUsuario, rol }: { idUsuario: number, rol: string }) {
   const comunicados = await getComunicadosRecibidos(idUsuario, rol);
-  const ultimos = comunicados.slice(0, 3); // Solo mostramos los 3 más recientes
+  const ultimos = comunicados.slice(0, 3);
 
   return (
     <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">

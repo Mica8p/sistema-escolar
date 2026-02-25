@@ -65,13 +65,13 @@ export async function createMovimientoStock(formData: FormData) {
     delta = ajusteSign === "sumar" ? cantidadRaw : -cantidadRaw;
   }
 
-  /* ---------- Datos de gasto (opcionales) ---------- */
+  /* ---------- Datos de gasto  ---------- */
   const crearGasto = normalizeText(formData.get("crearGasto")) === "1";
   const monto = Number(formData.get("monto") ?? 0);
   const concepto = normalizeText(formData.get("concepto"));
   const categoria = normalizeText(formData.get("categoria"));
 
-  // Validaciones del gasto 
+  // Validaciones del gasto
   if (tipo === "Entrada" && crearGasto) {
     if (!Number.isFinite(monto) || monto <= 0) {
       return { success: false, message: "El monto del gasto debe ser mayor a 0." };

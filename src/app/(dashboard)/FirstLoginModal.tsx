@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { changePasswordAction } from "@/lib/actions/auth-actions";
 import { LockKeyhole, Save } from "lucide-react";
-import { toast } from "sonner"; // 🚩 1. Importamos sonner
+import { toast } from "sonner";
 
 export default function FirstLoginModal({ shouldForceChange }: { shouldForceChange?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
