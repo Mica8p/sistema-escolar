@@ -3,16 +3,13 @@
 import { useActionState, useState } from "react";
 import { authenticate } from "@/lib/actions/auth-actions";
 import { Loader2, User, Lock, Eye, EyeOff, Info } from "lucide-react";
-import ConfirmModal from "@/components/shared/ConfirmModal";
+import Link from "next/link";
 
 export default function LoginForm() {
   const [errorMessage, formAction, isPending] = useActionState(authenticate, undefined);
   const [showPassword, setShowPassword] = useState(false);
 
-  const [isHelpOpen, setIsHelpOpen] = useState(false);
-
   return (
-    <>
     <form action={formAction} className="space-y-5">
       <div className="space-y-1.5">
         <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">
@@ -36,13 +33,12 @@ export default function LoginForm() {
             <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">
               Contraseña
             </label>
-            <button
-              type="button"
+            <Link
+              href="/recuperar-password"
               className="text-[8px] font-black text-indigo-500 uppercase hover:underline"
-              onClick={() => setIsHelpOpen(true)}
             >
               ¿Olvidaste tu clave?
-            </button>
+            </Link>
           </div>
           <div className="relative group">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
@@ -80,15 +76,5 @@ export default function LoginForm() {
         {isPending ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "Ingresar al Portal"}
       </button>
     </form>
-
-    <ConfirmModal
-        isOpen={isHelpOpen}
-        onClose={() => setIsHelpOpen(false)}
-        onConfirm={() => setIsHelpOpen(false)}
-        title="Recuperar Acceso"
-        message="Por razones de seguridad, para resetear tu clave debes acercarte presencialmente a la Secretaría del establecimiento con tu DNI."
-        variant="info"
-      />
-     </>
   );
 }

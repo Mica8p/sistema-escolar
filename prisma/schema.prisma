@@ -135,8 +135,9 @@ model Usuario {
   asistencias       Asistencia[]
   comunicados       Comunicado[]         @relation("AutorComunicado")
   comunicadosVistos ComunicadoVisto[]    @relation("LectorComunicado")
-  movimientos       MovimientoStock[]
-  gastos            GastoInstitucional[]
+  movimientos         MovimientoStock[]
+  gastos              GastoInstitucional[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("USUARIO")
 }
@@ -540,4 +541,15 @@ model DiaHabil {
 
   @@unique([orden])
   @@map("DIA_HABIL")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expires   DateTime
+  userId    Int
+  user      Usuario  @relation(fields: [userId], references: [idUsuario], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_tokens")
 }
