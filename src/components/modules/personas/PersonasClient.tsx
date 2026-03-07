@@ -57,6 +57,9 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedPersonas = filteredPersonas.slice(startIndex, startIndex + itemsPerPage);
 
+  const selectedRoleName = availableRoles.find(r => r.id.toString() === selectedRole)?.nombre || "";
+  const isAlumnoRoleSelected = selectedRoleName.toLowerCase() === 'alumno';
+
   return (
     <div className="space-y-6">
       {success === "true" && (
@@ -121,8 +124,8 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
           }}
           className="w-full md:w-48 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
         >
-          <option value="activo">Activos</option>
-          <option value="inactivo">Inactivos</option>
+          <option value="activo">{isAlumnoRoleSelected ? "Inscriptos" : "Activos"}</option>
+          <option value="inactivo">{isAlumnoRoleSelected ? "No Inscriptos" : "Inactivos"}</option>
           <option value="todos">Todos</option>
         </select>
       </div>
