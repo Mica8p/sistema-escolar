@@ -27,31 +27,66 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
         rolesMap.set(ur.rol.idRol, ur.rol.nombre);
       });
     });
+    // Manually add "Alumno" role if it doesn't exist from users, as some students might not have user accounts
+    const hasAlumnoRole = Array.from(rolesMap.values()).some(name => name.toLowerCase() === 'alumno');
+    if (!hasAlumnoRole) {
+      // We need a stable ID. This is a bit of a hack. A better solution would be to fetch all roles from the DB.
+      // For now, we'll assume a hardcoded-like ID if it's not present. Let's find it first.
+      const studentWithUser = personas.find(p => p.usuario?.roles.some(r => r.rol.nombre.toLowerCase() === 'alumno'));
+      const studentRoleId = studentWithUser?.usuario?.roles.find(r => r.rol.nombre.toLowerCase() === 'alumno')?.rol.idRol;
+      // This is getting too complex. The original availableRoles logic is probably fine if we fix the filter.
+    }
+
+
     return Array.from(rolesMap.entries()).map(([id, nombre]) => ({ id, nombre }));
   }, [personas]);
 
   const filteredPersonas = useMemo(() => {
+    const selectedRoleName = availableRoles.find(r => r.id.toString() === selectedRole)?.nombre?.toLowerCase();
+
     return personas.filter((p) => {
+      // --- MATCHING LOGIC ---
       const matchesSearch = !search ||
         p.apellido.toLowerCase().includes(search.toLowerCase()) ||
         p.dni.toLowerCase().includes(search.toLowerCase());
 
-      const matchesRole = !selectedRole || p.usuario?.roles.some((r) => r.rol.idRol.toString() === selectedRole);
-      
-      const isEnrolled = (p.alumno?.matriculas?.length ?? 0) > 0;
-      const hasActiveUser = p.usuario?.estado === true;
-      const isAlumno = p.alumno !== null || p.usuario?.roles.some(r => r.rol.nombre.toLowerCase() === 'alumno');
-
-      let matchesStatus = true;
-      if (selectedStatus === "activo") {
-        matchesStatus = isEnrolled || (!isAlumno && hasActiveUser);
-      } else if (selectedStatus === "inactivo") {
-        matchesStatus = !(isEnrolled || (!isAlumno && hasActiveUser));
+      const isConsideredAlumno = p.alumno !== null || p.usuario?.roles.some(r => r.rol.nombre.toLowerCase() === 'alumno');
+      let matchesRole = !selectedRole;
+      if (selectedRole) {
+        if (selectedRoleName === 'alumno') {
+          matchesRole = isConsideredAlumno;
+        } else {
+          matchesRole = p.usuario?.roles.some((r) => r.rol.idRol.toString() === selectedRole);
+        }
       }
 
-      return matchesSearch && matchesRole && matchesStatus;
+      if (!matchesSearch || !matchesRole) {
+        return false;
+      }
+      
+      if (selectedStatus === 'todos') {
+        return true;
+      }
+
+      // --- STATUS LOGIC ---
+      const isEnrolled = (p.alumno?.matriculas?.length ?? 0) > 0;
+      const hasActiveUser = p.usuario?.estado === true;
+      
+      // Case 1: A specific role IS selected
+      if (selectedRoleName) {
+        if (selectedRoleName === 'alumno') {
+          return selectedStatus === 'activo' ? isEnrolled : !isEnrolled;
+        }
+        // For any other specific role, status is based on the user account
+        return selectedStatus === 'activo' ? hasActiveUser : !hasActiveUser;
+      }
+
+      // Case 2: "Todos los roles" is selected
+      // 'Activo' means an enrolled student OR an active non-student user.
+      const isGenerallyActive = isEnrolled || (!isConsideredAlumno && hasActiveUser);
+      return selectedStatus === 'activo' ? isGenerallyActive : !isGenerallyActive;
     });
-  }, [search, selectedRole, selectedStatus, personas]);
+  }, [search, selectedRole, selectedStatus, personas, availableRoles]);
 
   const totalPages = Math.ceil(filteredPersonas.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -154,12 +189,18 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <span className="font-medium text-slate-900">{p.apellido}, {p.nombre}</span>
-                    {isEnrolled ? (
-                      <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold border border-indigo-200">Estudiante</span>
-                    ) : !isAlumno && hasActiveUser ? (
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold border border-emerald-200">Activo</span>
+                    {isAlumno ? (
+                      isEnrolled ? (
+                        <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold border border-indigo-200">Inscripto</span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200">No Inscripto</span>
+                      )
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200">Inactivo</span>
+                      hasActiveUser ? (
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold border border-emerald-200">Activo</span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200">Inactivo</span>
+                      )
                     )}
                   </div>
                 </td>

@@ -5,8 +5,13 @@ export async function getCicloActual() {
   const cookieStore = await cookies();
   const cicloCookie = cookieStore.get("cicloSeleccionado");
 
-  if (cicloCookie) {
-    return Number(cicloCookie.value);
+  // Ensure cookie has a non-empty value before using it
+  if (cicloCookie && cicloCookie.value) {
+    const cicloId = Number(cicloCookie.value);
+    // Ensure it's a valid number and not 0 from an empty string etc.
+    if (!isNaN(cicloId) && cicloId > 0) {
+      return cicloId;
+    }
   }
 
   const cicloActivo = await db.cicloLectivo.findFirst({
