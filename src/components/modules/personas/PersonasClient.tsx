@@ -16,6 +16,7 @@ interface PersonasClientProps {
 export default function PersonasClient({ personas, success }: PersonasClientProps) {
   const [search, setSearch] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("activo");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -36,10 +37,20 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
         p.dni.toLowerCase().includes(search.toLowerCase());
 
       const matchesRole = !selectedRole || p.usuario?.roles.some((r) => r.rol.idRol.toString() === selectedRole);
+      
+      const isEnrolled = (p.alumno?.matriculas?.length ?? 0) > 0;
+      const hasActiveUser = p.usuario?.estado === true;
 
-      return matchesSearch && matchesRole;
+      let matchesStatus = true;
+      if (selectedStatus === "activo") {
+        matchesStatus = hasActiveUser || isEnrolled;
+      } else if (selectedStatus === "inactivo") {
+        matchesStatus = !hasActiveUser && !isEnrolled;
+      }
+
+      return matchesSearch && matchesRole && matchesStatus;
     });
-  }, [search, selectedRole, personas]);
+  }, [search, selectedRole, selectedStatus, personas]);
 
   const totalPages = Math.ceil(filteredPersonas.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -100,6 +111,19 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
             </option>
           ))}
         </select>
+
+        <select
+          value={selectedStatus}
+          onChange={(e) => {
+            setSelectedStatus(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="w-full md:w-48 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+        >
+          <option value="activo">Activos</option>
+          <option value="inactivo">Inactivos</option>
+          <option value="todos">Todos</option>
+        </select>
       </div>
 
 
@@ -118,6 +142,8 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
           <tbody className="divide-y divide-slate-100">
             {paginatedPersonas.map((p) => {
               const isEnrolled = (p.alumno?.matriculas?.length ?? 0) > 0;
+              const hasActiveUser = p.usuario?.estado === true;
+              const isActive = hasActiveUser || isEnrolled;
               const isAlumno = p.alumno !== null || p.usuario?.roles.some(r => r.rol.nombre.toLowerCase() === 'alumno');
 
               return (
@@ -125,10 +151,12 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <span className="font-medium text-slate-900">{p.apellido}, {p.nombre}</span>
-                    {isEnrolled ? (
-                      <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold border border-indigo-200">Estudiante</span>
-                    ) : isAlumno ? null : p.usuario?.estado ? (
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold border border-emerald-200">Activo</span>
+                    {isActive ? (
+                       isEnrolled ? (
+                        <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold border border-indigo-200">Estudiante</span>
+                       ) : (
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold border border-emerald-200">Activo</span>
+                       )
                     ) : (
                       <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200">Inactivo</span>
                     )}
