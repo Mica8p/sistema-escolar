@@ -3,6 +3,14 @@ import { authConfig } from "./auth.config";
 import db from "@/lib/db";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { AuthError } from "next-auth";
+
+export class AccountDisabledError extends AuthError {
+  constructor(message = "Tu cuenta está deshabilitada.") {
+    super(message);
+    this.type = "AccountDisabled";
+  }
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -21,7 +29,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!usuario || !usuario.passwordHash) return null;
 
-        if (!usuario.estado) return null;
+        if (!usuario.estado) {
+          throw new AccountDisabledError();
+        }
 
         const isPasswordValid = await bcrypt.compare(
           credentials.password as string,

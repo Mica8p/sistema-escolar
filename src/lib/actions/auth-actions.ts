@@ -27,6 +27,8 @@ export async function authenticate(
       switch (error.type) {
         case "CredentialsSignin":
           return "DNI o contraseña incorrectos.";
+        case "AccountDisabled":
+          return "Tu cuenta está deshabilitada. Contacta al administrador.";
         default:
           return "Algo salió mal. Intentá de nuevo.";
       }
