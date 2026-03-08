@@ -1,41 +1,82 @@
-'use client';
+'use client'; // Import useMemo for performance
 
-import { useState } from 'react';
-import { BookOpen, UserX, Pencil } from 'lucide-react';
-import { desactivarAsignacionAction } from '@/lib/actions/profesor-actions';
+import { useState, useMemo } from 'react'; // Import useMemo for performance
+import { BookOpen, UserX, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'; // Add Chevron icons for pagination
+// desactivarAsignacionAction is not used in the provided code, keeping it commented out if it was intended for future use.
+// import { desactivarAsignacionAction } from '@/lib/actions/profesor-actions';
 import { darDeBajaAction } from '@/lib/actions/profesor-actions';
 import { toast } from 'sonner';
 import BajaMateriaModal from '@/components/modules/profesores/BajaMateriaModal';
+import { useRouter } from 'next/navigation'; // Import useRouter to refresh data
 
-export function AsignacionesList({ profesores }: { profesores: any[] }) {
- const [isModalOpen, setIsModalOpen] = useState(false);
+// Define types for better type safety, inferred from usage
+interface Curso {
+  grado: string;
+  seccion: string;
+  turno: string;
+}
+
+interface Materia {
+  nombre: string;
+}
+
+interface Persona {
+  apellido: string;
+  nombre: string;
+  dni: string;
+}
+
+interface Asignacion {
+  idAsignacion: number;
+  estado: boolean;
+  materia: Materia;
+  curso: Curso;
+}
+
+interface Profesor {
+  idProfesor: number;
+  persona: Persona;
+  asignaciones: Asignacion[];
+}
+
+export function AsignacionesList({ profesores }: { profesores: Profesor[] }) { // Use the defined Profesor type
+  const router = useRouter(); // Initialize useRouter
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedAsignacion, setSelectedAsignacion] = useState<{id: number, materia: string} | null>(null);
 
-  const profesoresConAsignacionesActivas = profesores.filter(
-    (profe) => profe.asignaciones.some((asig: any) => asig.estado)
-  );
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Mostrar 5 docentes por página
 
+  const profesoresConAsignacionesActivas = useMemo(() => {
+    return profesores.filter(
+      (profe) => profe.asignaciones.some((asig) => asig.estado)
+    );
+  }, [profesores]);
+
+  const totalPages = Math.ceil(profesoresConAsignacionesActivas.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedProfesores = profesoresConAsignacionesActivas.slice(startIndex, startIndex + itemsPerPage);
   const handleBajaClick = (id: number, materia: string) => {
     setSelectedAsignacion({ id, materia });
     setIsModalOpen(true);
   };
 
   const onConfirmBaja = async (motivo: string) => {
-  if (!selectedAsignacion) return;
+    if (!selectedAsignacion) return;
 
     setLoading(true);
-
     const res = await darDeBajaAction(selectedAsignacion.id, motivo);
-
     setLoading(false);
     setIsModalOpen(false);
 
-  if (res.success) {
-    toast.success("Baja procesada correctamente. Se movió a Memoria Académica.");
-  } else {
-    toast.error(res.message);
-  }
+    if (res.success) {
+      toast.success("Baja procesada correctamente. Se movió a Memoria Académica.");
+      router.refresh(); // Refresh data after successful baja
+    } else {
+      toast.error(res.message);
+    }
   };
 
   return (
@@ -55,7 +96,9 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
             </tr>
           </thead>
           <tbody className='divide-y divide-gray-100'>
-            {profesoresConAsignacionesActivas.map((profe) => (
+            {paginatedProfesores.length > 0 ? (
+              paginatedProfesores.map((profe) => (
+
               <tr
                 key={profe.idProfesor}
                 className='hover:bg-gray-50/50 transition-colors'
@@ -72,8 +115,8 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
                 <td className='p-4'>
                   <div className='grid grid-cols-1 gap-2 justify-items-start'>
                     {profe.asignaciones
-                      .filter((asig: any) => asig.estado)
-                      .map((asig: any) => (
+                      .filter((asig: Asignacion) => asig.estado) // Use Asignacion type
+                      .map((asig: Asignacion) => ( // Use Asignacion type
                       <div
                         key={asig.idAsignacion}
                         className='flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-[11px] font-bold px-3 py-1 rounded-full border border-indigo-100'
@@ -88,8 +131,8 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
                 <td className='p-4'>
                   <div className='flex flex-col gap-2'>
                     {profe.asignaciones
-                      .filter((asig: any) => asig.estado)
-                      .map((asig: any) => (
+                      .filter((asig: Asignacion) => asig.estado) // Use Asignacion type
+                      .map((asig: Asignacion) => ( // Use Asignacion type
                       <div
                         key={asig.idAsignacion}
                         className='flex items-center justify-center gap-4 py-1 border-b border-gray-50 last:border-0'
@@ -117,9 +160,41 @@ export function AsignacionesList({ profesores }: { profesores: any[] }) {
                   </div>
                 </td>
               </tr>
-            ))}
+            ))
+            ) : (
+              <tr>
+                <td colSpan={3} className="p-10 text-center text-gray-400 italic">
+                  No hay docentes con asignaciones activas.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-gray-200 pt-4 mt-4 px-4 pb-4">
+            <div className="text-sm text-gray-500">
+              Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, profesoresConAsignacionesActivas.length)} de {profesoresConAsignacionesActivas.length} resultados
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-600"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <span className="text-sm font-medium text-gray-700">Página {currentPage} de {totalPages}</span>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-600"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       <BajaMateriaModal
         isOpen={isModalOpen}
