@@ -1,4 +1,4 @@
-import { getHorariosPorCurso, getHorariosPorDocente } from "@/service/horario.service";
+import { getHorariosPorCurso, getHorariosPorDocente, getHorarioConfig } from "@/service/horario.service";
 import { getCicloActual } from "@/lib/ciclo-session";
 import db from "@/lib/db";
 import GrillaSemanal from "@/components/modules/horarios/GrillaSemanal";
@@ -30,6 +30,8 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
   let horarios: any[] = [];
   let idCurso = curso ? parseInt(curso) : null;
 
+  const { bloques, dias } = await getHorarioConfig();
+
   if (esDocente && !esAdmin) {
     if (idProfesor) {
       horarios = await getHorariosPorDocente(idProfesor, idCiclo);
@@ -46,6 +48,11 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
   }
 
   const cursos = esAdmin ? await db.curso.findMany({ orderBy: { grado: 'asc' } }) : [];
+
+  const horariosMañana = esDocente ? horarios.filter(h => h.asignacion.curso.turno === 'Mañana') : [];
+  const horariosTarde = esDocente ? horarios.filter(h => h.asignacion.curso.turno === 'Tarde') : [];
+  const bloquesMañana = bloques.filter(b => b.turno === 'Mañana');
+  const bloquesTarde = bloques.filter(b => b.turno === 'Tarde');
 
   return (
    <div className="p-8 space-y-8">
@@ -74,17 +81,34 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
         </div>
       )}
 
-
-
-      {/* Grilla */}
-      {(idCurso || (esDocente && idProfesor)) ? (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <GrillaSemanal horarios={horarios} />
+      {esDocente ? (
+        <div className="space-y-12">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h2 className="text-xl font-bold text-slate-700 mb-4">Turno Mañana</h2>
+            <GrillaSemanal horarios={horariosMañana} bloques={bloquesMañana} dias={dias} />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h2 className="text-xl font-bold text-slate-700 mb-4">Turno Tarde</h2>
+            <GrillaSemanal horarios={horariosTarde} bloques={bloquesTarde} dias={dias} />
+          </div>
+          {horarios.length === 0 && (
+            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <p>No tienes horarios asignados para este ciclo lectivo.</p>
+            </div>
+          )}
         </div>
       ) : (
-        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-           <p>Selecciona un curso para visualizar el cuadro horario.</p>
-        </div>
+        <>
+          {idCurso ? (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <GrillaSemanal horarios={horarios} bloques={bloques} dias={dias}/>
+            </div>
+          ) : (
+            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <p>Selecciona un curso para visualizar el cuadro horario.</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

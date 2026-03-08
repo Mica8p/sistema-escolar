@@ -21,7 +21,12 @@ export async function getPlanillaAsistencia(params: {
   idAsignacion: number;
   idHorario: number;
   fecha: Date;
+  page?: number;
+  search?: string;
 }) {
+  const PAGE_SIZE = 5;
+  const skip = ((params.page || 1) - 1) * PAGE_SIZE;
+  
   const fechaBusqueda = new Date(params.fecha);
   fechaBusqueda.setHours(0, 0, 0, 0);
 
@@ -32,14 +37,30 @@ export async function getPlanillaAsistencia(params: {
 
   if (!asig) throw new Error("Asignación no encontrada");
 
+  const whereClause: Prisma.MatriculaWhereInput = {
+    idCurso: asig.idCurso,
+    idCiclo: asig.idCiclo,
+    estadoAcademico: "Activo"
+  };
+
+  if (params.search) {
+    whereClause.alumno = {
+      OR: [
+        { persona: { nombre: { contains: params.search, mode: 'insensitive' } } },
+        { persona: { apellido: { contains: params.search, mode: 'insensitive' } } },
+        { persona: { dni: { contains: params.search } } }
+      ]
+    };
+  }
+
+  const totalMatriculas = await db.matricula.count({ where: whereClause });
+
   const matriculas = await db.matricula.findMany({
-    where: {
-      idCurso: asig.idCurso,
-      idCiclo: asig.idCiclo,
-      estadoAcademico: "Activo"
-    },
+    where: whereClause,
     include: { alumno: { include: { persona: true } } },
     orderBy: { alumno: { persona: { apellido: "asc" } } },
+    take: PAGE_SIZE,
+    skip,
   });
 
   const asistencias = await db.asistencia.findMany({
@@ -54,5 +75,5 @@ export async function getPlanillaAsistencia(params: {
     asistenciaByMatricula.set(a.idMatricula, a);
   }
 
-  return { asig, matriculas, asistenciaByMatricula };
+  return { asig, matriculas, asistenciaByMatricula, totalMatriculas };
 }

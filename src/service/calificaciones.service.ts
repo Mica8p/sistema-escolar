@@ -1,19 +1,51 @@
 import db from "@/lib/db";
-import { TipoEvaluacion } from "@prisma/client";
+import { Turno, TipoEvaluacion, Prisma, Nota } from '@prisma/client';
 
-export async function getAsignacionesParaUsuario(params: {
+interface GetAsignacionesParams {
   isAdmin: boolean;
   idPersona: number;
   idCiclo: number;
-}) {
+  grado?: string;
+  seccion?: string;
+  turno?: Turno;
+}
+
+export async function getAsignacionesParaUsuario(params: GetAsignacionesParams) {
+  const whereClause: Prisma.AsignacionAcademicaWhereInput = {
+    idCiclo: params.idCiclo,
+  };
+
+  const cursoWhere: Prisma.CursoWhereInput = {};
+
+  if (params.grado && params.seccion) {
+    cursoWhere.grado = params.grado;
+    cursoWhere.seccion = params.seccion;
+  }
+
+  if (params.turno) {
+    cursoWhere.turno = params.turno;
+  }
+
+  if (Object.keys(cursoWhere).length > 0) {
+    whereClause.curso = cursoWhere;
+  }
 
   if (params.isAdmin) {
     return db.asignacionAcademica.findMany({
-      where: {
-        idCiclo: params.idCiclo
+      where: whereClause,
+      include: {
+        curso: true,
+        materia: true,
+        ciclo: true
       },
-      include: { curso: true, materia: true, ciclo: true },
-      orderBy: [{ idCiclo: "desc" }, { idCurso: "asc" }],
+      orderBy: [
+        {
+          idCiclo: "desc"
+        },
+        {
+          idCurso: "asc"
+        }
+      ]
     });
   }
 
@@ -23,13 +55,10 @@ export async function getAsignacionesParaUsuario(params: {
   });
 
   if (!prof) return [];
+  whereClause.idProfesor = prof.idProfesor;
 
   return db.asignacionAcademica.findMany({
-    where: {
-      idProfesor: prof.idProfesor,
-      idCiclo: params.idCiclo,
-      estado: true
-    },
+    where: whereClause,
     include: { curso: true, materia: true, ciclo: true },
     orderBy: [{ idCiclo: "desc" }, { idCurso: "asc" }],
   });
@@ -47,7 +76,12 @@ export async function getPlanilla(params: {
   idAsignacion: number;
   idPeriodo: number;
   tipo: string;
+  page: number;
+  search?: string;
 }) {
+  const PAGE_SIZE = 5;
+  const skip = (params.page - 1) * PAGE_SIZE;
+
   const asig = await db.asignacionAcademica.findUnique({
     where: { idAsignacion: params.idAsignacion },
     include: { curso: true, ciclo: true, materia: true }
@@ -55,16 +89,32 @@ export async function getPlanilla(params: {
 
   if (!asig) throw new Error("Asignación no encontrada");
 
+  const whereClause: Prisma.MatriculaWhereInput = {
+    idCurso: asig.idCurso,
+    idCiclo: asig.idCiclo,
+    estadoAcademico: "Activo" as const
+  };
+
+  if (params.search) {
+    whereClause.alumno = {
+      OR: [
+        { persona: { nombre: { contains: params.search, mode: 'insensitive' } } },
+        { persona: { apellido: { contains: params.search, mode: 'insensitive' } } },
+        { persona: { dni: { contains: params.search } } }
+      ]
+    };
+  }
+
+  const totalMatriculas = await db.matricula.count({ where: whereClause });
+
   const matriculas = await db.matricula.findMany({
-    where: {
-      idCurso: asig.idCurso,
-      idCiclo: asig.idCiclo,
-      estadoAcademico: "Activo"
-    },
+    where: whereClause,
     include: {
       alumno: { include: { persona: true } }
     },
-    orderBy: { alumno: { persona: { apellido: "asc" } } }
+    orderBy: { alumno: { persona: { apellido: "asc" } } },
+    take: PAGE_SIZE,
+    skip,
   });
 
   const todasLasNotas = await db.nota.findMany({
@@ -81,12 +131,12 @@ export async function getPlanilla(params: {
     }
   });
 
-  const notaByMatricula = new Map<number, any>();
+  const notaByMatricula = new Map<number, Nota>();
   todasLasNotas
-    .filter(n => n.idPeriodo === params.idPeriodo && n.tipo === params.tipo)
-    .forEach((n) => notaByMatricula.set(n.idMatricula, n));
+    .filter((n: Nota) => n.idPeriodo === params.idPeriodo && n.tipo === params.tipo)
+    .forEach((n: Nota) => notaByMatricula.set(n.idMatricula, n));
 
-  return { asig, matriculas, notaByMatricula, historialNotas: todasLasNotas };
+  return { asig, matriculas, notaByMatricula, historialNotas: todasLasNotas, totalMatriculas };
 }
 
 

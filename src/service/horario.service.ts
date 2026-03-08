@@ -80,3 +80,10 @@ export async function getHorariosPorDocente(idProfesor: number, idCiclo: number)
     orderBy: { horaInicio: 'asc' }
   });
 }
+export async function getHorarioConfig() {
+  const [bloques, dias] = await Promise.all([
+    db.bloqueHorario.findMany({ orderBy: { orden: 'asc' } }),
+    db.diaHabil.findMany({ where: { habilitado: true }, orderBy: { orden: 'asc' } }),
+  ]);
+  return { bloques, dias };
+}

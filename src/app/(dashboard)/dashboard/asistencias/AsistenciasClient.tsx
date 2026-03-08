@@ -1,28 +1,80 @@
 'use client'
 
-import { Users, Clock, CheckCircle, CalendarDays, Sun, Moon } from "lucide-react";
+import { Users, Clock, CheckCircle, CalendarDays, GraduationCap, Search } from "lucide-react";
 import AsistenciasHeader from "./AsistenciasHeader";
-import { Materia, EstadoAsistencia } from "@prisma/client";
+import { Materia, EstadoAsistencia, AsignacionAcademica, Alumno, Persona, Turno } from "@prisma/client";
 import { useState, useMemo, useEffect } from "react";
 import AsistenciasTable from "@/components/modules/asistencias/AsistenciasTable";
+import PaginationControls from "@/components/shared/PaginationControls";
+import { useRouter, useSearchParams } from "next/navigation";
+
+type AsistenciaMap = Map<number, {
+    idMatricula: number;
+    estado: EstadoAsistencia;
+}>;
+
+interface Matricula {
+    idMatricula: number;
+    alumno: Alumno & { persona: Persona };
+}
+
+interface Planilla {
+    asig: AsignacionAcademica & { materia: Materia };
+    matriculas: Matricula[];
+    asistenciaByMatricula: [number, {
+        idMatricula: number;
+        estado: EstadoAsistencia;
+    }][];
+    totalMatriculas: number;
+}
+
+interface CursoAgrupado {
+  idCurso: number;
+  grado: string;
+  seccion: string;
+  turnos: Turno[];
+}
+
+interface Props {
+  asig?: AsignacionAcademica & { materia: Materia };
+  cursos: CursoAgrupado[];
+  idCurso: number;
+  turno: Turno;
+  materiasUnicas: Materia[];
+  idMateria: number;
+  fechaISO: string;
+  hoyISO: string;
+  idAsignacion: number;
+  nombreDiaSeleccionado: string;
+  idHorario: number;
+  planilla: Planilla | null;
+  isAdmin: boolean;
+  currentPage: number;
+  totalPages: number;
+  search?: string;
+}
 
 export default function AsistenciasClient({
   asig,
+  cursos,
+  idCurso,
+  turno,
   materiasUnicas,
   idMateria,
   fechaISO,
   hoyISO,
   idAsignacion,
   nombreDiaSeleccionado,
-  horariosPorCurso,
-  asignaciones,
   idHorario,
   planilla,
-  isAdmin
-}: any) {
-  const [asistenciaMap, setAsistenciaMap] = useState(new Map<number, any>());
-
-  const [busqueda, setBusqueda] = useState("");
+  isAdmin,
+  currentPage,
+  totalPages,
+  search,
+}: Props) {
+  const [asistenciaMap, setAsistenciaMap] = useState<AsistenciaMap>(new Map());
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (planilla?.asistenciaByMatricula) {
@@ -41,12 +93,6 @@ export default function AsistenciasClient({
     return { presentes: p, ausentes: a, tardes: t, justificados: j };
   }, [asistenciaMap]);
 
-  const materiasFiltradas = useMemo(() => {
-    return materiasUnicas.filter((m: any) =>
-      m.nombre.toLowerCase().includes(busqueda.toLowerCase())
-    );
-  }, [materiasUnicas, busqueda]);
-
   const handleAsistenciaChange = (idMatricula: number, nuevoEstado: EstadoAsistencia) => {
     setAsistenciaMap(prev => {
       const newMap = new Map(prev);
@@ -56,38 +102,94 @@ export default function AsistenciasClient({
     });
   };
 
-  function setBusquedaMateria(value: string): void {
-    throw new Error("Function not implemented.");
-  }
+  const turnosDelCurso = cursos.find(c => c.idCurso === idCurso)?.turnos || [];
+
+  const handleSearchChange = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (value) {
+      params.set("search", value);
+    } else {
+      params.delete("search");
+    }
+    params.set("page", "1");
+    router.push(`?${params.toString()}`);
+  };
 
   return (
     <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">
       <AsistenciasHeader fechaISO={fechaISO} hoyISO={hoyISO} idAsignacion={idAsignacion} nombreDia={nombreDiaSeleccionado} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* PANEL 1: MATERIA */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* PANEL 1: CURSO */}
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
+          <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2 shrink-0">
+            <GraduationCap size={16} />
+            <span className="text-[10px] font-black uppercase tracking-widest">1. Curso</span>
+          </div>
+
+          <div className="p-4 space-y-2 overflow-y-auto custom-scrollbar flex-1">
+            {cursos.map((c) => (
+              <a
+                key={c.idCurso}
+                href={`?curso=${c.idCurso}&fecha=${fechaISO}`}
+                className={`block px-5 py-4 rounded-2xl border-2 transition-all ${
+                  c.idCurso === idCurso
+                    ? "bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-100"
+                    : "bg-white border-slate-50 text-slate-600 hover:border-slate-200"
+                }`}
+              >
+                <div className="font-black text-sm uppercase tracking-tight">{c.grado}° {c.seccion}</div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* PANEL 2: TURNO */}
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
+            <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2 shrink-0">
+              <Clock size={16} />
+              <span className="text-[10px] font-black uppercase tracking-widest">2. Turno</span>
+            </div>
+
+            <div className="p-4 space-y-2 overflow-y-auto custom-scrollbar flex-1">
+              {turnosDelCurso.map((t) => (
+                <a
+                  key={t}
+                  href={`?curso=${idCurso}&turno=${t}&fecha=${fechaISO}`}
+                  className={`block px-5 py-4 rounded-2xl border-2 transition-all ${
+                    t === turno
+                      ? "bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-100"
+                      : "bg-white border-slate-50 text-slate-600 hover:border-slate-200"
+                  }`}
+                >
+                  <div className="font-black text-sm uppercase tracking-tight">{t}</div>
+                </a>
+              ))}
+            </div>
+        </div>
+        
+        {/* PANEL 3: MATERIA */}
        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
           <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2 shrink-0">
             <Users size={16} />
-            <span className="text-[10px] font-black uppercase tracking-widest">1. Materia</span>
+            <span className="text-[10px] font-black uppercase tracking-widest">3. Materia</span>
           </div>
 
           <div className="p-4 border-b border-slate-50 bg-slate-50/30">
             <input
               type="text"
               placeholder="🔍 Buscar materia..."
-              value={busqueda}
+              onChange={(e) => router.push(`?${new URLSearchParams({ ...Object.fromEntries(searchParams.entries()), mat_search: e.target.value })}`)}
               className="w-full text-[10px] font-black uppercase p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 ring-indigo-500 transition-all text-slate-700 placeholder:text-slate-300"
-              onChange={(e) => setBusqueda(e.target.value)}
             />
           </div>
 
           <div className="p-4 space-y-2 overflow-y-auto custom-scrollbar flex-1">
-            {materiasFiltradas.length > 0 ? (
-              materiasFiltradas.map((m: any) => (
+            {materiasUnicas.length > 0 ? (
+              materiasUnicas.map((m) => (
                 <a
                   key={m.idMateria}
-                  href={`?mat=${m.idMateria}&fecha=${fechaISO}`}
+                  href={`?curso=${idCurso}&turno=${turno}&mat=${m.idMateria}&fecha=${fechaISO}`}
                   className={`block px-5 py-4 rounded-2xl border-2 transition-all ${
                     m.idMateria === idMateria
                       ? "bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-100"
@@ -105,67 +207,10 @@ export default function AsistenciasClient({
           </div>
         </div>
 
-        {/* PANEL 2: BLOQUES */}
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
-            <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2 shrink-0">
-              <Clock size={16} />
-              <span className="text-[10px] font-black uppercase tracking-widest">2. Cursos y Horarios</span>
-            </div>
-
-            <div className="p-4 space-y-6 overflow-y-auto custom-scrollbar">
-              {["Mañana", "Tarde"].map((turnoLabel) => {
-                const cursosDelTurno = Object.entries(horariosPorCurso || {}).filter(([idCursoStr]) => {
-                  const curso = asignaciones.find((a: any) => a.idCurso === Number(idCursoStr))?.curso;
-                  return curso?.turno === turnoLabel;
-                });
-
-               if (cursosDelTurno.length === 0) return null;
-
-      return (
-        <div key={turnoLabel} className="space-y-3">
-          <div className="flex items-center gap-2 px-2">
-            {turnoLabel === "Mañana" ? <Sun size={14} className="text-amber-500" /> : <Moon size={14} className="text-indigo-400" />}
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Turno {turnoLabel}</span>
-          </div>
-
-          {cursosDelTurno.map(([idCursoStr, horarios]: any) => {
-            const cursoAsig = asignaciones.find((a: any) => a.idCurso === Number(idCursoStr) && a.materia.idMateria === idMateria);
-            const isSelected = horarios.some((h: any) => h.idHorario === idHorario);
-
-            return (
-              <a
-                key={idCursoStr}
-                href={`?mat=${idMateria}&horario=${horarios[0].idHorario}&fecha=${fechaISO}`}
-                className={`block px-5 py-4 rounded-2xl border-2 transition-all group ${
-                  isSelected
-                    ? "bg-indigo-600 border-indigo-600 text-white shadow-lg"
-                    : "bg-white border-slate-50 text-slate-600 hover:border-indigo-100"
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="font-black text-sm uppercase tracking-tight">
-                    {cursoAsig.curso.grado}° {cursoAsig.curso.seccion}
-                  </div>
-                  <div className={`text-[8px] px-2 py-0.5 rounded-full font-black ${isSelected ? 'bg-indigo-400 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                    {turnoLabel}
-                  </div>
-                </div>
-                <div className={`text-[10px] font-bold mt-1 ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>
-                  {horarios.map((h: any) => `${h.horaInicio.slice(0,5)} a ${h.horaFin.slice(0,5)}`).join(' - ')}
-                </div>
-              </a>
-            );
-          })}
-        </div>
-      );
-    })}
-  </div>
-</div>
-
-        {/*  PANEL 3: RESUMEN DETALLADO */}
+        {/*  PANEL 4: RESUMEN DETALLADO */}
         <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
           <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2">
-            <CheckCircle size={16} /> <span className="text-[10px] font-black uppercase tracking-widest">3. Resumen de Clase</span>
+            <CheckCircle size={16} /> <span className="text-[10px] font-black uppercase tracking-widest">4. Resumen de Clase</span>
           </div>
           <div className="p-6 h-full flex flex-col justify-between">
             {planilla ? (
@@ -198,7 +243,7 @@ export default function AsistenciasClient({
                 </div>
 
                 <div className="pt-2 text-center">
-                  <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">Total alumnos: {asistenciaMap.size}</p>
+                  <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">Total alumnos: {planilla.totalMatriculas}</p>
                 </div>
               </div>
             ) : (
@@ -211,6 +256,26 @@ export default function AsistenciasClient({
       </div>
 
       <div className="mt-6 bg-white rounded-[3rem] border border-slate-200 shadow-2xl shadow-slate-200/50 overflow-hidden min-h-[500px]">
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users size={18} className="text-indigo-600" />
+            <span className="text-sm font-black text-slate-700 uppercase tracking-tight">
+              {planilla ? `Listado de Alumnos` : "Seleccione los filtros"}
+            </span>
+          </div>
+          {planilla && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por Apellido o DNI..."
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border-2 border-slate-100 rounded-xl text-sm text-slate-700 font-bold outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                onChange={(e) => handleSearchChange(e.target.value)}
+                defaultValue={search}
+              />
+            </div>
+          )}
+        </div>
         {planilla ? (
           <div className="p-6">
             <AsistenciasTable
@@ -221,6 +286,10 @@ export default function AsistenciasClient({
               asistenciaByMatricula={Array.from(asistenciaMap.entries())}
               readOnly={isAdmin}
               onAsistenciaChange={handleAsistenciaChange}
+            />
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
             />
           </div>
         ) : (

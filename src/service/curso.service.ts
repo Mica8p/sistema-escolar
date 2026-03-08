@@ -1,5 +1,23 @@
 import db from '@/lib/db';
-import { Curso } from '@prisma/client';
+import { Curso, Turno } from '@prisma/client';
+
+export async function getCursos() {
+  try {
+    return await db.curso.findMany({
+      orderBy: [
+        { grado: 'asc' },
+        { seccion: 'asc' }
+      ]
+    });
+  } catch (error) {
+    console.error('Error al obtener los cursos:', error);
+    throw new Error('No se pudieron obtener los cursos.');
+  }
+}
+
+export function getTurnos() {
+  return Object.values(Turno);
+}
 
 export const cursoService = {
   getAll: async () => {
