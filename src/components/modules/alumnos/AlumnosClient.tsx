@@ -20,7 +20,7 @@ interface MatriculaWithCurso {
 interface AlumnoWithPersonaAndMatriculas {
   idAlumno: number;
   legajo: string;
-  persona: Persona; // Usamos el tipo Persona de Prisma
+  persona: Persona; 
   matriculas: MatriculaWithCurso[];
 }
 
@@ -38,7 +38,7 @@ const StatusBadge = ({ estado }: { estado: EstadoAcademico }) => {
 export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatriculas[] }) {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // Mostrar 5 alumnos por página
+  const itemsPerPage = 5; 
 
   const filteredAlumnos = useMemo(() => {
     return alumnos.filter((alumno) => {
@@ -65,7 +65,7 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
-              setCurrentPage(1); // Resetear a la primera página al cambiar la búsqueda
+              setCurrentPage(1); 
             }}
             className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder:text-gray-500"
           />
@@ -109,7 +109,7 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
                           <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
                             matriculaActual.curso.turno === 'Mañana'
                             ? 'bg-orange-100 text-orange-700'
-                            : 'bg-indigo-100 text-indigo-700' // Corregido: se escapa la comilla doble
+                            : 'bg-indigo-100 text-indigo-700' 
                           }`}>
                             {matriculaActual.curso.grado}° &quot;{matriculaActual.curso.seccion}&quot; - {matriculaActual.curso.turno}
                           </span>
