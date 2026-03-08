@@ -18,7 +18,7 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
   const [selectedRole, setSelectedRole] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("activo");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
 
   const availableRoles = useMemo(() => {
     const rolesMap = new Map<number, string>();
@@ -27,17 +27,6 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
         rolesMap.set(ur.rol.idRol, ur.rol.nombre);
       });
     });
-    // Manually add "Alumno" role if it doesn't exist from users, as some students might not have user accounts
-    const hasAlumnoRole = Array.from(rolesMap.values()).some(name => name.toLowerCase() === 'alumno');
-    if (!hasAlumnoRole) {
-      // We need a stable ID. This is a bit of a hack. A better solution would be to fetch all roles from the DB.
-      // For now, we'll assume a hardcoded-like ID if it's not present. Let's find it first.
-      const studentWithUser = personas.find(p => p.usuario?.roles.some(r => r.rol.nombre.toLowerCase() === 'alumno'));
-      const studentRoleId = studentWithUser?.usuario?.roles.find(r => r.rol.nombre.toLowerCase() === 'alumno')?.rol.idRol;
-      // This is getting too complex. The original availableRoles logic is probably fine if we fix the filter.
-    }
-
-
     return Array.from(rolesMap.entries()).map(([id, nombre]) => ({ id, nombre }));
   }, [personas]);
 
@@ -50,13 +39,13 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
         p.apellido.toLowerCase().includes(search.toLowerCase()) ||
         p.dni.toLowerCase().includes(search.toLowerCase());
 
-      const isConsideredAlumno = p.alumno !== null || p.usuario?.roles.some(r => r.rol.nombre.toLowerCase() === 'alumno');
+      const isConsideredAlumno = p.alumno !== null || (p.usuario?.roles.some(r => r.rol.nombre.toLowerCase() === 'alumno') ?? false);
       let matchesRole = !selectedRole;
       if (selectedRole) {
         if (selectedRoleName === 'alumno') {
           matchesRole = isConsideredAlumno;
-        } else {
-          matchesRole = p.usuario?.roles.some((r) => r.rol.idRol.toString() === selectedRole);
+        } else { // For other roles, check if the user has that specific role
+          matchesRole = (p.usuario?.roles.some((r) => r.rol.idRol.toString() === selectedRole) ?? false);
         }
       }
 
