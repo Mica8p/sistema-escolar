@@ -2,12 +2,27 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { EstadoAcademico } from "@prisma/client";
+import { EstadoAcademico, Curso, Persona } from "@prisma/client";
 import { cn } from "@/lib/utils";
-import { Fingerprint, Settings2, GraduationCap, UserCog, FileText } from "lucide-react";
+import { Fingerprint, Settings2, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import GenericDeleteButton from "@/components/shared/GenericDeletButton";
 import { deleteMatriculaAction } from "@/lib/actions/alumno-actions";
 
+// Definimos la estructura de la matrícula con el curso asociado
+interface MatriculaWithCurso {
+  idMatricula: number;
+  estadoAcademico: EstadoAcademico;
+  curso: Curso;
+  // Puedes añadir más propiedades de Matricula si son necesarias
+}
+
+// Definimos la estructura del alumno con su persona y matrículas asociadas
+interface AlumnoWithPersonaAndMatriculas {
+  idAlumno: number;
+  legajo: string;
+  persona: Persona; // Usamos el tipo Persona de Prisma
+  matriculas: MatriculaWithCurso[];
+}
 
 const StatusBadge = ({ estado }: { estado: EstadoAcademico }) => {
     const baseClasses = "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider";
@@ -20,8 +35,10 @@ const StatusBadge = ({ estado }: { estado: EstadoAcademico }) => {
     return <span className={cn(baseClasses, statusStyles[estado])}>{estado}</span>;
   }
 
-export function AlumnosClient({ alumnos }: { alumnos: any[] }) {
+export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatriculas[] }) {
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Mostrar 5 alumnos por página
 
   const filteredAlumnos = useMemo(() => {
     return alumnos.filter((alumno) => {
@@ -34,6 +51,10 @@ export function AlumnosClient({ alumnos }: { alumnos: any[] }) {
     });
   }, [search, alumnos]);
 
+  const totalPages = Math.ceil(filteredAlumnos.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedAlumnos = filteredAlumnos.slice(startIndex, startIndex + itemsPerPage);
+
 
   return (
     <>
@@ -44,6 +65,7 @@ export function AlumnosClient({ alumnos }: { alumnos: any[] }) {
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
+              setCurrentPage(1); // Resetear a la primera página al cambiar la búsqueda
             }}
             className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder:text-gray-500"
           />
@@ -72,8 +94,8 @@ export function AlumnosClient({ alumnos }: { alumnos: any[] }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredAlumnos.length > 0 ? (
-                filteredAlumnos.map((alumno) => {
+              {paginatedAlumnos.length > 0 ? (
+                paginatedAlumnos.map((alumno) => {
                   const matriculaActual = alumno.matriculas[0];
                   return (
                     <tr key={alumno.idAlumno} className="hover:bg-gray-50 transition-colors">
@@ -87,9 +109,9 @@ export function AlumnosClient({ alumnos }: { alumnos: any[] }) {
                           <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
                             matriculaActual.curso.turno === 'Mañana'
                             ? 'bg-orange-100 text-orange-700'
-                            : 'bg-indigo-100 text-indigo-700'
+                            : 'bg-indigo-100 text-indigo-700' // Corregido: se escapa la comilla doble
                           }`}>
-                            {matriculaActual.curso.grado}° "{matriculaActual.curso.seccion}" - {matriculaActual.curso.turno}
+                            {matriculaActual.curso.grado}° &quot;{matriculaActual.curso.seccion}&quot; - {matriculaActual.curso.turno}
                           </span>
                         ) : (
                           <span className="text-red-500 text-xs italic">Sin matrícula</span>
@@ -144,6 +166,35 @@ export function AlumnosClient({ alumnos }: { alumnos: any[] }) {
             </tbody>
           </table>
         </div>
+
+        {/* Controles de Paginación */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-slate-200 pt-4 mt-4 px-4 pb-4">
+            <div className="text-sm text-slate-500">
+              Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, filteredAlumnos.length)} de {filteredAlumnos.length} resultados
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <span className="text-sm font-medium text-slate-700">
+                Página {currentPage} de {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </>
   );
