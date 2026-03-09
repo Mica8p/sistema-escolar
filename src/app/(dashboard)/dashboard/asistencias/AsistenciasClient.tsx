@@ -121,7 +121,7 @@ export default function AsistenciasClient({
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* PANEL 1: CURSO */}
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-125">
           <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2 shrink-0">
             <GraduationCap size={16} />
             <span className="text-[10px] font-black uppercase tracking-widest">1. Curso</span>
@@ -145,7 +145,7 @@ export default function AsistenciasClient({
         </div>
 
         {/* PANEL 2: TURNO */}
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-125">
             <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2 shrink-0">
               <Clock size={16} />
               <span className="text-[10px] font-black uppercase tracking-widest">2. Turno</span>
@@ -169,7 +169,7 @@ export default function AsistenciasClient({
         </div>
         
         {/* PANEL 3: MATERIA */}
-       <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
+       <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-125">
           <div className="px-6 py-4 bg-slate-900 text-white flex items-center gap-2 shrink-0">
             <Users size={16} />
             <span className="text-[10px] font-black uppercase tracking-widest">3. Materia</span>
@@ -255,7 +255,7 @@ export default function AsistenciasClient({
         </div>
       </div>
 
-      <div className="mt-6 bg-white rounded-[3rem] border border-slate-200 shadow-2xl shadow-slate-200/50 overflow-hidden min-h-[500px]">
+      <div className="mt-6 bg-white rounded-[3rem] border border-slate-200 shadow-2xl shadow-slate-200/50 overflow-hidden min-h-125">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Users size={18} className="text-indigo-600" />
@@ -293,7 +293,7 @@ export default function AsistenciasClient({
             />
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-[500px] text-slate-300 gap-4 uppercase font-black text-[10px] tracking-widest">
+          <div className="flex flex-col items-center justify-center h-125 text-slate-300 gap-4 uppercase font-black text-[10px] tracking-widest">
             <Users size={48} className="opacity-10 mb-2" />
             Elegí una materia y curso para pasar lista
           </div>

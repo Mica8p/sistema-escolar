@@ -40,7 +40,7 @@ export default function GrillaSemanal({ horarios, bloques, dias }: GrillaSemanal
   const diasSemana = dias.map(d => d.nombre);
 
   return (
-    <div className="w-full border border-slate-200 rounded-[2rem] bg-white shadow-sm overflow-hidden">
+    <div className="w-full border border-slate-200 rounded-4xl bg-white shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse table-fixed">
           <thead>
@@ -72,7 +72,7 @@ export default function GrillaSemanal({ horarios, bloques, dias }: GrillaSemanal
                           </p>
                           {item.asignacion.curso && (
                             <p className="text-[8px] font-black text-indigo-400 uppercase">
-                              {item.asignacion.curso.grado}° "{item.asignacion.curso.seccion}"
+                              {item.asignacion.curso.grado}° &quot;{item.asignacion.curso.seccion}&quot;
                             </p>
                           )}
                           <p className="text-[9px] font-bold text-slate-500 mt-1">

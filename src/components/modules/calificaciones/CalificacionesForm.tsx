@@ -1,11 +1,45 @@
 "use client";
 
-import { TipoEvaluacion, Nota } from "@prisma/client";
+import { Nota } from "@prisma/client";
 import { guardarNotaAction } from "@/lib/actions/calificaciones-actions";
-import { Save, User, Edit2, Lock, CheckCircle2, GraduationCap } from "lucide-react";
+import { Save, User, Edit2, Lock, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+
+interface PeriodoActual {
+  idPeriodo: number;
+  nombre: string;
+  cerrado: boolean;
+}
+
+interface NotaWithPeriodo extends Nota {
+  periodo: {
+    nombre: string;
+  };
+}
+
+interface MatriculaConAlumno {
+  idMatricula: number;
+  alumno: {
+    legajo: string;
+    persona: {
+      nombre: string;
+      apellido: string;
+    };
+  };
+}
+
+interface CalificacionesTableProps {
+  idAsignacion: number;
+  idPeriodo: number;
+  periodoActual: PeriodoActual;
+  tipo: string; // Asumiendo que 'tipo' es un string como "Parcial", "Recuperatorio"
+  matriculas: MatriculaConAlumno[];
+  notaByMatricula: Map<number, Nota>;
+  readOnly?: boolean;
+  historialNotas: NotaWithPeriodo[];
+}
 
 export default function CalificacionesTable({
   idAsignacion,
@@ -16,7 +50,7 @@ export default function CalificacionesTable({
   notaByMatricula,
   readOnly = false,
   historialNotas = []
-}: any) {
+}: CalificacionesTableProps) {
   const router = useRouter();
   const [editando, setEditando] = useState<number | null>(null);
   const notaMap = new Map<number, Nota>(notaByMatricula);
@@ -36,11 +70,11 @@ export default function CalificacionesTable({
   };
 
   const getNotaTrimestre = (alumnoId: number, nombreTrimestre: string) => {
-    const notasTrim = historialNotas.filter((n: any) =>
+    const notasTrim = historialNotas.filter((n: NotaWithPeriodo) =>
       n.idMatricula === alumnoId && n.periodo.nombre === nombreTrimestre
     );
-    const parcial = notasTrim.find((n: any) => n.tipo === "Parcial")?.nota || 0;
-    const recuperatorio = notasTrim.find((n: any) => n.tipo === "Recuperatorio")?.nota || 0;
+    const parcial = notasTrim.find((n: NotaWithPeriodo) => n.tipo === "Parcial")?.nota || 0;
+    const recuperatorio = notasTrim.find((n: NotaWithPeriodo) => n.tipo === "Recuperatorio")?.nota || 0;
     return Math.max(parcial, recuperatorio);
   };
 
@@ -66,7 +100,7 @@ export default function CalificacionesTable({
             </tr>
           </thead>
           <tbody>
-            {matriculas.map((m: any) => {
+            {matriculas.map((m: MatriculaConAlumno) => {
               const notaObj = notaMap.get(m.idMatricula);
               const valorNota = notaObj?.nota;
               const tieneNota = valorNota !== undefined && valorNota !== null;
@@ -81,7 +115,7 @@ export default function CalificacionesTable({
               const esPromocionado = suma >= 18 && n1 >= 6 && n2 >= 6 && n3 >= 6;
 
               // Lógica de "Recuperado "
-              const tieneRecuperatorioAprobado = historialNotas.some((n: any) =>
+              const tieneRecuperatorioAprobado = historialNotas.some((n: NotaWithPeriodo) =>
                 n.idMatricula === m.idMatricula &&
                 n.idPeriodo === idPeriodo &&
                 n.tipo === "Recuperatorio" &&
@@ -89,7 +123,7 @@ export default function CalificacionesTable({
               );
 
               // Lógica de Bloqueo
-              const notaParcialActual = historialNotas.find((n: any) =>
+              const notaParcialActual = historialNotas.find((n: NotaWithPeriodo) =>
                 n.idMatricula === m.idMatricula && n.idPeriodo === idPeriodo && n.tipo === "Parcial"
               );
               const yaAproboParcial = (notaParcialActual?.nota ?? 0) >= 6;
@@ -129,7 +163,7 @@ export default function CalificacionesTable({
                           type="number"
                           min={1} max={10} step={0.5}
                           defaultValue={valorNota ?? ""}
-                          className="w-20 text-center text-xl font-black bg-slate-50 border-2 border-indigo-100 rounded-xl py-2 focus:border-indigo-500 outline-none"
+                          className="w-20 text-center text-xl font-black bg-slate-100 border-2 border-indigo-100 rounded-xl py-2 focus:border-indigo-500 outline-none text-slate-900 placeholder-slate-700"
                         />
                       ) : (
                         <div className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl text-xl font-black shadow-sm ${
@@ -160,10 +194,10 @@ export default function CalificacionesTable({
                         name="observacion"
                         defaultValue={notaObj?.observacion ?? ""}
                         placeholder="Comentarios..."
-                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-2 px-4 text-xs outline-none focus:border-indigo-500"
+                        className="w-full bg-slate-100 border-2 border-slate-100 rounded-xl py-2 px-4 text-xs outline-none focus:border-indigo-500 text-slate-900 placeholder-slate-700"
                       />
                     ) : (
-                      <div className="text-xs text-slate-500 italic max-w-[200px] truncate">
+                        <div className="text-xs text-slate-500 italic max-w-50 truncate">
                         {estaBloqueado ? (bloquearRecuperatorio ? "Aprobó instancia parcial." : "Periodo cerrado.") : (notaObj?.observacion || "Sin observaciones")}
                       </div>
                     )}
