@@ -1,22 +1,34 @@
 "use client";
 import { useState } from "react";
-import { AlertTriangle, X, Loader2, MessageSquare } from "lucide-react";
+import { AlertTriangle, X, Loader2, MessageSquare, Users } from "lucide-react";
+
+interface Suplente {
+  idPersona: number;
+  nombre: string;
+  apellido: string;
+}
 
 interface BajaMateriaModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (motivo: string) => void;
+  onConfirm: (motivo: string, idSuplente?: number) => void;
   title: string;
   materia: string;
   loading?: boolean;
+  suplentes: Suplente[];
 }
 
 export default function BajaMateriaModal({
-  isOpen, onClose, onConfirm, title, materia, loading
+  isOpen, onClose, onConfirm, title, materia, loading, suplentes
 }: BajaMateriaModalProps) {
   const [motivo, setMotivo] = useState("Fin de suplencia / Licencia");
+  const [idSuplente, setIdSuplente] = useState<number | undefined>();
 
   if (!isOpen) return null;
+
+  const handleConfirm = () => {
+    onConfirm(motivo, idSuplente);
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -35,16 +47,36 @@ export default function BajaMateriaModal({
             ¿Confirmás la baja de la materia <span className="text-slate-800 font-bold">{materia}</span>?
           </p>
 
-          <div className="w-full text-left space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Motivo de la baja</label>
-            <div className="relative">
-              <MessageSquare className="absolute top-4 left-4 text-slate-300" size={18} />
-              <textarea
-                value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-600 font-medium focus:border-amber-400 focus:bg-white transition-all outline-none resize-none h-24"
-                placeholder="Escribí el motivo aquí..."
-              />
+          <div className="w-full text-left space-y-4">
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Asignar Suplente (Opcional)</label>
+              <div className="relative">
+                <Users className="absolute top-4 left-4 text-slate-300" size={18} />
+                <select
+                  value={idSuplente}
+                  onChange={(e) => setIdSuplente(e.target.value ? Number(e.target.value) : undefined)}
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-600 font-medium focus:border-amber-400 focus:bg-white transition-all outline-none"
+                >
+                  <option value="">Dejar vacante</option>
+                  {suplentes.map(suplente => (
+                    <option key={suplente.idPersona} value={suplente.idPersona}>
+                      {suplente.apellido}, {suplente.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Motivo de la baja</label>
+              <div className="relative">
+                <MessageSquare className="absolute top-4 left-4 text-slate-300" size={18} />
+                <textarea
+                  value={motivo}
+                  onChange={(e) => setMotivo(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-600 font-medium focus:border-amber-400 focus:bg-white transition-all outline-none resize-none h-24"
+                  placeholder="Escribí el motivo aquí..."
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -58,7 +90,7 @@ export default function BajaMateriaModal({
             Cancelar
           </button>
           <button
-            onClick={() => onConfirm(motivo)}
+            onClick={handleConfirm}
             disabled={loading || !motivo.trim()}
             className="flex-1 px-6 py-4 rounded-2xl bg-amber-500 text-white font-black text-[10px] uppercase tracking-widest hover:bg-amber-600 shadow-lg shadow-amber-100 disabled:opacity-50 transition-all"
           >

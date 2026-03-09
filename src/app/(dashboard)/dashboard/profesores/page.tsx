@@ -74,7 +74,7 @@ export default async function DocentesPage({ searchParams }: PageProps) {
         bloquesHorario={bloquesHorario}
       />
 
-      <AsignacionesList profesores={profesores} />
+      <AsignacionesList profesores={profesores} suplentes={personas} />
 
       {/* Render the new client component for historial */}
       <HistorialAsignacionesTable historial={historial} />

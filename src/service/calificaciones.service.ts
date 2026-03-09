@@ -13,6 +13,7 @@ interface GetAsignacionesParams {
 export async function getAsignacionesParaUsuario(params: GetAsignacionesParams) {
   const whereClause: Prisma.AsignacionAcademicaWhereInput = {
     idCiclo: params.idCiclo,
+    estado: true,
   };
 
   const cursoWhere: Prisma.CursoWhereInput = {};

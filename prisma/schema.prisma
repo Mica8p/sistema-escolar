@@ -276,7 +276,7 @@ model Materia {
 
 model AsignacionAcademica {
   idAsignacion Int     @id @default(autoincrement())
-  idProfesor   Int
+  idProfesor   Int?
   idMateria    Int
   idCurso      Int
   idCiclo      Int
@@ -285,7 +285,7 @@ model AsignacionAcademica {
   motivoBaja   String?
   fechaBaja    DateTime?
 
-  profesor Profesor     @relation(fields: [idProfesor], references: [idProfesor])
+  profesor Profesor?     @relation(fields: [idProfesor], references: [idProfesor])
   materia  Materia      @relation(fields: [idMateria], references: [idMateria])
   curso    Curso        @relation(fields: [idCurso], references: [idCurso])
   ciclo    CicloLectivo @relation(fields: [idCiclo], references: [idCiclo])

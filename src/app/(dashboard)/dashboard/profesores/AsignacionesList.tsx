@@ -1,15 +1,12 @@
-'use client'; // Import useMemo for performance
+'use client'; 
 
-import { useState, useMemo } from 'react'; // Import useMemo for performance
-import { BookOpen, UserX, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'; // Add Chevron icons for pagination
-// desactivarAsignacionAction is not used in the provided code, keeping it commented out if it was intended for future use.
-// import { desactivarAsignacionAction } from '@/lib/actions/profesor-actions';
+import { useState, useMemo } from 'react'; 
+import { BookOpen, UserX, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import { darDeBajaAction } from '@/lib/actions/profesor-actions';
 import { toast } from 'sonner';
 import BajaMateriaModal from '@/components/modules/profesores/BajaMateriaModal';
-import { useRouter } from 'next/navigation'; // Import useRouter to refresh data
+import { useRouter } from 'next/navigation'; 
 
-// Define types for better type safety, inferred from usage
 interface Curso {
   grado: string;
   seccion: string;
@@ -21,9 +18,16 @@ interface Materia {
 }
 
 interface Persona {
+  idPersona: number;
   apellido: string;
   nombre: string;
   dni: string;
+}
+
+interface Suplente {
+  idPersona: number;
+  nombre: string;
+  apellido: string;
 }
 
 interface Asignacion {
@@ -39,15 +43,14 @@ interface Profesor {
   asignaciones: Asignacion[];
 }
 
-export function AsignacionesList({ profesores }: { profesores: Profesor[] }) { // Use the defined Profesor type
-  const router = useRouter(); // Initialize useRouter
+export function AsignacionesList({ profesores, suplentes }: { profesores: Profesor[], suplentes: Suplente[] }) {
+  const router = useRouter(); 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedAsignacion, setSelectedAsignacion] = useState<{id: number, materia: string} | null>(null);
 
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // Mostrar 5 docentes por página
+  const itemsPerPage = 5; 
 
   const profesoresConAsignacionesActivas = useMemo(() => {
     return profesores.filter(
@@ -58,26 +61,32 @@ export function AsignacionesList({ profesores }: { profesores: Profesor[] }) { /
   const totalPages = Math.ceil(profesoresConAsignacionesActivas.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedProfesores = profesoresConAsignacionesActivas.slice(startIndex, startIndex + itemsPerPage);
+  
   const handleBajaClick = (id: number, materia: string) => {
     setSelectedAsignacion({ id, materia });
     setIsModalOpen(true);
   };
 
-  const onConfirmBaja = async (motivo: string) => {
+  const onConfirmBaja = async (motivo: string, idSuplente?: number) => {
     if (!selectedAsignacion) return;
 
     setLoading(true);
-    const res = await darDeBajaAction(selectedAsignacion.id, motivo);
+    const res = await darDeBajaAction(selectedAsignacion.id, motivo, idSuplente);
     setLoading(false);
     setIsModalOpen(false);
 
     if (res.success) {
       toast.success("Baja procesada correctamente. Se movió a Memoria Académica.");
-      router.refresh(); // Refresh data after successful baja
+      router.refresh();
     } else {
       toast.error(res.message);
     }
   };
+
+  const currentProfesorId = selectedAsignacion ? 
+    profesores.find(p => p.asignaciones.some(a => a.idAsignacion === selectedAsignacion.id))?.persona.idPersona : undefined;
+
+  const suplentesFiltrados = suplentes.filter(s => s.idPersona !== currentProfesorId);
 
   return (
     <>
@@ -115,8 +124,8 @@ export function AsignacionesList({ profesores }: { profesores: Profesor[] }) { /
                 <td className='p-4'>
                   <div className='grid grid-cols-1 gap-2 justify-items-start'>
                     {profe.asignaciones
-                      .filter((asig: Asignacion) => asig.estado) // Use Asignacion type
-                      .map((asig: Asignacion) => ( // Use Asignacion type
+                      .filter((asig: Asignacion) => asig.estado)
+                      .map((asig: Asignacion) => (
                       <div
                         key={asig.idAsignacion}
                         className='flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-[11px] font-bold px-3 py-1 rounded-full border border-indigo-100'
@@ -131,8 +140,8 @@ export function AsignacionesList({ profesores }: { profesores: Profesor[] }) { /
                 <td className='p-4'>
                   <div className='flex flex-col gap-2'>
                     {profe.asignaciones
-                      .filter((asig: Asignacion) => asig.estado) // Use Asignacion type
-                      .map((asig: Asignacion) => ( // Use Asignacion type
+                      .filter((asig: Asignacion) => asig.estado)
+                      .map((asig: Asignacion) => (
                       <div
                         key={asig.idAsignacion}
                         className='flex items-center justify-center gap-4 py-1 border-b border-gray-50 last:border-0'
@@ -170,7 +179,6 @@ export function AsignacionesList({ profesores }: { profesores: Profesor[] }) { /
             )}
           </tbody>
         </table>
-        {/* Pagination Controls */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-gray-200 pt-4 mt-4 px-4 pb-4">
             <div className="text-sm text-gray-500">
@@ -203,6 +211,7 @@ export function AsignacionesList({ profesores }: { profesores: Profesor[] }) { /
         loading={loading}
         title="Dar de Baja Materia"
         materia={selectedAsignacion?.materia || ""}
+        suplentes={suplentesFiltrados}
       />
     </>
   );

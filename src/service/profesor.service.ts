@@ -1,5 +1,6 @@
 import db from "@/lib/db";
 import { getCicloActual } from "@/lib/ciclo-session";
+import { DiaSemana } from "@prisma/client";
 
 export const ProfesorService = {
 async getAll(idCiclo: number) {
@@ -55,7 +56,7 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
       const conflicto = await tx.horario.findFirst({
         where: {
           asignacion: { idProfesor: idPersona, idCiclo, estado: true },
-          diaSemana: slot.dia as any,
+          diaSemana: slot.dia as DiaSemana,
           horaInicio: slot.hora.split(" - ")[0]
         }
       });
@@ -99,7 +100,7 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
         await tx.horario.create({
           data: {
             idAsignacion: asignacion.idAsignacion,
-            diaSemana: slot.dia as any,
+            diaSemana: slot.dia as DiaSemana,
             horaInicio,
             horaFin,
           }
@@ -127,7 +128,7 @@ async eliminarAsignacion(idAsignacion: number) {
         await tx.horario.create({
           data: {
             idAsignacion: idAsignacion,
-            diaSemana: slot.dia as any,
+            diaSemana: slot.dia as DiaSemana,
             horaInicio,
             horaFin,
           }
@@ -187,29 +188,100 @@ async darDeBaja(idAsignacion: number, motivo: string) {
   });
 },
 
+async reemplazarProfesor(idAsignacionOriginal: number, motivo: string, idPersonaSuplente: number) {
+    return await db.$transaction(async (tx) => {
+      // 1. Obtener datos de la asignación original
+      const asignacionOriginal = await tx.asignacionAcademica.findUnique({
+        where: { idAsignacion: idAsignacionOriginal }
+      });
+
+      if (!asignacionOriginal) {
+        throw new Error("La asignación a reemplazar no existe.");
+      }
+
+      // 2. Dar de baja la asignación original
+      await tx.asignacionAcademica.update({
+        where: { idAsignacion: idAsignacionOriginal },
+        data: {
+          estado: false,
+          motivoBaja: motivo,
+          fechaBaja: new Date(),
+        }
+      });
+
+      // 3. Asegurar que el suplente exista como profesor
+      const profesorSuplente = await tx.profesor.upsert({
+        where: { idPersona: idPersonaSuplente },
+        update: {},
+        create: { idPersona: idPersonaSuplente, fechaIngreso: new Date() }
+      });
+
+      // 4. Crear la nueva asignación para el suplente
+      const nuevaAsignacion = await tx.asignacionAcademica.create({
+        data: {
+          idProfesor: profesorSuplente.idProfesor,
+          idMateria: asignacionOriginal.idMateria,
+          idCurso: asignacionOriginal.idCurso,
+          idCiclo: asignacionOriginal.idCiclo,
+          cargaHoraria: asignacionOriginal.cargaHoraria,
+          estado: true,
+        }
+      });
+
+      // 5. Mover horarios y notas a la nueva asignación para mantener el historial
+      await tx.horario.updateMany({
+        where: { idAsignacion: idAsignacionOriginal },
+        data: { idAsignacion: nuevaAsignacion.idAsignacion }
+      });
+
+      await tx.nota.updateMany({
+        where: { idAsignacion: idAsignacionOriginal },
+        data: { idAsignacion: nuevaAsignacion.idAsignacion }
+      });
+
+
+      return nuevaAsignacion;
+    });
+  },
+
 async reincorporarDocente(idAsignacion: number) {
   return await db.$transaction(async (tx) => {
-  const asig = await tx.asignacionAcademica.findUnique({
+    const asig = await tx.asignacionAcademica.findUnique({
       where: { idAsignacion },
-      include: { materia: true, curso: true }
+      include: { materia: true, curso: true, profesor: { include: { persona: true } } }
     });
 
     if (!asig) throw new Error("Asignación no encontrada");
+    if (asig.estado) return asig; // Ya está activo
 
     const reemplazante = await tx.asignacionAcademica.findFirst({
       where: {
         idMateria: asig.idMateria,
         idCurso: asig.idCurso,
         idCiclo: asig.idCiclo,
-        estado: true
+        estado: true,
       },
-      include: { profesor: { include: { persona: true } } }
     });
 
     if (reemplazante) {
-      throw new Error(
-        `No se puede reincorporar: El cargo está ocupado por ${reemplazante.profesor.persona.apellido}, ${reemplazante.profesor.persona.nombre}. Primero debés darle la baja al reemplazante.`
-      );
+      await tx.asignacionAcademica.update({
+        where: { idAsignacion: reemplazante.idAsignacion },
+        data: {
+          estado: false,
+          motivoBaja: `Reemplazado por reincorporación de ${asig.profesor.persona.nombre} ${asig.profesor.persona.apellido}`,
+          fechaBaja: new Date(),
+        }
+      });
+      
+      // Mover historial de vuelta a la asignación original
+      await tx.nota.updateMany({
+        where: { idAsignacion: reemplazante.idAsignacion },
+        data: { idAsignacion: idAsignacion }
+      });
+      await tx.horario.updateMany({
+        where: { idAsignacion: reemplazante.idAsignacion },
+        data: { idAsignacion: idAsignacion }
+      });
     }
 
     return await tx.asignacionAcademica.update({
@@ -226,4 +298,3 @@ async reincorporarDocente(idAsignacion: number) {
 
 
 };
-

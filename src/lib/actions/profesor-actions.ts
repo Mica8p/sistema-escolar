@@ -119,13 +119,18 @@ export async function borrarErrorAsignacionAction(idAsignacion: number) {
   }
 }
 
-export async function darDeBajaAction(idAsignacion: number, motivo: string) {
+export async function darDeBajaAction(idAsignacion: number, motivo: string, idSuplente?: number) {
   try {
-    await ProfesorService.darDeBaja(idAsignacion, motivo);
+    if (idSuplente) {
+      await ProfesorService.reemplazarProfesor(idAsignacion, motivo, idSuplente);
+    } else {
+      await ProfesorService.darDeBaja(idAsignacion, motivo);
+    }
     revalidatePath("/dashboard/profesores");
     return { success: true };
-  } catch (error) {
-    return { success: false, message: "Error al procesar la baja." };
+  } catch (error: any) {
+    console.error("Error en darDeBajaAction:", error);
+    return { success: false, message: error.message || "Error al procesar la baja." };
   }
 }
 
