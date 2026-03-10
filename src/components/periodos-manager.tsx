@@ -7,6 +7,8 @@ import { PeriodoNombre } from '@prisma/client';
 import { useActionState, useEffect, useState } from 'react';
 import { PeriodoAcademico, CicloLectivo } from '@prisma/client';
 import { Lock, Unlock, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import ConfirmModal from '@/components/shared/ConfirmModal';
 
 
 function SubmitButton() {
@@ -19,52 +21,97 @@ function SubmitButton() {
 }
 
 function ToggleStatusButton({ idPeriodo, cerrado }: { idPeriodo: number, cerrado: boolean }) {
-    const handleToggle = async () => {
-        const mensaje = cerrado
-            ? '¿Quieres abrir este periodo? Los docentes podrán volver a cargar notas.'
-            : '¿Quieres cerrar este periodo? Se bloqueará la carga de notas para todos los docentes.';
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-        if (confirm(mensaje)) {
-            const result = await togglePeriodoCerradoAction(idPeriodo, !cerrado);
-            if (result.success) {
-                window.location.reload();
-            } else {
-                alert('Error al cambiar el estado del periodo');
-            }
+    const handleToggle = () => {
+        setIsModalOpen(true);
+    };
+
+    const onConfirm = async () => {
+        setLoading(true);
+        const result = await togglePeriodoCerradoAction(idPeriodo, !cerrado);
+        setLoading(false);
+        setIsModalOpen(false);
+        if (result.success) {
+            toast.success(cerrado ? 'Periodo abierto correctamente' : 'Periodo cerrado correctamente');
+            window.location.reload();
+        } else {
+            // Mostrar el mensaje detallado del servidor
+            const mensaje = result.message || 'Error al cambiar el estado del periodo';
+            toast.error(mensaje, {
+                duration: 5000,
+                description: mensaje.includes('faltan') ? 'Por favor, carga las notas pendientes' : undefined
+            });
         }
     };
 
+    const mensaje = cerrado
+        ? '¿Quieres abrir este periodo? Los docentes podrán volver a cargar notas.'
+        : '¿Quieres cerrar este periodo? Se bloqueará la carga de notas para todos los docentes.';
+
     return (
-        <button
-            onClick={handleToggle}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${
-                cerrado
-                ? 'bg-slate-800 text-white hover:bg-slate-900'
-                : 'bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200'
-            }`}
-        >
-            {cerrado ? <Unlock size={14} /> : <Lock size={14} />}
-            {cerrado ? 'Abrir' : 'Cerrar'}
-        </button>
+        <>
+            <button
+                onClick={handleToggle}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${
+                    cerrado
+                    ? 'bg-slate-800 text-white hover:bg-slate-900'
+                    : 'bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200'
+                }`}
+            >
+                {cerrado ? <Unlock size={14} /> : <Lock size={14} />}
+                {cerrado ? 'Abrir' : 'Cerrar'}
+            </button>
+            <ConfirmModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onConfirm={onConfirm}
+                title={cerrado ? 'Abrir Periodo' : 'Cerrar Periodo'}
+                message={mensaje}
+                loading={loading}
+                variant={cerrado ? 'warning' : 'danger'}
+            />
+        </>
     );
 }
 
 function DeletePeriodoButton({ idPeriodo }: { idPeriodo: number }) {
-    const handleDelete = async () => {
-        if (confirm('¿Estás seguro de que quieres eliminar este periodo? Esta acción no se puede deshacer.')) {
-            const result = await deletePeriodoAction(idPeriodo);
-            if (result.success) {
-                window.location.reload();
-            } else {
-                alert(`Error: ${result.message}`);
-            }
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleDelete = () => {
+        setIsModalOpen(true);
+    };
+
+    const onConfirm = async () => {
+        setLoading(true);
+        const result = await deletePeriodoAction(idPeriodo);
+        setLoading(false);
+        setIsModalOpen(false);
+        if (result.success) {
+            toast.success('Periodo eliminado correctamente');
+            window.location.reload();
+        } else {
+            toast.error(`Error: ${result.message}`);
         }
     };
 
     return (
-        <button onClick={handleDelete} className="px-3 py-1.5 bg-rose-50 text-rose-600 border border-rose-100 rounded-lg text-[10px] font-black uppercase hover:bg-rose-100 transition-all flex items-center gap-1">
-            <Trash2 size={14} /> Eliminar
-        </button>
+        <>
+            <button onClick={handleDelete} className="px-3 py-1.5 bg-rose-50 text-rose-600 border border-rose-100 rounded-lg text-[10px] font-black uppercase hover:bg-rose-100 transition-all flex items-center gap-1">
+                <Trash2 size={14} /> Eliminar
+            </button>
+            <ConfirmModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onConfirm={onConfirm}
+                title="Eliminar Periodo"
+                message="¿Estás seguro de que quieres eliminar este periodo? Esta acción no se puede deshacer."
+                loading={loading}
+                variant="danger"
+            />
+        </>
     );
 }
 
@@ -83,7 +130,9 @@ export default function PeriodosManager() {
       const fetchedCiclos = await getAllCiclos();
       setCiclos(fetchedCiclos);
       if (fetchedCiclos.length > 0) {
-        setSelectedCiclo(fetchedCiclos[0].idCiclo);
+        // Buscar el ciclo activo (estado = true), si no hay usar el primero
+        const activeCiclo = fetchedCiclos.find(c => c.estado === true);
+        setSelectedCiclo(activeCiclo ? activeCiclo.idCiclo : fetchedCiclos[0].idCiclo);
       }
     }
     fetchCiclos();

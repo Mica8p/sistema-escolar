@@ -84,6 +84,16 @@ export async function cambiarEstadoPeriodoAction(idPeriodo: number, cerrado: boo
     throw new Error("Solo el personal administrativo puede cerrar periodos.");
   }
 
+  // Si está intentando CERRAR el período, validar notas
+  if (cerrado) {
+    const { validarNotasFaltantesPeriodo } = await import("@/service/calificaciones.service");
+    const validacion = await validarNotasFaltantesPeriodo(idPeriodo);
+    
+    if (!validacion.ok) {
+      throw new Error(validacion.mensaje || 'No se puede cerrar el período');
+    }
+  }
+
   await db.periodoAcademico.update({
     where: { idPeriodo },
     data: { cerrado }

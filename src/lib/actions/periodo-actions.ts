@@ -83,6 +83,19 @@ export async function getPeriodosByCiclo(idCiclo: number) {
 
 export async function togglePeriodoCerradoAction(idPeriodo: number, cerrado: boolean) {
     try {
+        // Si está intentando CERRAR el período, validar notas
+        if (cerrado) {
+            const { validarNotasFaltantesPeriodo } = await import("@/service/calificaciones.service");
+            const validacion = await validarNotasFaltantesPeriodo(idPeriodo);
+            
+            if (!validacion.ok) {
+                return { 
+                    success: false, 
+                    message: validacion.mensaje || 'No se puede cerrar el período'
+                };
+            }
+        }
+
         await db.periodoAcademico.update({
             where: { idPeriodo },
             data: { cerrado }

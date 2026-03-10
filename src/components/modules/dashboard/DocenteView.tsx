@@ -5,6 +5,7 @@ import {
   getProximosCierresDocente,
   getRendimientoAsistenciaDocente,
   getComunicadosDashboard,
+  // Asumiendo que getDocenteDashboardPendingNotifications está en profesor-dashboard.service o lo importaremos directamente
 } from "@/service/profesor-dashboard.service";
 import { StatCard, Panel, Empty } from "@/components/modules/dashboard/DashboarShared";
 import { Calendar, UserCheck, ClipboardList, GraduationCap, Clock, Zap, ClipboardCheck, ArrowRight } from "lucide-react";
@@ -13,11 +14,26 @@ import ChartAsistencia from "./ChartAsistencia";
 import { getCicloActual } from "@/lib/ciclo-session";
 import WelcomeHeader from "./WelcomeHeader";
 import BannerClaseActualClient from "@/components/modules/dashboard/BannerClaseActualClient";
+import { getDocenteDashboardPendingNotifications } from "@/service/calificaciones.service"; // Importa la nueva función
+
+// Define la interfaz para las notificaciones
+interface PendingNotification {
+  periodoNombre: string;
+  diasFaltantes: number;
+  asignacionesPendientes: {
+    materia: string;
+    curso: string;
+    idAsignacion: number;
+  }[];
+}
 
 export default async function DocenteView({ idProfesor, idUsuario, userName, userRoles }: { idProfesor: number | null, idUsuario: number, userName: string, userRoles: string[] }) {
   if (!idProfesor) return <Empty text="Usuario sin perfil docente asociado." />;
 
   const idCiclo = await getCicloActual();
+  // Llama a la nueva función para obtener las notificaciones dinámicas
+  const pendingNotifications: PendingNotification[] = await getDocenteDashboardPendingNotifications(idProfesor, idCiclo);
+
   const clasesHoy = await getClasesDeHoyDocente(idProfesor);
   const idsCursos = Array.from(new Set(clasesHoy.map(h => h.asignacion.idCurso)));
 
@@ -79,6 +95,28 @@ export default async function DocenteView({ idProfesor, idUsuario, userName, use
 
           {/*  BANNER DINÁMICO: Solo aparece si hay una clase ahora */}
           <BannerClaseActualClient clasesHoy={clasesHoy} />
+
+          {/* --- NOTIFICACIÓN FIJA DE NOTAS PENDIENTES (ROJO) --- */}
+          {pendingNotifications.length > 0 && (
+            <div className="bg-red-50 border-l-4 border-red-500 text-red-800 p-6 rounded-[2.5rem] shadow-sm mb-8">
+              <p className="font-bold text-lg mb-2">⚠️ ¡ATENCIÓN! Notas Pendientes por Cargar</p>
+              {pendingNotifications.map((notif, index) => (
+                <div key={index} className="mb-4 last:mb-0">
+                  <p className="font-semibold">El período "{notif.periodoNombre}" cierra en {notif.diasFaltantes} día(s).</p>
+                  <p className="text-sm">Debes cargar las notas de las siguientes asignaciones:</p>
+                  <ul className="list-disc list-inside ml-4 text-sm">
+                    {notif.asignacionesPendientes.map((asig, idx) => (
+                      <li key={idx}>Materia: {asig.materia} - Curso: {asig.curso}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              <p className="text-sm mt-4 italic font-bold text-red-900">
+                Este mensaje permanecerá visible hasta que todas las notas pendientes sean cargadas.
+              </p>
+            </div>
+          )}
+          {/* --- FIN NOTIFICACIÓN FIJA DE NOTAS PENDIENTES --- */}
 
           {/* AGENDA TIMELINE */}
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-2xl shadow-slate-200/40">
