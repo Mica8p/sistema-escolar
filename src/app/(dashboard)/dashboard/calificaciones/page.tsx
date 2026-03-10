@@ -14,7 +14,6 @@ import FiltrosCalificaciones from "@/components/modules/calificaciones/FiltrosCa
 import PaginationControls from "@/components/shared/PaginationControls";
 import PlanillaSearchBar from "@/components/modules/calificaciones/PlanillaSearchBar";
 
-const TIPOS: TipoEvaluacion[] = ["Parcial", "Final", "Recuperatorio"];
 const PAGE_SIZE = 5;
 
 export default async function CalificacionesPage({
@@ -73,8 +72,13 @@ export default async function CalificacionesPage({
 
   const periodoElegido = periodos.find((p) => p.idPeriodo === idPeriodo);
 
+  const esTrimestre = periodoElegido?.nombre.includes("TRIMESTRE");
+  const tiposDisponibles: TipoEvaluacion[] = esTrimestre
+    ? ["Parcial", "Recuperatorio"]
+    : ["Parcial"];
+
   const tipo = (params.tipo as TipoEvaluacion) ?? "Parcial";
-  const tipoValido = TIPOS.includes(tipo) ? tipo : "Parcial";
+  const tipoValido = tiposDisponibles.includes(tipo) ? tipo : "Parcial";
 
   const planilla =
     idAsignacion && idPeriodo
@@ -217,7 +221,7 @@ export default async function CalificacionesPage({
           </div>
           <div className="p-5 space-y-6">
             <div className="flex gap-2 flex-wrap">
-              {TIPOS.map((t) => (
+              {tiposDisponibles.map((t) => (
                 <Link
                   key={t}
                   href={qs({ tipo: t as TipoEvaluacion })}

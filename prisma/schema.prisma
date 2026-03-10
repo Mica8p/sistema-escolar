@@ -45,7 +45,6 @@ enum EstadoAcademico {
 
 enum TipoEvaluacion {
   Parcial
-  Final
   Recuperatorio
   EXAMEN_MESA
 }
