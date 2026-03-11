@@ -19,7 +19,9 @@ export default async function InventarioView() {
   }
 
   const insumos = await getInventario();
-  const movimientos = await getUltimosMovimientos(20);
+  // Se traen todos los movimientos para que el filtro por mes funcione correctamente
+  // en todo el historial, no solo en un número limitado.
+  const movimientos = await getUltimosMovimientos();
 
   return <InventarioClient insumos={insumos} movimientos={movimientos} />;
 }
