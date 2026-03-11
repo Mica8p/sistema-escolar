@@ -34,14 +34,22 @@ export async function createHorario(
     return { success: true };
   } catch (error) {
     console.error("❌ ERROR AL CREAR HORARIO:", error);
-    return { success: false, message: 'Error al crear el horario' };
+    const errorMessage = error instanceof Error ? error.message : 'Error al crear el horario';
+    return { success: false, message: errorMessage };
   }
 }
 
-import { getHorariosPorCurso as getHorariosPorCursoService } from '@/service/horario.service';
+import { 
+  getHorariosPorCurso as getHorariosPorCursoService, 
+  getHorariosPorDocente as getHorariosPorDocenteService 
+} from '@/service/horario.service';
 
 export async function getHorariosPorCurso(idCurso: number, idCiclo: number) {
   return await getHorariosPorCursoService(idCurso, idCiclo);
+}
+
+export async function getHorariosPorDocente(idProfesor: number, idCiclo: number) {
+  return await getHorariosPorDocenteService(idProfesor, idCiclo);
 }
 
 export async function deleteHorario(idHorario: number) {

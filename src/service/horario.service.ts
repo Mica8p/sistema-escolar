@@ -16,12 +16,39 @@ export const createHorario = async (data: {
 }): Promise<Horario> => {
   const { idAsignacion, diaSemana, horaInicio, horaFin } = data;
 
+  const asignacion = await db.asignacion.findUnique({
+    where: { idAsignacion },
+    select: { idProfesor: true, idCiclo: true },
+  });
+
+  if (!asignacion || !asignacion.idProfesor) {
+    throw new Error('Asignación o profesor no encontrados.');
+  }
+
+  const { idProfesor, idCiclo } = asignacion;
+
+  const existingHorario = await db.horario.findFirst({
+    where: {
+      diaSemana: diaSemana as DiaSemana,
+      horaInicio,
+      asignacion: {
+        idProfesor,
+        idCiclo,
+        estado: true,
+      },
+    },
+  });
+
+  if (existingHorario) {
+    throw new Error('El profesor ya tiene un horario asignado en este bloque.');
+  }
+
   return db.horario.create({
     data: {
       idAsignacion,
       diaSemana: diaSemana as DiaSemana,
-      horaInicio, // Se guarda como "08:00"
-      horaFin,    // Se guarda como "09:20"
+      horaInicio,
+      horaFin,
     },
   });
 };

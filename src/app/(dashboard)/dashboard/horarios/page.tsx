@@ -29,6 +29,7 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
 
   let horarios: any[] = [];
   let idCurso = curso ? parseInt(curso) : null;
+  let cursoSeleccionado = null;
 
   const { bloques, dias } = await getHorarioConfig();
 
@@ -41,6 +42,7 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
   } else {
     if (idCurso) {
       horarios = await getHorariosPorCurso(idCurso, idCiclo);
+      cursoSeleccionado = await db.curso.findUnique({ where: { idCurso } });
     } else if (esDocente && idProfesor) {
       horarios = await getHorariosPorDocente(idProfesor, idCiclo);
       horarios = horarios.filter((h: any) => h.asignacion.estado);
@@ -53,6 +55,10 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
   const horariosTarde = esDocente ? horarios.filter(h => h.asignacion.curso.turno === 'Tarde') : [];
   const bloquesMañana = bloques.filter(b => b.turno === 'Mañana');
   const bloquesTarde = bloques.filter(b => b.turno === 'Tarde');
+  
+  const bloquesFiltrados = cursoSeleccionado
+    ? bloques.filter(b => b.turno === cursoSeleccionado.turno)
+    : bloques;
 
   return (
    <div className="p-8 space-y-8">
@@ -101,7 +107,7 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
         <>
           {idCurso ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <GrillaSemanal horarios={horarios} bloques={bloques} dias={dias}/>
+              <GrillaSemanal horarios={horarios} bloques={bloquesFiltrados} dias={dias}/>
             </div>
           ) : (
             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">

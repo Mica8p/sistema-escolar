@@ -1,10 +1,18 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { asignarDocenteAction, editarDocenteAction, FormState } from "@/lib/actions/profesor-actions";
+import {
+  asignarDocenteAction,
+  editarDocenteAction,
+  FormState,
+} from "@/lib/actions/profesor-actions";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, X } from "lucide-react";
-import { getHorariosPorCurso, getHorarios } from "@/lib/actions/horario-actions";
+import {
+  getHorariosPorCurso,
+  getHorarios,
+  getHorariosPorDocente,
+} from "@/lib/actions/horario-actions";
 import { BloqueHorario, DiaHabil } from "@prisma/client";
 import HorarioMatrix from "./HorarioMatrix";
 
@@ -20,31 +28,50 @@ interface Props {
 
 const initialState: FormState = {};
 
-export default function FormAsignacion({ personas, materias, cursos, editData, idCiclo, diasHabiles, bloquesHorario }: Props) {
+export default function FormAsignacion({
+  personas,
+  materias,
+  cursos,
+  editData,
+  idCiclo,
+  diasHabiles,
+  bloquesHorario,
+}: Props) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [horario, setHorario] = useState<any[]>([]);
   const [loadingHorario, setLoadingHorario] = useState(false);
-  const [selectedCurso, setSelectedCurso] = useState<number | null>(editData?.idCurso || null);
-  const [selectedSlots, setSelectedSlots] = useState<{ dia: string, hora: string }[]>([]);
+  const [selectedCurso, setSelectedCurso] = useState<number | null>(
+    editData?.idCurso || null
+  );
+  const [selectedProfesor, setSelectedProfesor] = useState<number | null>(
+    editData?.profesor?.idPersona || null
+  );
+  const [selectedSlots, setSelectedSlots] = useState<
+    { dia: string; hora: string }[]
+  >([]);
 
   const actionToUse = editData ? editarDocenteAction : asignarDocenteAction;
-  const [state, formAction, isPending] = useActionState(actionToUse, initialState);
+  const [state, formAction, isPending] = useActionState(
+    actionToUse,
+    initialState
+  );
 
   useEffect(() => {
     if (state.success && !editData) {
       setSelectedCurso(null);
       setSelectedSlots([]);
+      setSelectedProfesor(null);
       formRef.current?.reset();
     }
   }, [state, editData]);
 
   useEffect(() => {
     if (editData) {
-      getHorarios(editData.idAsignacion).then(horarios => {
-        const slots = horarios.map(h => ({
+      getHorarios(editData.idAsignacion).then((horarios) => {
+        const slots = horarios.map((h) => ({
           dia: h.diaSemana,
-          hora: `${h.horaInicio} - ${h.horaFin}`
+          hora: `${h.horaInicio} - ${h.horaFin}`,
         }));
         setSelectedSlots(slots);
       });
@@ -52,22 +79,48 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
   }, [editData]);
 
   useEffect(() => {
-    if (selectedCurso) {
+    const fetchHorarios = async () => {
+      if (!selectedProfesor) {
+        setHorario([]);
+        return;
+      }
       setLoadingHorario(true);
-      getHorariosPorCurso(selectedCurso, idCiclo)
-        .then(setHorario)
-        .finally(() => setLoadingHorario(false));
-    } else {
-      setHorario([]);
-    }
+      try {
+        const [horarioDocente, horarioCursoData] = await Promise.all([
+          getHorariosPorDocente(selectedProfesor, idCiclo),
+          selectedCurso ? getHorariosPorCurso(selectedCurso, idCiclo) : Promise.resolve([]),
+        ]);
+        
+        const combinedHorario = [...horarioDocente];
+        
+        horarioCursoData.forEach(hCurso => {
+          if (!combinedHorario.some(hDocente => hDocente.idHorario === hCurso.idHorario)) {
+            combinedHorario.push(hCurso);
+          }
+        });
+
+        setHorario(combinedHorario);
+
+      } catch (error) {
+        console.error("Error fetching horarios:", error);
+        setHorario([]);
+      } finally {
+        setLoadingHorario(false);
+      }
+    };
+  
+    fetchHorarios();
+  
     if (!editData) {
       setSelectedSlots([]);
     }
-  }, [selectedCurso, idCiclo, editData]);
+  }, [selectedCurso, selectedProfesor, idCiclo, editData]);
 
   const handleSlotSelect = (dia: string, hora: string) => {
-    setSelectedSlots(prev => {
-      const index = prev.findIndex(slot => slot.dia === dia && slot.hora === hora);
+    setSelectedSlots((prev) => {
+      const index = prev.findIndex(
+        (slot) => slot.dia === dia && slot.hora === hora
+      );
       if (index > -1) {
         return prev.filter((_, i) => i !== index);
       } else {
@@ -80,18 +133,26 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
     router.push("/dashboard/profesores");
   };
 
-  const cursoSeleccionado = cursos.find(c => c.idCurso === selectedCurso);
+  const cursoSeleccionado = cursos.find((c) => c.idCurso === selectedCurso);
+  const profesorSeleccionado = personas.find(p => p.idPersona === selectedProfesor);
 
   return (
-    <div className={`p-6 rounded-xl border transition-all duration-300 ${
-      editData ? 'bg-blue-50 border-blue-300 shadow-md' : 'bg-white border-gray-200'
-    }`}>
+    <div
+      className={`p-6 rounded-xl border transition-all duration-300 ${
+        editData
+          ? "bg-blue-50 border-blue-300 shadow-md"
+          : "bg-white border-gray-200"
+      }`}
+    >
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold text-gray-700">
           {editData ? "📝 Corregir Asignación" : "➕ Asignar Materia a Docente"}
         </h2>
         {editData && (
-          <button onClick={cancelarEdicion} className="text-gray-400 hover:text-gray-600">
+          <button
+            onClick={cancelarEdicion}
+            className="text-gray-400 hover:text-gray-600"
+          >
             <X size={20} />
           </button>
         )}
@@ -103,40 +164,64 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
         </div>
       )}
 
-      <form ref={formRef} action={formAction} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+      <form
+        ref={formRef}
+        action={formAction}
+        className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end"
+      >
         <input type="hidden" name="idCiclo" value={idCiclo} />
-        {editData && <input type="hidden" name="idAsignacion" value={editData.idAsignacion} />}
+        {editData && (
+          <input type="hidden" name="idAsignacion" value={editData.idAsignacion} />
+        )}
         {selectedSlots.map((slot, i) => (
-          <input type="hidden" name={`slots[${i}]dia`} value={slot.dia} key={`${i}-dia`} />
+          <input
+            type="hidden"
+            name={`slots[${i}]dia`}
+            value={slot.dia}
+            key={`${i}-dia`}
+          />
         ))}
         {selectedSlots.map((slot, i) => (
-          <input type="hidden" name={`slots[${i}]hora`} value={slot.hora} key={`${i}-hora`} />
+          <input
+            type="hidden"
+            name={`slots[${i}]hora`}
+            value={slot.hora}
+            key={`${i}-hora`}
+          />
         ))}
 
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Docente</label>
+          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+            Docente
+          </label>
           <select
             name="idPersona"
             required
             disabled={!!editData}
-            defaultValue={editData?.profesor?.idPersona || ""}
+            value={selectedProfesor || ""}
+            onChange={(e) => setSelectedProfesor(Number(e.target.value))}
             className="w-full p-2 border rounded-md bg-white disabled:bg-gray-100 text-gray-600"
           >
             <option value="">Seleccionar...</option>
             {editData ? (
                 <option value={editData.profesor?.idPersona}>
-                  {editData.profesor?.persona?.apellido}, {editData.profesor?.persona?.nombre}
+                  {editData.profesor?.persona?.apellido},{" "}
+                  {editData.profesor?.persona?.nombre}
                 </option>
             ) : (
-              personas.map(p => (
-                <option key={p.idPersona} value={p.idPersona}>{p.apellido}, {p.nombre}</option>
+              personas.map((p) => (
+                <option key={p.idPersona} value={p.idPersona}>
+                  {p.apellido}, {p.nombre}
+                </option>
               ))
             )}
           </select>
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Materia</label>
+          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+            Materia
+          </label>
           <select
             name="idMateria"
             required
@@ -145,12 +230,18 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
             className="w-full p-2 border rounded-md bg-white text-gray-600"
           >
             <option value="">Seleccionar...</option>
-            {materias.map(m => <option key={m.idMateria} value={m.idMateria}>{m.nombre}</option>)}
+            {materias.map((m) => (
+              <option key={m.idMateria} value={m.idMateria}>
+                {m.nombre}
+              </option>
+            ))}
           </select>
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Curso</label>
+          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+            Curso
+          </label>
           <select
             name="idCurso"
             required
@@ -160,7 +251,11 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
             onChange={(e) => setSelectedCurso(Number(e.target.value))}
           >
             <option value="">Seleccionar...</option>
-            {cursos.map(c => <option key={c.idCurso} value={c.idCurso}>{c.grado}° "{c.seccion}" - {c.turno}</option>)}
+            {cursos.map((c) => (
+              <option key={c.idCurso} value={c.idCurso}>
+                {c.grado}° &quot;{c.seccion}&quot; - {c.turno}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -169,7 +264,9 @@ export default function FormAsignacion({ personas, materias, cursos, editData, i
             type="submit"
             disabled={isPending}
             className={`flex-1 font-bold py-2 rounded-md transition-colors ${
-              editData ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+              editData
+                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white"
             }`}
           >
             {isPending ? "Guardando..." : editData ? "Actualizar" : "Asignar"}

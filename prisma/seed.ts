@@ -12,7 +12,7 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  console.log("🌱 Iniciando reseteo de acceso (Solo Admin)...");
+  console.log("🌱 Base de datos limpia: Creando único administrador del sistema...");
 
   const rolesADefinir = ["ADMIN", "DOCENTE", "PADRE", "ALUMNO"];
   for (const nombre of rolesADefinir) {
@@ -35,12 +35,12 @@ async function main() {
       nombre: "Admin",
       apellido: "Principal",
       dni: "12345678",
-      email: "admin@escuela.com",
+      email: "admin@escuela.local",
       usuario: {
         create: {
           passwordHash: hashedAdminPassword,
           estado: true,
-          defaultPassword: true,
+          defaultPassword: false,
           roles: {
             create: { idRol: rolAdmin.idRol },
           },

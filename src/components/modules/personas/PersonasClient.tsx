@@ -15,8 +15,13 @@ interface PersonasClientProps {
 
 export default function PersonasClient({ personas, success }: PersonasClientProps) {
   const [search, setSearch] = useState("");
-  const [selectedRole, setSelectedRole] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("activo");
+  const [selectedRole, setSelectedRole] = useState(() => {
+    const adminRole = personas
+      .flatMap((p) => p.usuario?.roles ?? [])
+      .find((r) => r.rol.nombre.toLowerCase() === "admin");
+    return adminRole ? adminRole.rol.idRol.toString() : "";
+  });
+  const [selectedStatus, setSelectedStatus] = useState("todos");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -160,7 +165,7 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
         <table className="w-full text-left border-collapse">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              <th className="px-6 py-4 text-sm font-semibold text-slate-600">Nombre y Apellido</th>
+              <th className="px-6 py-4 text-sm font-semibold text-slate-600">Apellido y Nombre</th>
               <th className="px-6 py-4 text-sm font-semibold text-slate-600">DNI / Documento</th>
               <th className="px-6 py-4 text-sm font-semibold text-slate-600">Email</th>
               <th className="px-6 py-4 text-sm font-semibold text-slate-600">Roles</th>
