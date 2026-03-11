@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import InsumoFormModal from "./InsumoFormModal";
 import MovimientoStockModal from "./MovimientoStockModal";
+import PaginationControls from "@/components/shared/PaginationControls";
 
 type Insumo = {
   idInsumo: number;
@@ -57,7 +59,30 @@ export default function InventarioClient({
     setOpen(true);
   };
 
-  const rows = useMemo(() => insumos, [insumos]);
+  const searchParams = useSearchParams();
+  const page = searchParams.get("page") ?? "1";
+  const per_page = searchParams.get("per_page") ?? "5";
+
+  const start = (Number(page) - 1) * Number(per_page);
+  const end = start + Number(per_page);
+
+  const paginatedInsumos = useMemo(
+    () => insumos.slice(start, end),
+    [insumos, start, end]
+  );
+
+  const rows = useMemo(() => paginatedInsumos, [paginatedInsumos]);
+
+  const page_mov = searchParams.get("page_mov") ?? "1";
+  const per_page_mov = searchParams.get("per_page_mov") ?? "5";
+
+  const start_mov = (Number(page_mov) - 1) * Number(per_page_mov);
+  const end_mov = start_mov + Number(per_page_mov);
+
+  const paginatedMovimientos = useMemo(
+    () => movimientos.slice(start_mov, end_mov),
+    [movimientos, start_mov, end_mov]
+  );
 
   return (
     <div className="space-y-6">
@@ -157,13 +182,17 @@ export default function InventarioClient({
             )}
           </tbody>
         </table>
+        <PaginationControls
+          currentPage={Number(page)}
+          totalPages={Math.ceil(insumos.length / Number(per_page))}
+        />
       </div>
 
       {/* ---------- Tabla secundaria: HISTORIAL ---------- */}
       <div className="overflow-hidden rounded-xl border bg-white">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h2 className="text-sm font-semibold text-gray-900">Últimos movimientos</h2>
-          <span className="text-xs text-gray-600">Mostrando {movimientos.length}</span>
+          <span className="text-xs text-gray-600">Mostrando {paginatedMovimientos.length} de {movimientos.length}</span>
         </div>
 
         <table className="w-full text-sm">
@@ -179,7 +208,7 @@ export default function InventarioClient({
           </thead>
 
           <tbody>
-            {movimientos.map((m) => {
+            {paginatedMovimientos.map((m) => {
               const isNeg = m.cantidad < 0;
               const abs = Math.abs(m.cantidad);
 
@@ -222,7 +251,7 @@ export default function InventarioClient({
               );
             })}
 
-            {movimientos.length === 0 && (
+            {paginatedMovimientos.length === 0 && (
               <tr className="border-t">
                 <td className="px-4 py-6 text-gray-500" colSpan={6}>
                   Todavía no hay movimientos registrados.
@@ -231,6 +260,11 @@ export default function InventarioClient({
             )}
           </tbody>
         </table>
+        <PaginationControls
+          currentPage={Number(page_mov)}
+          totalPages={Math.ceil(movimientos.length / Number(per_page_mov))}
+          pageParam="page_mov"
+        />
       </div>
 
       {/* ---------- Modales ---------- */}
