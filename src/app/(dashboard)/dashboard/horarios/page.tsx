@@ -70,7 +70,7 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
         <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm flex gap-6 items-center">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Seleccionar Curso:</span>
           <form className="flex gap-3">
-            <select name="curso" defaultValue={curso || ""} className="text-[10px] font-black text-gray-600 uppercase tracking-widest  shadow-lg shadow-neutral-300 transition-all">
+            <select name="curso" defaultValue={curso || ""} className="text-[10px] font-black text-gray-600 uppercase tracking-widest transition-all">
               <option value="" disabled>Elegir curso...</option>
               {cursos.map(c => (
                 <option key={c.idCurso} value={c.idCurso}>{c.grado} "{c.seccion}" - {c.turno}</option>

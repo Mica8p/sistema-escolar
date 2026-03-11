@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { ConceptoDePago } from "@prisma/client";
 import { deleteConceptoAction } from "@/lib/actions/finanzas-actions";
-import { Pencil } from "lucide-react";
+import { Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import GenericDeleteButton from "@/components/shared/GenericDeletButton";
 
 type ConceptosListProps = {
@@ -11,6 +12,21 @@ type ConceptosListProps = {
 };
 
 export default function ConceptosList({ conceptos, onEdit }: ConceptosListProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const totalPages = Math.ceil(conceptos.length / itemsPerPage);
+  const paginatedConceptos = conceptos.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage > 0 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
   return (
     <div className="overflow-x-auto rounded-[2.5rem] border border-slate-100 shadow-sm bg-white">
       <table className="min-w-full divide-y divide-slate-100">
@@ -23,7 +39,7 @@ export default function ConceptosList({ conceptos, onEdit }: ConceptosListProps)
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-slate-50">
-          {conceptos.map((concepto) => (
+          {paginatedConceptos.map((concepto) => (
             <tr key={concepto.id} className="hover:bg-indigo-50/30 transition-colors group">
               <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-700 uppercase">
                 {concepto.nombre}
@@ -56,6 +72,29 @@ export default function ConceptosList({ conceptos, onEdit }: ConceptosListProps)
           ))}
         </tbody>
       </table>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-4 p-4">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft size={16} />
+            Anterior
+          </button>
+          <span className="text-sm font-bold text-slate-500">
+            Página {currentPage} de {totalPages}
+          </span>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Siguiente
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

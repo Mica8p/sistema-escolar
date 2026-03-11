@@ -9,10 +9,14 @@ export type AlumnoConDeuda = {
   id: number;
   nombre: string;
   apellido: string;
+  dni: string;
   legajo: string;
   curso: string;
   deudaTotal: number;
   estado: "Al día" | "Con Deuda";
+  telefono?: string | null;
+  telefonoPadre: string;
+  nombrePadre: string;
 };
 
 export async function getAlumnosConEstadoDeCuenta(): Promise<AlumnoConDeuda[]> {
@@ -61,7 +65,7 @@ export async function getAlumnosConEstadoDeCuenta(): Promise<AlumnoConDeuda[]> {
 
     const matricula = alumno.matriculas[0];
     const cursoActual = matricula?.curso
-      ? `${matricula.curso.grado} '${matricula.curso.seccion}'`
+      ? `${matricula.curso.grado} '${matricula.curso.seccion}' - ${matricula.curso.turno}`
       : "Sin curso asignado";
 
     const relacionPadre = alumno.padres[0];
@@ -72,6 +76,7 @@ export async function getAlumnosConEstadoDeCuenta(): Promise<AlumnoConDeuda[]> {
       id: alumno.idAlumno,
       nombre: alumno.persona.nombre,
       apellido: alumno.persona.apellido,
+      dni: alumno.persona.dni,
       legajo: alumno.legajo,
       telefono: alumno.persona.telefono,
       curso: cursoActual,

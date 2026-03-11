@@ -3,19 +3,41 @@
 import { useRef } from "react";
 import BotonImprimir from "@/components/BotonDescarga";
 import { GraduationCap, AlertCircle, MessageCircle } from "lucide-react";
+import { toast } from "sonner";
 
-export default function ReporteDeudoresTable({ deudores }: { deudores: any[] }) {
+export default function ReporteDeudoresTable({
+  deudores,
+  totalDeudores,
+  montoGlobal,
+}: {
+  deudores: any[];
+  totalDeudores: number;
+  montoGlobal: number;
+}) {
   const tableRef = useRef<HTMLDivElement>(null);
 
   const enviarRecordatorio = (alumno: any) => {
-    const telefono = alumno.telefonoPadre?.replace(/\D/g, "");
-if (!telefono) {
-      return alert(`No hay un teléfono registrado para el padre/tutor de ${alumno.nombre}.`);
-    }
+    let telefono: string | undefined;
+    let mensaje: string;
 
-    const mensaje = encodeURIComponent(
-      `Estimado/a *${alumno.nombrePadre}*, le informamos desde *Escuela Pro 2026* que el alumno *${alumno.apellido}, ${alumno.nombre}* presenta una deuda pendiente de *${alumno.deudaFormateada}*. Por favor, solicitamos regularizar el pago. Saludos!`
-    );
+    const telefonoPadre = alumno.telefonoPadre?.replace(/\D/g, "");
+    const telefonoAlumno = alumno.telefono?.replace(/\D/g, "");
+
+    if (telefonoPadre) {
+      telefono = telefonoPadre;
+      mensaje = encodeURIComponent(
+        `Estimado/a *${alumno.nombrePadre}*, le informamos desde *Escuela Pro 2026* que el alumno *${alumno.apellido}, ${alumno.nombre}* presenta una deuda pendiente de *${alumno.deudaFormateada}*. Por favor, solicitamos regularizar el pago. Saludos!`
+      );
+    } else if (telefonoAlumno) {
+      telefono = telefonoAlumno;
+      mensaje = encodeURIComponent(
+        `Hola *${alumno.nombre}*, te informamos desde *Escuela Pro 2026* que presentas una deuda pendiente de *${alumno.deudaFormateada}*. Por favor, solicitamos regularizar el pago. Saludos!`
+      );
+    } else {
+      return toast.error(
+        `No hay un teléfono registrado para el alumno/a o su tutor.`
+      );
+    }
 
     window.open(`https://wa.me/${telefono}?text=${mensaje}`, "_blank");
   };
@@ -38,8 +60,12 @@ if (!telefono) {
           <div className="flex items-center gap-4">
             <GraduationCap className="text-indigo-600" size={40} />
             <div>
-              <h2 className="text-2xl font-black uppercase tracking-tighter">Escuela Pro 2026</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Listado Oficial de Saldos Pendientes</p>
+              <h2 className="text-2xl font-black uppercase tracking-tighter">
+                Escuela Pro 2026
+              </h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                Listado Oficial de Saldos Pendientes
+              </p>
             </div>
           </div>
         </div>
@@ -47,17 +73,30 @@ if (!telefono) {
         <table className="w-full">
           <thead>
             <tr className="border-b-2 border-slate-100">
-              <th className="px-4 py-4 text-left text-[10px] font-black text-slate-400 uppercase">Alumno</th>
-              <th className="px-4 py-4 text-left text-[10px] font-black text-slate-400 uppercase">Curso</th>
-              <th className="px-4 py-4 text-right text-[10px] font-black text-slate-400 uppercase">Total Deuda</th>
+              <th className="px-4 py-4 text-left text-[10px] font-black text-slate-400 uppercase">
+                Alumno
+              </th>
+              <th className="px-4 py-4 text-left text-[10px] font-black text-slate-400 uppercase">
+                Curso
+              </th>
+              <th className="px-4 py-4 text-right text-[10px] font-black text-slate-400 uppercase">
+                Total Deuda
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {deudores.map((alumno) => (
-              <tr key={alumno.id} className="hover:bg-slate-50 transition-colors">
+              <tr
+                key={alumno.id}
+                className="hover:bg-slate-50 transition-colors"
+              >
                 <td className="px-4 py-4">
-                  <p className="text-sm font-black text-slate-800 uppercase">{alumno.apellido}, {alumno.nombre}</p>
-                  <p className="text-[9px] font-bold text-slate-400">Legajo: {alumno.legajo}</p>
+                  <p className="text-sm font-black text-slate-800 uppercase">
+                    {alumno.apellido}, {alumno.nombre}
+                  </p>
+                  <p className="text-[9px] font-bold text-slate-400">
+                    Legajo: {alumno.legajo}
+                  </p>
                 </td>
                 <td className="px-4 py-4 text-xs font-bold text-slate-500 uppercase">
                   {alumno.curso}
@@ -84,10 +123,15 @@ if (!telefono) {
         <div className="mt-8 p-6 bg-slate-50 rounded-2xl flex justify-between items-center border border-slate-100">
           <div className="flex items-center gap-2 text-slate-500">
             <AlertCircle size={16} />
-            <p className="text-[10px] font-bold uppercase tracking-widest">Total deudores: {deudores.length}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest">
+              Total deudores: {totalDeudores}
+            </p>
           </div>
           <p className="text-lg font-black text-slate-900">
-            Monto Global: <span className="text-rose-600">${deudores.reduce((acc, a) => acc + a.deudaTotal, 0).toLocaleString()}</span>
+            Monto Global:{" "}
+            <span className="text-rose-600">
+              ${montoGlobal.toLocaleString()}
+            </span>
           </p>
         </div>
       </div>

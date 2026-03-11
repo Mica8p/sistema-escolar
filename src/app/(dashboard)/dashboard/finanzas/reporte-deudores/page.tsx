@@ -1,19 +1,39 @@
 import { getAlumnosConEstadoDeCuenta } from "@/service/finanzas.service";
 import ReporteDeudoresTable from "@/components/modules/finanzas/ReporteDeudoresTable";
+import PaginationControls from "@/components/shared/PaginationControls";
 
-export default async function ReporteDeudoresPage() {
+export default async function ReporteDeudoresPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const todosLosAlumnos = await getAlumnosConEstadoDeCuenta();
 
   const deudores = todosLosAlumnos
-    .filter(a => a.deudaTotal > 0)
-    .map(a => ({
+    .filter((a) => a.deudaTotal > 0)
+    .map((a) => ({
       ...a,
-      deudaFormateada: new Intl.NumberFormat('es-AR', {
-        style: 'currency',
-        currency: 'ARS',
-      }).format(a.deudaTotal)
+      deudaFormateada: new Intl.NumberFormat("es-AR", {
+        style: "currency",
+        currency: "ARS",
+      }).format(a.deudaTotal),
     }));
 
+  const page = searchParams["page"] ?? "1";
+  const perPage = 5;
+  const currentPage = Math.max(Number(page), 1);
+
+  const paginatedDeudores = deudores.slice(
+    (currentPage - 1) * perPage,
+    currentPage * perPage
+  );
+
+  const totalPages = Math.ceil(deudores.length / perPage);
+  const hasNextPage = currentPage < totalPages;
+  const hasPrevPage = currentPage > 1;
+
+  const totalDeudores = deudores.length;
+  const montoGlobal = deudores.reduce((acc, a) => acc + a.deudaTotal, 0);
 
   return (
     <div className="space-y-6">
@@ -28,7 +48,16 @@ export default async function ReporteDeudoresPage() {
         </div>
       </div>
 
-      <ReporteDeudoresTable deudores={deudores} />
+      <ReporteDeudoresTable
+        deudores={paginatedDeudores}
+        totalDeudores={totalDeudores}
+        montoGlobal={montoGlobal}
+      />
+      <PaginationControls
+        hasNextPage={hasNextPage}
+        hasPrevPage={hasPrevPage}
+        totalPages={totalPages}
+      />
     </div>
   );
 }
