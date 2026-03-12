@@ -27,20 +27,46 @@ export const createHorario = async (data: {
 
   const { idProfesor, idCiclo } = asignacion;
 
-  const existingHorario = await db.horario.findFirst({
+  // Obtener todos los horarios del profesor en el mismo día y ciclo
+  const horariosDelProfesor = await db.horario.findMany({
     where: {
       diaSemana: diaSemana as DiaSemana,
-      horaInicio,
       asignacion: {
         idProfesor,
         idCiclo,
         estado: true,
       },
     },
+    select: {
+      horaInicio: true,
+      horaFin: true,
+      asignacion: {
+        select: {
+          curso: {
+            select: {
+              grado: true,
+              seccion: true,
+            }
+          }
+        }
+      }
+    }
   });
 
-  if (existingHorario) {
-    throw new Error('El profesor ya tiene un horario asignado en este bloque.');
+  // Verificar si hay solapamiento con algún horario existente
+  for (const horario of horariosDelProfesor) {
+    const existeInicio = horaInicio >= horario.horaInicio && horaInicio < horario.horaFin;
+    const existeFin = horaFin > horario.horaInicio && horaFin <= horario.horaFin;
+    const contieneTodo = horaInicio <= horario.horaInicio && horaFin >= horario.horaFin;
+    
+    if (existeInicio || existeFin || contieneTodo) {
+      const cursoInfo = horario.asignacion?.curso;
+      throw new Error(
+        `El profesor ya tiene clase ${cursoInfo ? `en ${cursoInfo.grado}°${cursoInfo.seccion}` : ''} ` +
+        `el ${diaSemana} de ${horario.horaInicio} a ${horario.horaFin}. ` +
+        `No se puede asignar desde ${horaInicio} a ${horaFin}.`
+      );
+    }
   }
 
   return db.horario.create({
@@ -90,7 +116,8 @@ export async function getHorariosPorDocente(idProfesor: number, idCiclo: number)
     where: {
       asignacion: {
         idProfesor,
-        idCiclo
+        idCiclo,
+        estado: true  // Solo traer horarios de asignaciones activas
       }
     },
     include: {
@@ -104,7 +131,7 @@ export async function getHorariosPorDocente(idProfesor: number, idCiclo: number)
         }
       }
     },
-    orderBy: { horaInicio: 'asc' }
+    orderBy: [{ diaSemana: 'asc' }, { horaInicio: 'asc' }]
   });
 }
 export async function getHorarioConfig() {

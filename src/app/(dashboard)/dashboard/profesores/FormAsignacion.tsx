@@ -11,7 +11,7 @@ import { AlertCircle, CheckCircle2, X } from "lucide-react";
 import {
   getHorariosPorCurso,
   getHorarios,
-  getHorariosPorDocente,
+  getHorariosPorPersona,
 } from "@/lib/actions/horario-actions";
 import { BloqueHorario, DiaHabil } from "@prisma/client";
 import HorarioMatrix from "./HorarioMatrix";
@@ -40,6 +40,7 @@ export default function FormAsignacion({
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [horario, setHorario] = useState<any[]>([]);
+  const [horarioCurso, setHorarioCurso] = useState<any[]>([]);
   const [loadingHorario, setLoadingHorario] = useState(false);
   const [selectedCurso, setSelectedCurso] = useState<number | null>(
     editData?.idCurso || null
@@ -80,30 +81,27 @@ export default function FormAsignacion({
 
   useEffect(() => {
     const fetchHorarios = async () => {
-      if (!selectedProfesor) {
-        setHorario([]);
-        return;
-      }
       setLoadingHorario(true);
       try {
-        const [horarioDocente, horarioCursoData] = await Promise.all([
-          getHorariosPorDocente(selectedProfesor, idCiclo),
-          selectedCurso ? getHorariosPorCurso(selectedCurso, idCiclo) : Promise.resolve([]),
-        ]);
-        
-        const combinedHorario = [...horarioDocente];
-        
-        horarioCursoData.forEach(hCurso => {
-          if (!combinedHorario.some(hDocente => hDocente.idHorario === hCurso.idHorario)) {
-            combinedHorario.push(hCurso);
-          }
-        });
+        // Obtener horarios del profesor desde su idPersona
+        if (selectedProfesor) {
+          const horarioDocente = await getHorariosPorPersona(selectedProfesor, idCiclo);
+          setHorario(horarioDocente);
+        } else {
+          setHorario([]);
+        }
 
-        setHorario(combinedHorario);
-
+        // Obtener horarios del curso
+        if (selectedCurso) {
+          const horarioCursoData = await getHorariosPorCurso(selectedCurso, idCiclo);
+          setHorarioCurso(horarioCursoData);
+        } else {
+          setHorarioCurso([]);
+        }
       } catch (error) {
         console.error("Error fetching horarios:", error);
         setHorario([]);
+        setHorarioCurso([]);
       } finally {
         setLoadingHorario(false);
       }
@@ -114,7 +112,7 @@ export default function FormAsignacion({
     if (!editData) {
       setSelectedSlots([]);
     }
-  }, [selectedCurso, selectedProfesor, idCiclo, editData]);
+  }, [selectedProfesor, selectedCurso, idCiclo, editData]);
 
   const handleSlotSelect = (dia: string, hora: string) => {
     setSelectedSlots((prev) => {
@@ -251,7 +249,7 @@ export default function FormAsignacion({
             onChange={(e) => setSelectedCurso(Number(e.target.value))}
           >
             <option value="">Seleccionar...</option>
-            {cursos.map((c) => (
+            {[...new Map(cursos.map(c => [c.idCurso, c])).values()].map((c) => (
               <option key={c.idCurso} value={c.idCurso}>
                 {c.grado}° &quot;{c.seccion}&quot; - {c.turno}
               </option>
@@ -286,7 +284,8 @@ export default function FormAsignacion({
 
       {selectedCurso && cursoSeleccionado && (
         <HorarioMatrix
-          horario={horario}
+          horarioProfesor={horario}
+          horarioCurso={horarioCurso}
           turno={cursoSeleccionado.turno}
           loading={loadingHorario}
           onSlotSelect={handleSlotSelect}
