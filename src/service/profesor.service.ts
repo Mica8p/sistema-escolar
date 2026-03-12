@@ -63,47 +63,77 @@ async getAll(idCiclo: number, page: number = 1, limit: number = 10) {
 
 async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idCiclo: number, slots: { dia: string, hora: string }[]) {
     return await db.$transaction(async (tx) => {
+    // 1. Obtener o crear el profesor primero
+    const profesor = await tx.profesor.upsert({
+      where: { idPersona: idPersona },
+      update: {},
+      create: { idPersona, fechaIngreso: new Date() }
+    });
 
+    // 2. Validar que la materia no esté asignada a otro docente activo
     const tronoOcupado = await tx.asignacionAcademica.findFirst({
       where: { idMateria, idCurso, idCiclo, estado: true }
     });
     if (tronoOcupado) throw new Error("Esta materia ya tiene un docente activo.");
 
+    // 3. Validar conflictos de horario usando el idProfesor correcto
     for (const slot of slots) {
+      const [newHoraInicio, newHoraFin] = slot.hora.split(" - ");
+      
+      // Convertir a minutos para comparación más precisa
+      const [newHH, newMM] = newHoraInicio.split(":").map(Number);
+      const [newHHFin, newMMFin] = newHoraFin.split(":").map(Number);
+      const nuevoInicioMinutos = newHH * 60 + newMM;
+      const nuevoFinMinutos = newHHFin * 60 + newMMFin;
+      
       const conflicto = await tx.horario.findFirst({
         where: {
-          asignacion: { idProfesor: idPersona, idCiclo, estado: true },
+          asignacion: { 
+            idProfesor: profesor.idProfesor,
+            idCiclo, 
+            estado: true 
+          },
           diaSemana: slot.dia as DiaSemana,
-          horaInicio: slot.hora.split(" - ")[0]
-        }
+        },
       });
-      if (conflicto) throw new Error(`El docente ya tiene otra clase el ${slot.dia} a esa hora.`);
+
+      // Si encontramos horarios en ese día, verificar solapamiento
+      if (conflicto) {
+        const [hh, mm] = conflicto.horaInicio.split(":").map(Number);
+        const [hhFin, mmFin] = conflicto.horaFin.split(":").map(Number);
+        const inicioMinutos = hh * 60 + mm;
+        const finMinutos = hhFin * 60 + mmFin;
+        
+        // Verificar solapamiento: NO hay solapamiento si (fin1 <= inicio2 OR inicio1 >= fin2)
+        const hayInterseccion = !(nuevoFinMinutos <= inicioMinutos || nuevoInicioMinutos >= finMinutos);
+        
+        if (hayInterseccion) {
+          throw new Error(
+            `El docente ya tiene otra clase el ${slot.dia} de ${conflicto.horaInicio} a ${conflicto.horaFin}.`
+          );
+        }
+      }
     }
 
-      const existeActiva = await tx.asignacionAcademica.findFirst({
-        where: {
-          idMateria,
-          idCurso,
-          idCiclo,
-          estado: true
-        },
-        include: { profesor: { include: { persona: true } } }
-      });
+    // 4. Validar que no exista una asignación activa de esta materia+curso
+    const existeActiva = await tx.asignacionAcademica.findFirst({
+      where: {
+        idMateria,
+        idCurso,
+        idCiclo,
+        estado: true
+      },
+      include: { profesor: { include: { persona: true } } }
+    });
 
-      if (existeActiva) {
-        throw new Error(`¡Cuidado! ${existeActiva.profesor.persona.apellido} ya está activo en esta materia. Primero debés darle la baja.`);
-      }
+    if (existeActiva) {
+      throw new Error(`¡Cuidado! ${existeActiva.profesor.persona.apellido} ya está activo en esta materia. Primero debés darle la baja.`);
+    }
 
-
-      const profesor = await tx.profesor.upsert({
-        where: { idPersona: idPersona },
-        update: {},
-        create: { idPersona, fechaIngreso: new Date() }
-      });
-
-      const asignacion = await tx.asignacionAcademica.create({
-        data: {
-          idProfesor: profesor.idProfesor,
+    // 5. Crear la asignación académica
+    const asignacion = await tx.asignacionAcademica.create({
+      data: {
+        idProfesor: profesor.idProfesor,
           idMateria,
           idCurso,
           idCiclo: idCiclo,
@@ -136,8 +166,56 @@ async eliminarAsignacion(idAsignacion: number) {
 
   async updateAsignacion(idAsignacion: number, data: { idMateria?: number, idCurso?: number }, slots: { dia: string, hora: string }[]) {
     return await db.$transaction(async (tx) => {
+      const asignacion = await tx.asignacionAcademica.findUnique({
+        where: { idAsignacion },
+        select: { idProfesor: true, idCiclo: true },
+      });
+
+      if (!asignacion) {
+        throw new Error("Asignación no encontrada");
+      }
+
+      for (const slot of slots) {
+        const [newHoraInicio, newHoraFin] = slot.hora.split(" - ");
+        
+        // Convertir a minutos para comparación más precisa
+        const [newHH, newMM] = newHoraInicio.split(":").map(Number);
+        const [newHHFin, newMMFin] = newHoraFin.split(":").map(Number);
+        const nuevoInicioMinutos = newHH * 60 + newMM;
+        const nuevoFinMinutos = newHHFin * 60 + newMMFin;
+
+        const horariosExistentes = await tx.horario.findMany({
+          where: {
+            idAsignacion: { not: idAsignacion },
+            asignacion: {
+              idProfesor: asignacion.idProfesor,
+              idCiclo: asignacion.idCiclo,
+              estado: true,
+            },
+            diaSemana: slot.dia as DiaSemana,
+          },
+        });
+
+        // Verificar solapamiento con cada horario existente
+        for (const conflicto of horariosExistentes) {
+          const [hh, mm] = conflicto.horaInicio.split(":").map(Number);
+          const [hhFin, mmFin] = conflicto.horaFin.split(":").map(Number);
+          const inicioMinutos = hh * 60 + mm;
+          const finMinutos = hhFin * 60 + mmFin;
+          
+          // Verificar solapamiento: NO hay solapamiento si (fin1 <= inicio2 OR inicio1 >= fin2)
+          const hayInterseccion = !(nuevoFinMinutos <= inicioMinutos || nuevoInicioMinutos >= finMinutos);
+          
+          if (hayInterseccion) {
+            throw new Error(
+              `El docente ya tiene otra clase el ${slot.dia} de ${conflicto.horaInicio} a ${conflicto.horaFin}.`
+            );
+          }
+        }
+      }
+
       await tx.horario.deleteMany({
-        where: { idAsignacion: idAsignacion }
+        where: { idAsignacion: idAsignacion },
       });
 
       for (const slot of slots) {
@@ -148,7 +226,7 @@ async eliminarAsignacion(idAsignacion: number) {
             diaSemana: slot.dia as DiaSemana,
             horaInicio,
             horaFin,
-          }
+          },
         });
       }
 
@@ -157,7 +235,7 @@ async eliminarAsignacion(idAsignacion: number) {
         data: {
           ...data,
           cargaHoraria: 4 * slots.length,
-        }
+        },
       });
     });
   },

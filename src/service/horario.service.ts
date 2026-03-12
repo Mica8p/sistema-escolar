@@ -16,16 +16,22 @@ export const createHorario = async (data: {
 }): Promise<Horario> => {
   const { idAsignacion, diaSemana, horaInicio, horaFin } = data;
 
-  const asignacion = await db.asignacion.findUnique({
+  const asignacion = await db.asignacionAcademica.findUnique({
     where: { idAsignacion },
-    select: { idProfesor: true, idCiclo: true },
+    select: { idProfesor: true, idCiclo: true, curso: { select: { turno: true } } },
   });
 
   if (!asignacion || !asignacion.idProfesor) {
     throw new Error('Asignación o profesor no encontrados.');
   }
 
-  const { idProfesor, idCiclo } = asignacion;
+  const { idProfesor, idCiclo, curso } = asignacion;
+
+  // Convertir nuevos horarios a formato de minutos
+  const [newHHInicio, newMMInicio] = horaInicio.split(":").map(Number);
+  const [newHHFin, newMMFin] = horaFin.split(":").map(Number);
+  const nuevoInicioMinutos = newHHInicio * 60 + newMMInicio;
+  const nuevoFinMinutos = newHHFin * 60 + newMMFin;
 
   // Obtener todos los horarios del profesor en el mismo día y ciclo
   const horariosDelProfesor = await db.horario.findMany({
@@ -46,6 +52,7 @@ export const createHorario = async (data: {
             select: {
               grado: true,
               seccion: true,
+              turno: true,
             }
           }
         }
@@ -55,16 +62,20 @@ export const createHorario = async (data: {
 
   // Verificar si hay solapamiento con algún horario existente
   for (const horario of horariosDelProfesor) {
-    const existeInicio = horaInicio >= horario.horaInicio && horaInicio < horario.horaFin;
-    const existeFin = horaFin > horario.horaInicio && horaFin <= horario.horaFin;
-    const contieneTodo = horaInicio <= horario.horaInicio && horaFin >= horario.horaFin;
+    const [hh, mm] = horario.horaInicio.split(":").map(Number);
+    const inicioMinutos = hh * 60 + mm;
     
-    if (existeInicio || existeFin || contieneTodo) {
+    const [hh2, mm2] = horario.horaFin.split(":").map(Number);
+    const finMinutos = hh2 * 60 + mm2;
+    
+    // Verificar solapamiento: NO hay solapamiento si (fin1 <= inicio2 OR inicio1 >= fin2)
+    const hayInterseccion = !(nuevoFinMinutos <= inicioMinutos || nuevoInicioMinutos >= finMinutos);
+    
+    if (hayInterseccion) {
       const cursoInfo = horario.asignacion?.curso;
       throw new Error(
-        `El profesor ya tiene clase ${cursoInfo ? `en ${cursoInfo.grado}°${cursoInfo.seccion}` : ''} ` +
-        `el ${diaSemana} de ${horario.horaInicio} a ${horario.horaFin}. ` +
-        `No se puede asignar desde ${horaInicio} a ${horaFin}.`
+        `El profesor ya está asignado a ${cursoInfo ? `${cursoInfo.grado}°${cursoInfo.seccion}` : 'otro curso'} ` +
+        `el ${diaSemana} de ${horario.horaInicio} a ${horario.horaFin}.`
       );
     }
   }
