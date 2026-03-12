@@ -3,31 +3,48 @@ import { getCicloActual } from "@/lib/ciclo-session";
 import { DiaSemana } from "@prisma/client";
 
 export const ProfesorService = {
-async getAll(idCiclo: number) {
-    return await db.profesor.findMany({
-      where: {
-        persona: {
-          usuario: { estado: true }
-        }
+async getAll(idCiclo: number, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+
+    const whereCondition = {
+      persona: {
+        usuario: { estado: true }
       },
-      include: {
-        persona: true,
-        asignaciones: {
-          where: {
-            estado: true,
-            idCiclo: idCiclo
-          },
-          include: {
-            materia: true,
-            curso: true,
-            profesor: {
-              include: { persona: true }
+      asignaciones: {
+        some: {
+          idCiclo: idCiclo,
+          estado: true
+        }
+      }
+    };
+
+    const [profesores, total] = await db.$transaction([
+      db.profesor.findMany({
+        where: whereCondition,
+        include: {
+          persona: true,
+          asignaciones: {
+            where: {
+              estado: true,
+              idCiclo: idCiclo
+            },
+            include: {
+              materia: true,
+              curso: true,
+              profesor: {
+                include: { persona: true }
+              }
             }
           }
-        }
-      },
-      orderBy: { persona: { apellido: "asc" } }
-    });
+        },
+        orderBy: { persona: { apellido: "asc" } },
+        skip,
+        take: limit
+      }),
+      db.profesor.count({ where: whereCondition })
+    ]);
+
+    return { profesores, total };
   },
 
   async getPersonasDisponibles() {

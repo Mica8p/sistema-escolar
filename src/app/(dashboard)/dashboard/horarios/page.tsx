@@ -49,7 +49,19 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
     }
   }
 
-  const cursos = esAdmin ? await db.curso.findMany({ orderBy: { grado: 'asc' } }) : [];
+  const cursos = esAdmin 
+    ? await db.curso.findMany({ 
+        where: {
+          asignaciones: {
+            some: {
+              idCiclo: idCiclo,
+              estado: true
+            }
+          }
+        },
+        orderBy: [{ grado: 'asc' }, { seccion: 'asc' }]
+      }) 
+    : [];
 
   const horariosMañana = esDocente ? horarios.filter(h => h.asignacion.curso.turno === 'Mañana') : [];
   const horariosTarde = esDocente ? horarios.filter(h => h.asignacion.curso.turno === 'Tarde') : [];

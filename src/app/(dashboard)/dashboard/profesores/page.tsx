@@ -9,11 +9,16 @@ import { AsignacionesList } from "./AsignacionesList";
 import { HistorialAsignacionesTable } from "@/components/modules/profesores/HistorialAsignacionesTable"; // Import the new client component
 
 interface PageProps {
-  searchParams: Promise<{ editId?: string }>;
+  searchParams: { 
+    editId?: string;
+    page?: string;
+   };
 }
 
 export default async function DocentesPage({ searchParams }: PageProps) {
-  const { editId } = await searchParams;
+  const { editId } = searchParams;
+  const currentPage = Number(searchParams.page) || 1;
+  const limit = 5;
 
   let idCicloActual = await getCicloActual();
 
@@ -34,8 +39,9 @@ export default async function DocentesPage({ searchParams }: PageProps) {
     where: { anio: (cicloActualInfo?.anio ?? 0) - 1 },
   });
 
-  const [profesores, personas, materias, cursos, historial, diasHabiles, bloquesHorario] = await Promise.all([
-    ProfesorService.getAll(idCicloActual),
+  const { profesores, total } = await ProfesorService.getAll(idCicloActual, currentPage, limit);
+
+  const [personas, materias, cursos, historial, diasHabiles, bloquesHorario] = await Promise.all([
     ProfesorService.getPersonasDisponibles(),
     ProfesorService.getMaterias(),
     AlumnoService.getCursosDisponibles(),
@@ -44,8 +50,18 @@ export default async function DocentesPage({ searchParams }: PageProps) {
     db.bloqueHorario.findMany({ orderBy: { orden: 'asc' } }),
   ]);
 
-  const asignacionAEditar = editId
-    ? profesores.flatMap(p => p.asignaciones).find(a => a.idAsignacion === Number(editId))
+  const totalPages = Math.ceil(total / limit);
+
+  const asignacionAEditar = editId 
+    ? await db.asignacionAcademica.findUnique({ 
+        where: { idAsignacion: Number(editId) },
+        include: {
+          horarios: true,
+          materia: true,
+          curso: true,
+          profesor: { include: { persona: true } }
+        }
+      }) 
     : null;
 
   return (
@@ -60,12 +76,12 @@ export default async function DocentesPage({ searchParams }: PageProps) {
             cicloActualId={idCicloActual}
             cicloAnteriorId={cicloAnterior.idCiclo}
             anioAnterior={cicloAnterior.anio}
-            yaTieneDatos={profesores.length > 0}
+            yaTieneDatos={total > 0}
           />
         )}
 
       <FormAsignacion
-        editData={asignacionAEditar}
+        editData={asignacionAEditar as any}
         personas={personas}
         materias={materias}
         cursos={cursos}
@@ -74,7 +90,12 @@ export default async function DocentesPage({ searchParams }: PageProps) {
         bloquesHorario={bloquesHorario}
       />
 
-      <AsignacionesList profesores={profesores} suplentes={personas} />
+      <AsignacionesList 
+        profesores={profesores} 
+        suplentes={personas} 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        />
 
       {/* Render the new client component for historial */}
       <HistorialAsignacionesTable historial={historial} />

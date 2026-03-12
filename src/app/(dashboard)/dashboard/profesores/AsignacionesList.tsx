@@ -1,11 +1,12 @@
 'use client'; 
 
-import { useState, useMemo } from 'react'; 
-import { BookOpen, UserX, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react'; 
+import { BookOpen, UserX, Pencil } from 'lucide-react';
 import { darDeBajaAction } from '@/lib/actions/profesor-actions';
 import { toast } from 'sonner';
 import BajaMateriaModal from '@/components/modules/profesores/BajaMateriaModal';
 import { useRouter } from 'next/navigation'; 
+import PaginationControls from '@/components/shared/PaginationControls';
 
 interface Curso {
   grado: string;
@@ -43,25 +44,24 @@ interface Profesor {
   asignaciones: Asignacion[];
 }
 
-export function AsignacionesList({ profesores, suplentes }: { profesores: Profesor[], suplentes: Suplente[] }) {
+interface AsignacionesListProps {
+  profesores: Profesor[];
+  suplentes: Suplente[];
+  currentPage: number;
+  totalPages: number;
+}
+
+export function AsignacionesList({
+  profesores,
+  suplentes,
+  currentPage,
+  totalPages,
+}: AsignacionesListProps) {
   const router = useRouter(); 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedAsignacion, setSelectedAsignacion] = useState<{id: number, materia: string} | null>(null);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; 
-
-  const profesoresConAsignacionesActivas = useMemo(() => {
-    return profesores.filter(
-      (profe) => profe.asignaciones.some((asig) => asig.estado)
-    );
-  }, [profesores]);
-
-  const totalPages = Math.ceil(profesoresConAsignacionesActivas.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedProfesores = profesoresConAsignacionesActivas.slice(startIndex, startIndex + itemsPerPage);
-  
   const handleBajaClick = (id: number, materia: string) => {
     setSelectedAsignacion({ id, materia });
     setIsModalOpen(true);
@@ -105,8 +105,8 @@ export function AsignacionesList({ profesores, suplentes }: { profesores: Profes
             </tr>
           </thead>
           <tbody className='divide-y divide-gray-100'>
-            {paginatedProfesores.length > 0 ? (
-              paginatedProfesores.map((profe) => (
+            {profesores.length > 0 ? (
+              profesores.map((profe) => (
 
               <tr
                 key={profe.idProfesor}
@@ -179,30 +179,9 @@ export function AsignacionesList({ profesores, suplentes }: { profesores: Profes
             )}
           </tbody>
         </table>
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-200 pt-4 mt-4 px-4 pb-4">
-            <div className="text-sm text-gray-500">
-              Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, profesoresConAsignacionesActivas.length)} de {profesoresConAsignacionesActivas.length} resultados
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-600"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <span className="text-sm font-medium text-gray-700">Página {currentPage} de {totalPages}</span>
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-600"
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
-          </div>
-        )}
+         <div className="p-4 bg-gray-50 border-t border-gray-200">
+          <PaginationControls currentPage={currentPage} totalPages={totalPages} />
+        </div>
       </div>
       <BajaMateriaModal
         isOpen={isModalOpen}
