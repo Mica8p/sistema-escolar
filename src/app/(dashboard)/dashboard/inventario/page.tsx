@@ -2,6 +2,13 @@ import InventarioView from "@/components/modules/inventario/InventarioView";
 
 export const dynamic = "force-dynamic";
 
-export default function InventarioPage() {
-  return <InventarioView />;
+interface PageProps {
+  searchParams: Promise<{ ciclo?: string }>;
+}
+
+export default async function InventarioPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const cicloParam = params?.ciclo ? Number(params.ciclo) : undefined;
+
+  return <InventarioView cicloParam={cicloParam} />;
 }

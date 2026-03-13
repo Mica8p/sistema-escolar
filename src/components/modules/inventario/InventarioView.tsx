@@ -1,10 +1,16 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getInventario } from "@/service/inventario.service";
+import { getInventario, getTotalGastosCiclo } from "@/service/inventario.service";
 import { getUltimosMovimientos } from "@/service/movimiento-stock.service";
+import { getCicloActual } from "@/lib/ciclo-session";
+import db from "@/lib/db";
 import InventarioClient from "@/components/modules/inventario/InventarioClient";
 
-export default async function InventarioView() {
+interface Props {
+  cicloParam?: number;
+}
+
+export default async function InventarioView({ cicloParam }: Props) {
   const session = await auth();
 
   if (!session?.user) {
@@ -18,10 +24,27 @@ export default async function InventarioView() {
     redirect("/dashboard");
   }
 
-  const insumos = await getInventario();
-  // Se traen todos los movimientos para que el filtro por mes funcione correctamente
-  // en todo el historial, no solo en un número limitado.
-  const movimientos = await getUltimosMovimientos();
+  const idCicloActual = await getCicloActual();
+  const idCicloElegido = cicloParam || idCicloActual;
 
-  return <InventarioClient insumos={insumos} movimientos={movimientos} />;
+  const cicloActualInfo = await db.cicloLectivo.findUnique({ where: { idCiclo: idCicloElegido } });
+
+  const insumos = await getInventario(idCicloElegido);
+  const movimientos = await getUltimosMovimientos(999, idCicloElegido);
+  const totalGastos = await getTotalGastosCiclo(idCicloElegido);
+
+  const ciclos = await db.cicloLectivo.findMany({
+    orderBy: { anio: "desc" },
+  });
+
+  return (
+    <InventarioClient
+      insumos={insumos}
+      movimientos={movimientos}
+      cicloActual={cicloActualInfo}
+      totalGastos={totalGastos}
+      ciclos={ciclos}
+      idCicloActual={idCicloElegido}
+    />
+  );
 }

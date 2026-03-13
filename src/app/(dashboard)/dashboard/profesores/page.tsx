@@ -9,15 +9,16 @@ import { AsignacionesList } from "./AsignacionesList";
 import { HistorialAsignacionesTable } from "@/components/modules/profesores/HistorialAsignacionesTable"; // Import the new client component
 
 interface PageProps {
-  searchParams: { 
+  searchParams: Promise<{ 
     editId?: string;
     page?: string;
-   };
+   }>;
 }
 
 export default async function DocentesPage({ searchParams }: PageProps) {
-  const { editId } = searchParams;
-  const currentPage = Number(searchParams.page) || 1;
+  const params = await searchParams;
+  const editId = params?.editId;
+  const currentPage = Number(params?.page) || 1;
   const limit = 5;
 
   let idCicloActual = await getCicloActual();

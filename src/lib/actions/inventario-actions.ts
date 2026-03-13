@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
+import { getCicloActual } from "@/lib/ciclo-session";
 import db from "@/lib/db";
 
 /* =========================
@@ -58,14 +59,17 @@ export async function createInsumo(formData: FormData) {
 
   const key = normalizeKey(nombre);
 
+  const idCicloActual = await getCicloActual();
+
   const existentes = await db.inventario.findMany({
+    where: { idCiclo: idCicloActual },
     select: { nombre: true },
   });
 
   const existe = existentes.some((i) => normalizeKey(i.nombre) === key);
 
   if (existe) {
-    return { success: false, message: "Ya existe un insumo con ese nombre." };
+    return { success: false, message: "Ya existe un insumo con ese nombre en este ciclo." };
   }
 
   await db.inventario.create({
@@ -74,6 +78,7 @@ export async function createInsumo(formData: FormData) {
       unidadMedida,
       stockActual,
       stockMinimo,
+      idCiclo: idCicloActual,
     },
   });
 
@@ -103,17 +108,24 @@ export async function updateInsumo(formData: FormData) {
   if (!unidadMedida) return { success: false, message: "La unidad de medida es obligatoria." };
   if (stockMinimo < 0) return { success: false, message: "El stock mínimo no puede ser negativo." };
 
+  const insumoActual = await db.inventario.findUnique({
+    where: { idInsumo },
+    select: { idCiclo: true },
+  });
+
+  if (!insumoActual) return { success: false, message: "Insumo no encontrado." };
+
   const key = normalizeKey(nombre);
 
   const existentes = await db.inventario.findMany({
-    where: { NOT: { idInsumo } },
+    where: { NOT: { idInsumo }, idCiclo: insumoActual.idCiclo },
     select: { nombre: true },
   });
 
   const existe = existentes.some((i) => normalizeKey(i.nombre) === key);
 
   if (existe) {
-    return { success: false, message: "Ya existe otro insumo con ese nombre." };
+    return { success: false, message: "Ya existe otro insumo con ese nombre en este ciclo." };
   }
 
   const updateData: any = {
