@@ -37,19 +37,43 @@ const StatusBadge = ({ estado }: { estado: EstadoAcademico }) => {
 
 export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatriculas[] }) {
   const [search, setSearch] = useState("");
+  const [selectedCurso, setSelectedCurso] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; 
+  const itemsPerPage = 5;
+
+  // Obtener lista única de cursos
+  const cursosDisponibles = useMemo(() => {
+    const cursos = new Map();
+    alumnos.forEach((alumno) => {
+      alumno.matriculas.forEach((matricula) => {
+        const cursoKey = `${matricula.curso.idCurso}`;
+        if (!cursos.has(cursoKey)) {
+          cursos.set(cursoKey, matricula.curso);
+        }
+      });
+    });
+    return Array.from(cursos.values()).sort((a, b) => 
+      a.grado !== b.grado ? a.grado - b.grado : a.seccion.localeCompare(b.seccion)
+    );
+  }, [alumnos]);
 
   const filteredAlumnos = useMemo(() => {
     return alumnos.filter((alumno) => {
       const searchLower = search.toLowerCase();
       const nombreCompleto = `${alumno.persona.nombre} ${alumno.persona.apellido}`.toLowerCase();
-      return (
+      
+      // Filtro de búsqueda por nombre/DNI
+      const matchesSearch = 
         nombreCompleto.includes(searchLower) ||
-        alumno.persona.dni.includes(searchLower)
-      );
+        alumno.persona.dni.includes(searchLower);
+      
+      // Filtro de curso
+      const matchesCurso = selectedCurso === null || 
+        alumno.matriculas.some(m => m.curso.idCurso === selectedCurso);
+      
+      return matchesSearch && matchesCurso;
     });
-  }, [search, alumnos]);
+  }, [search, selectedCurso, alumnos]);
 
   const totalPages = Math.ceil(filteredAlumnos.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -58,19 +82,43 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
 
   return (
     <>
-        <div className="relative flex-1 mb-4">
-          <input
-            type="text"
-            placeholder="Buscar por apellido o DNI..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1); 
-            }}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder:text-gray-500"
-          />
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-            <Fingerprint className="h-5 w-5 text-slate-400" />
+        <div className="flex gap-4 mb-4 flex-col md:flex-row">
+          {/* Selector de Curso */}
+          <div className="flex-1">
+            <label className="block text-xs font-semibold text-slate-600 mb-2">Filtrar por Curso</label>
+            <select
+              value={selectedCurso ?? ""}
+              onChange={(e) => {
+                setSelectedCurso(e.target.value === "" ? null : Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+            >
+              <option value="">-- Todos los Cursos --</option>
+              {cursosDisponibles.map((curso) => (
+                <option key={curso.idCurso} value={curso.idCurso}>
+                  {curso.grado}° "{curso.seccion}" - {curso.turno}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Buscador por Apellido/DNI */}
+          <div className="flex-1 relative">
+            <label className="block text-xs font-semibold text-slate-600 mb-2">Buscar por Apellido o DNI</label>
+            <input
+              type="text"
+              placeholder="Apellido, nombre o DNI..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1); 
+              }}
+              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder:text-gray-500"
+            />
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 top-8">
+              <Fingerprint className="h-5 w-5 text-slate-400" />
+            </div>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
@@ -101,7 +149,7 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
                     <tr key={alumno.idAlumno} className="hover:bg-gray-50 transition-colors">
                       <td className="p-4 font-mono text-sm text-blue-600">{alumno.legajo}</td>
                       <td className="p-4 font-medium text-gray-800 uppercase">
-                        {alumno.persona.apellido}, {alumno.persona.nombre} (ID: {alumno.idAlumno})
+                        {alumno.persona.apellido}, {alumno.persona.nombre}
                       </td>
                       <td className="p-4 text-gray-600">{alumno.persona.dni}</td>
                       <td className="p-4">
