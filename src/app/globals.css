@@ -25,6 +25,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+@page {
+  margin: 0.3cm !important;
+  size: A4;
+}
+
 @media print {
   aside,
   header,
@@ -32,6 +37,16 @@ body {
   footer,
   .no-print {
     display: none !important;
+  }
+
+  html,
+  body {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: white !important;
   }
 
   main,
@@ -44,6 +59,22 @@ body {
   }
 
   .max-w-5xl {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Asegurar que el contenido sea imprimible sin desbordes */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Prevenir scroll horizontal */
+  body,
+  html {
+    overflow-x: hidden !important;
+    width: 100vw !important;
     max-width: 100% !important;
   }
 }

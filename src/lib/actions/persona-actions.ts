@@ -31,8 +31,20 @@ export async function createPersonaAction(prevState: any, formData: FormData) {
 
     const { idRol, ...personaData } = validatedFields.data;
 
+    // Extraer hijos del FormData
+    const hijosArray: number[] = [];
+    const entries = Object.fromEntries(formData.entries());
+    if (entries.hijos) {
+        const hijosValue = Array.isArray(entries.hijos) ? entries.hijos : [entries.hijos];
+        hijosArray.push(...hijosValue.map(Number).filter(n => !isNaN(n)));
+    }
+
     try {
-        await db.persona.create({
+        const rolId = Number(idRol);
+        const rol = await db.rol.findUnique({ where: { idRol: rolId } });
+        const isPadre = rol?.nombre === 'PADRE';
+
+        const newPersona = await db.persona.create({
             data: {
                 ...personaData,
                 usuario: {
@@ -41,14 +53,35 @@ export async function createPersonaAction(prevState: any, formData: FormData) {
                         estado: true,
                         roles: {
                             create: {
-                                idRol: Number(idRol)
+                                idRol: rolId
                             }
                         }
                     }
                 }
             }
         });
+
+        // Si es padre, crear registro Padre y asociar hijos
+        if (isPadre) {
+            const padre = await db.padre.create({
+                data: {
+                    idPersona: newPersona.idPersona
+                }
+            });
+
+            // Crear relaciones AlumnoPadre
+            if (hijosArray.length > 0) {
+                await db.alumnoPadre.createMany({
+                    data: hijosArray.map(idAlumno => ({
+                        idAlumno,
+                        idPadre: padre.idPadre,
+                        relacion: 'Padre'
+                    }))
+                });
+            }
+        }
     } catch (error) {
+        console.error(error);
         return { success: false, message: 'Error al crear la persona' };
     }
 

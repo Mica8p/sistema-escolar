@@ -61,9 +61,8 @@ export default function InventarioClient({
   const [statusFilter, setStatusFilter] = useState<"todos" | "alerta" | "sin-stock">("todos");
   const [activeTab, setActiveTab] = useState<"stock" | "historial">("stock");
 
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const now = new Date();
-    return { month: now.getMonth(), year: now.getFullYear() };
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    return new Date().getMonth();
   });
 
   const [consumoLoading, setConsumoLoading] = useState<number | null>(null);
@@ -140,18 +139,12 @@ export default function InventarioClient({
 
   const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
-  const availableYears = useMemo(() => {
-    if (!movimientos || movimientos.length === 0) return [new Date().getFullYear()];
-    const years = new Set(movimientos.map(m => new Date(m.fecha).getFullYear()));
-    return Array.from(years).sort((a, b) => b - a);
-  }, [movimientos]);
-
   const monthlyFilteredMovimientos = useMemo(() => {
     return movimientos.filter(m => {
         const movDate = new Date(m.fecha);
-        return movDate.getMonth() === selectedDate.month && movDate.getFullYear() === selectedDate.year;
+        return movDate.getMonth() === selectedMonth;
     });
-  }, [movimientos, selectedDate]);
+  }, [movimientos, selectedMonth]);
 
   const start_mov = (Number(page_mov) - 1) * Number(per_page_mov);
   const end_mov = start_mov + Number(per_page_mov);
@@ -326,28 +319,19 @@ export default function InventarioClient({
           <div className="flex items-center gap-4 rounded-xl border bg-white p-3 shadow-sm">
             <h3 className="text-sm font-semibold text-gray-700">Filtrar por mes:</h3>
             <select
-              value={selectedDate.month}
-              onChange={(e) => setSelectedDate({ ...selectedDate, month: Number(e.target.value) })}
-              className="rounded-lg border-slate-300 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
             >
               {monthNames.map((name, index) => (
                 <option key={index} value={index}>{name}</option>
-              ))}
-            </select>
-            <select
-              value={selectedDate.year}
-              onChange={(e) => setSelectedDate({ ...selectedDate, year: Number(e.target.value) })}
-              className="rounded-lg border-slate-300 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
-            >
-              {availableYears.map(year => (
-                <option key={year} value={year}>{year}</option>
               ))}
             </select>
           </div>
 
           <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
             <div className="flex items-center justify-between border-b px-4 py-3">
-              <h2 className="text-base font-semibold text-gray-900">Movimientos de {monthNames[selectedDate.month]} {selectedDate.year}</h2>
+              <h2 className="text-base font-semibold text-gray-900">Movimientos de {monthNames[selectedMonth]}</h2>
               <span className="text-xs text-gray-600">
                 Total: {monthlyFilteredMovimientos.length}
               </span>
@@ -432,7 +416,7 @@ const KpiCard = ({ icon, title, value, color }: { icon: React.ReactNode; title: 
 
   return (
     <div className="flex items-center gap-4 rounded-xl border bg-white p-4 shadow-sm">
-      <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg ${colors[color]}`}>{icon}</div>
+      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${colors[color]}`}>{icon}</div>
       <div>
         <p className="text-sm font-medium text-gray-500">{title}</p>
         <p className="text-2xl font-bold text-gray-900">{value}</p>

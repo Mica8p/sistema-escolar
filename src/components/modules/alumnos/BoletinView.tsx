@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Printer, School } from "lucide-react";
+import { ArrowLeft, Printer, School, AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function BoletinView({ matricula }: { matricula: any }) {
@@ -10,7 +10,7 @@ export default function BoletinView({ matricula }: { matricula: any }) {
   matricula.notas.forEach((n: any) => {
     const materiaNombre = n.asignacion.materia.nombre;
     if (!materiasMap.has(materiaNombre)) {
-      materiasMap.set(materiaNombre, { t1: 0, t2: 0, t3: 0, dic: 0 });
+      materiasMap.set(materiaNombre, { t1: 0, t2: 0, t3: 0, dic: 0, notas:[] });
     }
 
     const scores = materiasMap.get(materiaNombre);
@@ -20,16 +20,104 @@ export default function BoletinView({ matricula }: { matricula: any }) {
     if (periodo === "TRIMESTRE_2") scores.t2 = Math.max(scores.t2, n.nota);
     if (periodo === "TRIMESTRE_3") scores.t3 = Math.max(scores.t3, n.nota);
     if (periodo === "DICIEMBRE") scores.dic = n.nota;
+    
+    scores.notas.push(n.nota);
+  });
+
+  // Determinar condición académica del alumno
+  let materiasAprobadas = 0;
+  let materiasDesaprobadas = 0;
+  let materiasDiciembre = 0;
+
+  const materiasConEstado = Array.from(materiasMap.entries()).map(([materia, notas]) => {
+    const suma = notas.t1 + notas.t2 + notas.t3;
+    const promedio = suma > 0 ? (suma / 3) : 0;
+    
+    // Si tiene nota de diciembre, usar esa
+    if (notas.dic > 0) {
+      const aprobado = notas.dic >= 6;
+      if (aprobado) materiasAprobadas++;
+      else materiasDesaprobadas++;
+      return {
+        materia,
+        t1: notas.t1,
+        t2: notas.t2,
+        t3: notas.t3,
+        dic: notas.dic,
+        promedio: notas.dic,
+        estado: aprobado ? 'APROBADA' : 'DESAPROBADA',
+        condicion: 'DICIEMBRE'
+      };
+    }
+    
+    // Evaluar los 3 trimestres
+    const t1 = notas.t1 >= 6;
+    const t2 = notas.t2 >= 6;
+    const t3 = notas.t3 >= 6;
+    const promGeneralOk = promedio >= 6;
+    
+    // Criterios de aprobación
+    if (t1 && t2 && t3 && promGeneralOk) {
+      materiasAprobadas++;
+      return {
+        materia,
+        t1: notas.t1,
+        t2: notas.t2,
+        t3: notas.t3,
+        dic: 0,
+        promedio: parseFloat(promedio.toFixed(2)),
+        estado: 'APROBADA',
+        condicion: 'REGULAR'
+      };
+    }
+    
+    // Si tiene 2 trimestres aprobados o promedio >= 6, va a diciembre
+    const trimestresAprobados = [t1, t2, t3].filter(Boolean).length;
+    if (trimestresAprobados >= 2 || promGeneralOk) {
+      materiasDiciembre++;
+      return {
+        materia,
+        t1: notas.t1,
+        t2: notas.t2,
+        t3: notas.t3,
+        dic: 0,
+        promedio: parseFloat(promedio.toFixed(2)),
+        estado: 'A_DICIEMBRE',
+        condicion: 'DICIEMBRE'
+      };
+    }
+    
+    // Si no aprueeba ni va a diciembre, desaprobado
+    materiasDesaprobadas++;
+    return {
+      materia,
+      t1: notas.t1,
+      t2: notas.t2,
+      t3: notas.t3,
+      dic: 0,
+      promedio: parseFloat(promedio.toFixed(2)),
+      estado: 'DESAPROBADA',
+      condicion: 'LIBRE'
+    };
   });
 
   const handlePrint = () => window.print();
 
-  const faltasJustificadas = matricula.asistencias.filter((a: any) => a.estado === 'AusenteJustificado').length;
-  const faltasInjustificadas = matricula.asistencias.filter((a: any) => a.estado === 'AusenteInjustificado').length;
-  const totalFaltas = faltasJustificadas + faltasInjustificadas;
+  // Cálculo de asistencias para el boletín
+  // Reglas especiales: faltas justificadas cuentan como presente, 2 tardanzas cuentan como 1 presente
+  const presentes = matricula.asistencias.filter((a: any) => a.estado === 'Presente').length;
+  const faltasJustificadas = matricula.asistencias.filter((a: any) => a.estado === 'Justificado').length;
+  const faltasInjustificadas = matricula.asistencias.filter((a: any) => a.estado === 'Ausente').length;
+  const tardanzas = matricula.asistencias.filter((a: any) => a.estado === 'Tarde').length;
+  
+  // Para el boletín
+  const presentesBoletin = presentes + faltasJustificadas + (tardanzas / 2); // Justificadas cuentan como presente, 2 tardanzas = 1 presente
+  const faltasBoletin = faltasInjustificadas; // Solo faltas injustificadas
+  const totalAsistencias = matricula.asistencias.length;
+  const porcentajeAsistencia = totalAsistencias > 0 ? ((presentesBoletin / totalAsistencias) * 100).toFixed(1) : 0;
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-10 space-y-6">
+    <div className="max-w-5xl mx-auto p-4 md:p-10 space-y-6 print:p-1 print:m-0 print:max-w-full print:space-y-1 print:bg-white">
       <div className="w-full flex justify-between items-center mb-6 print:hidden">
 
         <button
@@ -50,74 +138,77 @@ export default function BoletinView({ matricula }: { matricula: any }) {
         </button>
       </div>
 
-      <div className="bg-white border-2 border-slate-200 rounded-[3rem] p-8 md:p-16 shadow-2xl print:shadow-none print:border-none print:p-0">
+      <div className="bg-white border-2 border-slate-200 rounded-[3rem] p-8 md:p-16 shadow-2xl print:shadow-none print:border-none print:rounded-none print:p-1 print:m-0">
 
         {/* ENCABEZADO */}
-        <div className="flex justify-between items-center border-b-4 border-slate-100 pb-10 mb-10">
-          <div className="flex items-center gap-4">
-            <div className="p-4 bg-indigo-600 rounded-3xl text-white">
-              <School size={40} />
+        <div className="flex justify-between items-center border-b-2 border-slate-100 pb-3 mb-4 print:pb-2 print:mb-3">
+          <div className="flex items-center gap-2 print:gap-2">
+            <div className="p-2 bg-indigo-600 rounded-2xl text-white print:p-1.5">
+              <School size={20} />
             </div>
             <div>
-              <h1 className="text-4xl font-black text-slate-800 tracking-tighter uppercase leading-none">Libreta Educativa</h1>
-              <p className="text-slate-400 font-bold text-sm tracking-[0.3em] mt-2">CICLO LECTIVO {matricula.ciclo.anio}</p>
+              <h1 className="text-lg font-black text-slate-800 tracking-tighter uppercase leading-none print:text-base">Libreta Educativa</h1>
+              <p className="text-slate-400 font-bold text-xs tracking-widest mt-0.5 print:text-[10px]">CICLO {matricula.ciclo.anio}</p>
             </div>
           </div>
           <div className="text-right hidden md:block">
-            <p className="font-black text-slate-800 text-xl">{matricula.curso.grado}° "{matricula.curso.seccion}"</p>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{matricula.curso.nivel} • TURNO {matricula.curso.turno}</p>
+            <p className="font-black text-slate-800 text-sm print:text-xs">{matricula.curso.grado}° "{matricula.curso.seccion}"</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter print:text-[9px]">{matricula.curso.nivel} • TURNO {matricula.curso.turno}</p>
           </div>
         </div>
 
         {/* DATOS ALUMNO */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Estudiante</span>
-            <div className="text-2xl font-black text-slate-800 uppercase">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 print:gap-2 print:mb-2">
+          <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 print:p-2 print:rounded-lg">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1 print:text-[7px] print:mb-0.5">Estudiante</span>
+            <div className="text-2xl font-black text-slate-800 uppercase print:text-sm">
               {matricula.alumno.persona.apellido}, {matricula.alumno.persona.nombre}
             </div>
-            <div className="text-sm font-bold text-indigo-500 mt-1">Legajo: {matricula.alumno.legajo}</div>
+            <div className="text-sm font-bold text-indigo-500 mt-1 print:text-[10px] print:mt-0.5">Legajo: {matricula.alumno.legajo}</div>
           </div>
-          <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex flex-col justify-center items-end">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">DNI</span>
-            <div className="text-xl font-bold text-slate-600">{matricula.alumno.persona.dni}</div>
+          <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex flex-col justify-center items-end print:p-2 print:rounded-lg print:items-start">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1 print:text-[7px] print:mb-0.5">DNI</span>
+            <div className="text-xl font-bold text-slate-600 print:text-sm">{matricula.alumno.persona.dni}</div>
           </div>
         </div>
 
         {/* TABLA DE CALIFICACIONES */}
-        <div className="overflow-hidden border-2 border-slate-100 rounded-[2.5rem]">
-          <table className="w-full border-collapse">
+        <div className="overflow-hidden border border-slate-200 rounded-xl print:rounded-md print:border-gray-300">
+          <table className="w-full border-collapse text-[11px] print:text-[10px]">
             <thead>
-              <tr className="bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                <th className="py-6 px-8 text-left">Asignatura</th>
-                <th className="py-6 text-center">1° Trim</th>
-                <th className="py-6 text-center">2° Trim</th>
-                <th className="py-6 text-center">3° Trim</th>
-                <th className="py-6 text-center bg-indigo-50 text-indigo-600">Promedio</th>
-                <th className="py-6 text-center">Estado</th>
+              <tr className="bg-slate-100 text-[8px] font-black text-slate-600 uppercase tracking-tight print:bg-gray-200 print:text-[7px]">
+                <th className="py-1.5 px-2 text-left print:py-1 print:px-1.5">Asignatura</th>
+                <th className="py-1.5 text-center print:py-1">1T</th>
+                <th className="py-1.5 text-center print:py-1">2T</th>
+                <th className="py-1.5 text-center print:py-1">3T</th>
+                <th className="py-1.5 text-center bg-indigo-100 text-indigo-700 print:bg-indigo-50 print:py-1">Prom</th>
+                {materiasConEstado.some(m => m.dic > 0) && <th className="py-1.5 text-center print:py-1">Dic</th>}
+                <th className="py-1.5 text-center print:py-1">Estado</th>
               </tr>
             </thead>
-            <tbody className="divide-y-2 divide-slate-50">
-              {Array.from(materiasMap.entries()).map(([materia, notas]) => {
-                const suma = notas.t1 + notas.t2 + notas.t3;
-                const promedio = (suma / 3).toFixed(2);
-                const promocionado = suma >= 18 && notas.t1 >= 6 && notas.t2 >= 6 && notas.t3 >= 6;
-
+            <tbody className="divide-y divide-slate-100 print:divide-gray-200">
+              {materiasConEstado.map((m) => {
+                const color = m.estado === 'APROBADA' ? 'emerald' : m.estado === 'A_DICIEMBRE' ? 'amber' : 'rose';
+                const icon = m.estado === 'APROBADA' ? '✓' : m.estado === 'A_DICIEMBRE' ? '→' : '✗';
+                
                 return (
-                  <tr key={materia} className="hover:bg-slate-50/30 transition-colors">
-                    <td className="py-6 px-8 font-black text-slate-700 uppercase text-sm">{materia}</td>
-                    <td className="py-6 text-center font-bold text-slate-500">{notas.t1 || '-'}</td>
-                    <td className="py-6 text-center font-bold text-slate-500">{notas.t2 || '-'}</td>
-                    <td className="py-6 text-center font-bold text-slate-500">{notas.t3 || '-'}</td>
-                    <td className="py-6 text-center font-black text-indigo-600 bg-indigo-50/30">{suma > 0 ? promedio : '-'}</td>
-                    <td className="py-6 text-center">
-                      {suma > 0 && (
-                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase ${
-                          promocionado ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
-                        }`}>
-                          {promocionado ? "Promocionado" : "Pendiente"}
-                        </span>
-                      )}
+                  <tr key={m.materia} className="hover:bg-slate-50/20 print:hover:bg-transparent">
+                    <td className="py-1.5 px-2 font-black text-slate-700 uppercase print:py-1 print:px-1.5">{m.materia}</td>
+                    <td className={`py-1.5 text-center font-bold print:py-1 ${m.t1 >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.t1 || '-'}</td>
+                    <td className={`py-1.5 text-center font-bold print:py-1 ${m.t2 >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.t2 || '-'}</td>
+                    <td className={`py-1.5 text-center font-bold print:py-1 ${m.t3 >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.t3 || '-'}</td>
+                    <td className="py-1.5 text-center font-black text-indigo-600 bg-indigo-50/30 print:bg-indigo-50 print:py-1">{m.promedio > 0 ? m.promedio : '-'}</td>
+                    {materiasConEstado.some(mat => mat.dic > 0) && (
+                      <td className="py-1.5 text-center font-bold text-slate-500 print:py-1">{m.dic || '-'}</td>
+                    )}
+                    <td className="py-1.5 text-center print:py-1">
+                      <span className={`px-1.5 py-0.5 rounded text-[7px] font-black uppercase print:text-[6px] print:px-1 print:py-0.5 ${
+                        m.estado === 'APROBADA' ? 'bg-emerald-100 text-emerald-700' : 
+                        m.estado === 'A_DICIEMBRE' ? 'bg-amber-100 text-amber-700' : 
+                        'bg-rose-100 text-rose-700'
+                      }`}>
+                        {m.estado === 'A_DICIEMBRE' ? 'Dic' : m.estado === 'APROBADA' ? 'Apr' : 'Ds'}
+                      </span>
                     </td>
                   </tr>
                 );
@@ -126,34 +217,51 @@ export default function BoletinView({ matricula }: { matricula: any }) {
           </table>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="bg-slate-50 border border-slate-100 p-4 rounded-3xl flex flex-col items-center">
-        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Faltas Justificadas</span>
-        <span className="text-xl font-black text-slate-700">{faltasJustificadas}</span>
-      </div>
-      <div className="bg-slate-50 border border-slate-100 p-4 rounded-3xl flex flex-col items-center">
-        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Faltas Injustificadas</span>
-        <span className="text-xl font-black text-rose-600">{faltasInjustificadas}</span>
-      </div>
-      <div className="bg-indigo-600 p-4 rounded-3xl flex flex-col items-center shadow-lg shadow-indigo-100">
-        <span className="text-[8px] font-black text-white/70 uppercase tracking-widest">Total Inasistencias</span>
-        <span className="text-xl font-black text-white">{totalFaltas}</span>
-      </div>
-    </div>
+        {/* RESUMEN ACADÉMICO */}
+        <div className="mt-3 grid grid-cols-4 gap-2 mb-3 print:gap-1.5 print:mt-2 print:mb-2">
+          <div className="bg-emerald-50 border border-emerald-200 p-2 rounded-lg flex flex-col items-center print:p-1.5">
+            <span className="text-[7px] font-black text-emerald-600 uppercase tracking-tight">Aprobadas</span>
+            <span className="text-lg font-black text-emerald-700 print:text-base">{materiasAprobadas}</span>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 p-2 rounded-lg flex flex-col items-center print:p-1.5">
+            <span className="text-[7px] font-black text-amber-600 uppercase tracking-tight">Diciembre</span>
+            <span className="text-lg font-black text-amber-700 print:text-base">{materiasDiciembre}</span>
+          </div>
+          <div className="bg-rose-50 border border-rose-200 p-2 rounded-lg flex flex-col items-center print:p-1.5">
+            <span className="text-[7px] font-black text-rose-600 uppercase tracking-tight">Desaprobadas</span>
+            <span className="text-lg font-black text-rose-700 print:text-base">{materiasDesaprobadas}</span>
+          </div>
+          <div className={`border p-2 rounded-lg flex flex-col items-center ${porcentajeAsistencia >= 80 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'} print:p-1.5`}>
+            <span className={`text-[7px] font-black uppercase tracking-tight ${porcentajeAsistencia >= 80 ? 'text-blue-600' : 'text-orange-600'}`}>Asistencia</span>
+            <span className={`text-lg font-black print:text-base ${porcentajeAsistencia >= 80 ? 'text-blue-700' : 'text-orange-700'}`}>{porcentajeAsistencia}%</span>
+          </div>
+        </div>
+
+        {/* DETALLE DE ASISTENCIAS */}
+        <div className="mt-2 grid grid-cols-2 gap-2 print:gap-1.5 print:mt-1.5">
+          <div className="bg-slate-50 border border-slate-100 p-2 rounded-lg flex flex-col items-center print:p-1.5">
+            <span className="text-[7px] font-black text-slate-600 uppercase tracking-tight">Presentes</span>
+            <span className="text-base font-black text-slate-700 print:text-sm">{Math.round(presentesBoletin)}</span>
+          </div>
+          <div className="bg-rose-50 border border-rose-100 p-2 rounded-lg flex flex-col items-center print:p-1.5">
+            <span className="text-[7px] font-black text-rose-600 uppercase tracking-tight">Faltas</span>
+            <span className="text-base font-black text-rose-700 print:text-sm">{Math.round(faltasBoletin)}</span>
+          </div>
+        </div>
 
         {/* ESPACIO PARA FIRMAS */}
-        <div className="grid grid-cols-3 gap-10 mt-20 pt-10 border-t-2 border-slate-100">
-          <div className="text-center space-y-2">
-            <div className="h-px bg-slate-300 w-32 mx-auto mt-12"></div>
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Firma del Director</p>
+        <div className="grid grid-cols-3 gap-4 mt-4 pt-3 border-t border-slate-100 print:gap-2 print:mt-1 print:pt-1">
+          <div className="text-center space-y-1">
+            <div className="h-px bg-slate-300 w-24 mx-auto mt-3 print:mt-2"></div>
+            <p className="text-[7px] font-black text-slate-400 uppercase tracking-tight print:text-[6px]">Director</p>
           </div>
-          <div className="text-center space-y-2">
-            <div className="h-px bg-slate-300 w-32 mx-auto mt-12"></div>
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Firma del Preceptor</p>
+          <div className="text-center space-y-1">
+            <div className="h-px bg-slate-300 w-24 mx-auto mt-3 print:mt-2"></div>
+            <p className="text-[7px] font-black text-slate-400 uppercase tracking-tight print:text-[6px]">Preceptor</p>
           </div>
-          <div className="text-center space-y-2">
-            <div className="h-px bg-slate-300 w-32 mx-auto mt-12"></div>
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sello de la Institución</p>
+          <div className="text-center space-y-1">
+            <div className="h-px bg-slate-300 w-24 mx-auto mt-3 print:mt-2"></div>
+            <p className="text-[7px] font-black text-slate-400 uppercase tracking-tight print:text-[6px]">Sello</p>
           </div>
         </div>
       </div>

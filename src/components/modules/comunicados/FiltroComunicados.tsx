@@ -44,7 +44,7 @@ export default function FiltroComunicados({ data, isEnviados }: FiltroProps) {
             placeholder="Buscar por título o contenido..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-transparent rounded-[1.8rem] text-sm focus:bg-white focus:border-indigo-200 focus:ring-4 focus:ring-indigo-50/50 transition-all font-bold text-slate-700 placeholder:text-slate-400 placeholder:font-medium"
+            className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-transparent rounded-[1.8rem] text-sm focus:bg-white focus:border-indigo-200 focus:ring-4 focus:ring-indigo-50/50 transition-all font-bold text-slate-800 placeholder:text-slate-600 placeholder:font-medium"
           />
         </div>
 
@@ -126,31 +126,31 @@ function ComunicadoRecibidoCard({ msg }: { msg: any }) {
             <Megaphone size={22} />
           </div>
           <div className="relative z-20">
-            <h3 className={`font-black tracking-tight uppercase text-sm ${isRead ? "text-slate-600" : "text-slate-900"}`}>
+            <h3 className={`font-black tracking-tight uppercase text-sm ${isRead ? "text-slate-700" : "text-slate-900"}`}>
               {msg.titulo}
             </h3>
             <div className="flex items-center gap-3 mt-1">
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+               <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-1">
                  <User size={12} className="text-indigo-400" /> {msg.usuario.persona.nombre}
                </p>
-               <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase ${isRead ? 'bg-slate-50 text-slate-400' : 'bg-indigo-50 text-indigo-600'}`}>
+               <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase ${isRead ? 'bg-slate-50 text-slate-700' : 'bg-indigo-50 text-indigo-600'}`}>
                   {msg.target}
                </span>
             </div>
           </div>
         </div>
-        <span className="text-[10px] font-black text-slate-300 relative z-20 italic">
+        <span className="text-[10px] font-black text-slate-700 relative z-20 italic">
           {new Date(msg.fecha).toLocaleDateString()}
         </span>
       </div>
-      <p className="text-sm text-slate-500 line-clamp-2 relative z-20 mb-5 pl-16 font-medium leading-relaxed">
+      <p className="text-sm text-slate-700 line-clamp-2 relative z-20 mb-5 pl-16 font-medium leading-relaxed">
         {msg.contenido}
       </p>
       <div className="flex justify-end border-t border-slate-50 pt-4 relative z-30">
         {!isRead ? (
           <BotonLeido idComunicado={msg.idComunicado} />
         ) : (
-          <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] italic">Visto por vos</span>
+          <span className="text-[9px] font-black text-slate-700 uppercase tracking-[0.2em] italic">Visto por vos</span>
         )}
       </div>
     </div>

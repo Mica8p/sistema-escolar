@@ -38,14 +38,14 @@ export default function EnviadoCard({ msg }: { msg: any }) {
             </div>
             <div>
               <h3 className="font-bold text-slate-800">{msg.titulo}</h3>
-              <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2">
+              <p className="text-[10px] font-black text-indigo-700 uppercase tracking-widest flex items-center gap-2">
                 <Users size={12} /> Para: {msg.target}
                 {msg.curso ? (
-                  <span className="text-slate-400 font-bold">
+                  <span className="text-slate-700 font-bold">
                     ({msg.curso.grado}° "{msg.curso.seccion}")
                   </span>
                 ) : msg.idTarget ? (
-                  <span className="ml-1 text-slate-400">(ID: {msg.idTarget})</span>
+                  <span className="ml-1 text-slate-700">(ID: {msg.idTarget})</span>
                 ) : (
                   ""
                 )}
@@ -55,7 +55,7 @@ export default function EnviadoCard({ msg }: { msg: any }) {
 
           <div className="flex items-center gap-6">
             <div className="text-right hidden sm:block">
-              <p className="text-[10px] font-bold text-slate-400 flex items-center justify-end gap-1">
+              <p className="text-[10px] font-bold text-slate-700 flex items-center justify-end gap-1">
                 <Calendar size={12} /> {new Date(msg.fecha).toLocaleDateString()}
               </p>
               <div className="flex items-center gap-1 text-indigo-600 mt-1">
@@ -83,12 +83,12 @@ export default function EnviadoCard({ msg }: { msg: any }) {
 
         {isExpanded && (
           <div className="mt-6 pt-6 border-t border-slate-50 animate-in fade-in slide-in-from-top-2 duration-300">
-            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+            <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
               {msg.contenido}
             </p>
 
             <div className="mt-4 sm:hidden flex justify-between items-center border-t border-slate-50 pt-4">
-              <span className="text-[10px] font-bold text-slate-400 tracking-tight">
+              <span className="text-[10px] font-bold text-slate-700 tracking-tight">
                 Enviado el {new Date(msg.fecha).toLocaleDateString()}
               </span>
               <div className="flex items-center gap-1 text-indigo-600 font-black text-xs">

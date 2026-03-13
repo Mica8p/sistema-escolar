@@ -14,20 +14,25 @@ import {
     Save,
     X,
     Phone,
-    Home
+    Home,
+    Users
 } from "lucide-react";
 import { toast } from "sonner";
 
 interface PersonaFormProps {
     roles: any[];
     initialData?: any;
+    alumnos?: any[];
 }
 
-export default function PersonaForm({ roles, initialData }: PersonaFormProps) {
+export default function PersonaForm({ roles, initialData, alumnos = [] }: PersonaFormProps) {
     const router = useRouter();
     const [nombre, setNombre] = useState(initialData?.nombre ?? "");
     const [apellido, setApellido] = useState(initialData?.apellido ?? "");
     const [dni, setDni] = useState(initialData?.dni ?? "");
+    const [selectedRole, setSelectedRole] = useState("");
+    const [selectedHijos, setSelectedHijos] = useState<number[]>([]);
+    const [searchHijos, setSearchHijos] = useState("");
 
     const updateActionWithId = updatePersonaAction.bind(
         null,
@@ -62,6 +67,26 @@ useEffect(() => {
         }
     }
 }, [state, router]);
+
+    const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setSelectedRole(e.target.value);
+        setSelectedHijos([]);
+    };
+
+    const toggleHijo = (idAlumno: number) => {
+        setSelectedHijos(prev => 
+            prev.includes(idAlumno) 
+                ? prev.filter(id => id !== idAlumno)
+                : [...prev, idAlumno]
+        );
+    };
+
+    const filteredAlumnos = alumnos.filter(alumno =>
+        searchHijos === "" || 
+        `${alumno.persona.apellido} ${alumno.persona.nombre}`.toLowerCase().includes(searchHijos.toLowerCase())
+    );
+
+    const isPadreRole = selectedRole && roles.find(r => r.idRol === Number(selectedRole))?.nombre === "PADRE";
 
     return (
         <form action={formAction} className="space-y-6">
@@ -182,6 +207,8 @@ useEffect(() => {
                     </label>
                     <select
                         name="idRol"
+                        value={selectedRole}
+                        onChange={handleRoleChange}
                         required
                         className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-black focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                     >
@@ -192,6 +219,58 @@ useEffect(() => {
                             </option>
                         ))}
                     </select>
+                </div>
+            )}
+
+            {isPadreRole && alumnos.length > 0 && (
+                <div className="space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                        <Users size={16} className="text-blue-600" /> Hijos (Opcional)
+                    </label>
+                    <p className="text-xs text-slate-600 italic">Seleccioná los alumnos que son hijos de este padre</p>
+                    
+                    {/* Buscador */}
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="Buscar alumno por nombre o apellido..."
+                            value={searchHijos}
+                            onChange={(e) => setSearchHijos(e.target.value)}
+                            className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white text-black text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                        />
+                    </div>
+
+                    {/* Lista de alumnos */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+                        {filteredAlumnos.length > 0 ? (
+                            filteredAlumnos.map((alumno) => (
+                                <label key={alumno.idAlumno} className="flex items-center gap-2 p-2 hover:bg-blue-100 rounded cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedHijos.includes(alumno.idAlumno)}
+                                        onChange={() => toggleHijo(alumno.idAlumno)}
+                                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <span className="text-sm text-slate-700 font-medium">
+                                        {alumno.persona.apellido}, {alumno.persona.nombre}
+                                    </span>
+                                </label>
+                            ))
+                        ) : (
+                            <p className="col-span-2 text-center text-sm text-slate-500 py-4">No se encontraron alumnos</p>
+                        )}
+                    </div>
+                    
+                    {/* Contador de seleccionados */}
+                    {selectedHijos.length > 0 && (
+                        <p className="text-xs text-blue-600 font-semibold">
+                            {selectedHijos.length} {selectedHijos.length === 1 ? 'hijo' : 'hijos'} seleccionado{selectedHijos.length === 1 ? '' : 's'}
+                        </p>
+                    )}
+                    
+                    {selectedHijos.map(idAlumno => (
+                        <input key={`hijo-${idAlumno}`} type="hidden" name={`hijos`} value={idAlumno} />
+                    ))}
                 </div>
             )}
 
