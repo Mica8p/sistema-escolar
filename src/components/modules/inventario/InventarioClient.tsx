@@ -15,7 +15,7 @@ import {
   Search,
   Plus,
   ShoppingCart,
-  Droplet,
+  MinusCircle,
 } from "lucide-react";
 
 type Insumo = {
@@ -247,7 +247,7 @@ export default function InventarioClient({
                             className="text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50"
                             disabled={consumoLoading === i.idInsumo || i.stockActual === 0}
                           >
-                            <Droplet size={20} />
+                            <MinusCircle size={20} />
                           </button>
                           <button 
                             title="Reposición" 

@@ -26,7 +26,6 @@ export default function MovimientoStockModal({
   const [cantidad, setCantidad] = useState("1");
   const [ajusteSign, setAjusteSign] = useState<"sumar" | "restar">("sumar");
 
-  const [crearGasto, setCrearGasto] = useState(false);
   const [monto, setMonto] = useState("");
   const [concepto, setConcepto] = useState("");
   const [categoria, setCategoria] = useState<"Insumos" | "Servicios" | "Mantenimiento" | "Sueldos">("Insumos");
@@ -35,7 +34,6 @@ export default function MovimientoStockModal({
     setTipo(tipoInicial);
     setCantidad("1");
     setAjusteSign("sumar");
-    setCrearGasto(false);
     setMonto("");
     setConcepto("");
     setCategoria("Insumos");
@@ -44,8 +42,6 @@ export default function MovimientoStockModal({
   if (!open || !insumo) return null;
 
   const onlyInt = (v: string) => (/^\d*$/.test(v) ? v : v.replace(/[^\d]/g, ""));
-
-  const allowedTipos: Array<"Entrada" | "Salida" | "Ajuste"> = ["Entrada", "Salida", "Ajuste"];
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +53,7 @@ export default function MovimientoStockModal({
 
     if (tipo === "Ajuste") fd.set("ajusteSign", ajusteSign);
 
-    if (tipo === "Entrada" && crearGasto) {
+    if (tipo === "Entrada") {
       fd.set("crearGasto", "1");
       fd.set("monto", monto || "0");
       fd.set("concepto", concepto);
@@ -85,20 +81,7 @@ export default function MovimientoStockModal({
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4 px-5 py-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Tipo</label>
-            <select
-              value={tipo}
-              onChange={(e) => setTipo(e.target.value as any)}
-              className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-            >
-              {allowedTipos.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
+
 
           {tipo === "Ajuste" && (
             <div className="flex gap-2">
@@ -136,55 +119,48 @@ export default function MovimientoStockModal({
 
           {tipo === "Entrada" && (
             <div className="space-y-3 rounded-xl border bg-slate-50 p-3">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={crearGasto}
-                  onChange={(e) => setCrearGasto(e.target.checked)}
-                />
-                Registrar gasto por esta compra
-              </label>
+              <p className="font-bold text-sm text-gray-700">Registrar gasto por esta compra</p>
 
-              {crearGasto && (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium text-gray-700">Monto</label>
-                      <input
-                        value={monto}
-                        onChange={(e) => setMonto(e.target.value)}
-                        inputMode="decimal"
-                        className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                        placeholder="Ej: 15000"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium text-gray-700">Categoría</label>
-                      <select
-                        value={categoria}
-                        onChange={(e) => setCategoria(e.target.value as any)}
-                        className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                      >
-                        <option value="Insumos">Insumos</option>
-                        <option value="Servicios">Servicios</option>
-                        <option value="Mantenimiento">Mantenimiento</option>
-                        <option value="Sueldos">Sueldos</option>
-                      </select>
-                    </div>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700">Monto</label>
+                    <input
+                      value={monto}
+                      onChange={(e) => setMonto(e.target.value)}
+                      inputMode="decimal"
+                      required
+                      className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      placeholder="Ej: 15000"
+                    />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Concepto</label>
-                    <input
-                      value={concepto}
-                      onChange={(e) => setConcepto(e.target.value)}
+                    <label className="text-sm font-medium text-gray-700">Categoría</label>
+                    <select
+                      value={categoria}
+                      onChange={(e) => setCategoria(e.target.value as any)}
                       className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                      placeholder="Ej: Compra de insumos librería"
-                    />
+                    >
+                      <option value="Insumos">Insumos</option>
+                      <option value="Servicios">Servicios</option>
+                      <option value="Mantenimiento">Mantenimiento</option>
+                      <option value="Sueldos">Sueldos</option>
+                    </select>
                   </div>
                 </div>
-              )}
+
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">Concepto</label>
+                  <input
+                    value={concepto}
+                    onChange={(e) => setConcepto(e.target.value)}
+                    required
+                    className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    placeholder="Ej: Compra de insumos librería"
+                  />
+                </div>
+              </div>
             </div>
           )}
 
