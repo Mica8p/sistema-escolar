@@ -1,0 +1,149 @@
+================================================================================================================================================================================================================================================================
+
+ADMIN
+Usuario/DNI: 12345678
+Contraseña: admin123   
+
+ADMIN SEGUNDO
+Usuario/DNI: 11234567
+Contraseña: admin123
+
+Error buscador de personas esta al reves y solo busca por nombre en ves de apellido
+
+PROFESORES (con materias)
+Nombre	Apellido	DNI		Correo Electrónico		Teléfono	Dirección
+Juan	Pérez	 	28456321	juan.perez@gmail.com		3814452231	Av. Belgrano 123
+María	Gómez		30124567	maria.gomez@gmail.com		3815521143	San Martín 456
+Carlos	López		27589654	carlos.lopez@gmail.com		3816678890	Av. Mate de Luna 789
+Laura	Fernández	29874563	laura.fernandez@gmail.com	3812233445	Laprida 1020
+Diego	Martínez	31245678	diego.martinez@gmail.com	3813344556	Av. Roca 345
+
+(sin materias)
+Ana	Rodríguez	28965412	ana.rodriguez@gmail.com		3814455667	25 de Mayo 678
+Pedro	Sánchez		27654321	pedro.sanchez@gmail.com		3815566778	Córdoba 910
+Sofía	Ramírez		32456789	sofia.ramirez@gmail.com		3816677889	Mendoza 112
+Martín	Torres		29543126	martin.torres@gmail.com		3817788990	Av. Alem 345
+Valeria	Flores		30876451	valeria.flores@gmail.com	3818899001	Salta 567
+
+Andrés	Díaz		28123456	andres.diaz@gmail.com		3819900112	Av. Colón 890
+Natalia	Castro		29987654	natalia.castro@gmail.com	3811011122	Entre Ríos 234
+Sergio	Morales		28765439	sergio.morales@gmail.com	3812122233	Av. Avellaneda 456
+Camila	Ortiz		31567890	camila.ortiz@gmail.com		3813233344	San Juan 678
+Pablo	Herrera		27432189	pablo.herrera@gmail.com		3814344455	Av. Sarmiento 910
+Lucía	Vega		30678912	lucia.vega@gmail.com		3815455566	Maipú 321
+Ricardo	Medina		28345987	ricardo.medina@gmail.com	3816566677	Av. Independencia 654
+Daniela	Ríos		31987654	daniela.rios@gmail.com		3817677788	Catamarca 987
+Gustavo	Navarro		29123478	gustavo.navarro@gmail.com	3818788899	Av. Ejército del Norte 111
+Paula	Acosta		32765432	paula.acosta@gmail.com		3819899900	Jujuy 222
+
+
+
+
+MATERIAS
+Materia				Descripción
+Lengua				Desarrollo de lectura, escritura y comprensión de textos.
+Matemática			Estudio de números, operaciones, problemas y razonamiento lógico.
+Ciencias Naturales		Conocimiento sobre seres vivos, el cuerpo humano y la naturaleza.
+Ciencias Sociales		Estudio de la sociedad, historia, cultura y organización humana.
+Educación Física		Actividad física, deportes y desarrollo de habilidades corporales.
+Educación Artística		Expresión creativa mediante dibujo, pintura y otras artes.
+Música				Aprendizaje de ritmo, canto, instrumentos y apreciación musical.
+Tecnología			Uso de herramientas tecnológicas y comprensión de procesos técnicos.
+Inglés				Aprendizaje básico del idioma inglés: vocabulario, lectura y conversación.
+Formación Ética y Ciudadana	Valores, convivencia, derechos y deberes en la sociedad.
+Lengua y Literatura		Análisis de obras literarias, gramática y producción de textos.
+Historia			Estudio de los acontecimientos y procesos del pasado.
+Geografía			Análisis del espacio geográfico, clima, población y territorios.
+Biología			Estudio de los seres vivos, células, organismos y ecosistemas.
+Física				Comprensión de fenómenos naturales como movimiento, energía y fuerzas.
+Química				Estudio de la materia, sus propiedades y transformaciones.
+Informática			Uso de computadoras, programas y herramientas digitales.
+Filosofía			Reflexión sobre el pensamiento, la existencia y el conocimiento.
+Economía			Estudio de producción, consumo y funcionamiento de los mercados.
+Psicología			Comprensión del comportamiento humano y los procesos mentales.
+
+
+PERIODOS
+Ciclo Lectivo	Nombre			Inicio		Fin
+2024 (Activo)	TRIMESTRE_1		04/03/2024	31/05/2024
+2024 (Activo)	TRIMESTRE_2		03/06/2024	06/09/2024
+2024 (Activo)	TRIMESTRE_3		09/09/2024	29/11/2024
+2024 (Activo)	RECUPERATORIO_DICIEMBRE	02/12/2024	13/12/2024
+2024 (Activo)	RECUPERATORIO_FEBRERO	10/02/2025	21/02/2025
+
+
+HORARIOS 
+⏰ Turno Mañana
+Bloque	Inicio	Fin
+1	07:30	08:10
+2	08:10	08:50
+3	08:50	09:30
+Recreo	09:30	09:50
+4	09:50	10:30
+5	10:30	11:10
+6	11:10	11:50
+7	11:50	12:30
+
+🔘 Agregar Bloque → si quieres más horas
+💾 Solo Guardar Mañana
+
+⏰ Turno Tarde
+Bloque	Inicio	Fin
+1	13:30	14:10
+2	14:10	14:50
+3	14:50	15:30
+Recreo	15:30	15:50
+4	15:50	16:30
+5	16:30	17:10
+6	17:10	17:50
+7	17:50	18:30
+
+
+ALUMNOS  1"A"-Primario (Mañana)
+Nombre		Apellido	DNI		Correo Electrónico		Teléfono	Dirección
+Mateo		Gómez		45213456	mateo.gomez@gmail.com		3814452231	San Martín 123
+Sofía		López		45321456	sofia.lopez@gmail.com		3815521143	Av. Belgrano 456
+Thiago		Pérez		45432167	thiago.perez@gmail.com		3816678890	Mendoza 789
+Valentina	Díaz		45543218	valentina.diaz@gmail.com	3812233445	Laprida 102
+Benjamín	Torres		45654329	benjamin.torres@gmail.com	3813344556	Av. Roca 345
+Martina		Sánchez		45765430	martina.sanchez@gmail.com	3814455667	Córdoba 678
+Joaquín		Fernández	45876541	joaquin.fernandez@gmail.com	3815566778	Salta 910
+Emma		Rodríguez	45987652	emma.rodriguez@gmail.com	3816677889	Av. Alem 222
+Bautista	Castro		45123467	bautista.castro@gmail.com	3817788990	San Juan 543
+Isabella	Rojas		45234578	isabella.rojas@gmail.com	3818899001	Av. Colón 876
+
+1"A"-Primario (Tarde)
+Lucas		Herrera		44123456	lucas.herrera@gmail.com		3819900112	Entre Ríos 111
+Camila		Morales		44234567	camila.morales@gmail.com	3811011122	Av. Avellaneda 222
+Tomás		Acosta		44345678	tomas.acosta@gmail.com		3812122233	Catamarca 333
+Martina		Vega		44456789	martina.vega@gmail.com		3813233344	Av. Independencia 444
+Franco		Medina		44567890	franco.medina@gmail.com		3814344455	Maipú 555
+Valeria		Ortiz		44678901	valeria.ortiz@gmail.com		3815455566	Jujuy 666
+Santiago	Ruiz		44789012	santiago.ruiz@gmail.com		3816566677	Av. Ejército del Norte 777
+Abril		Navarro		44890123	abril.navarro@gmail.com		3817677788	25 de Mayo 888
+Nicolás		Silva		44901234	nicolas.silva@gmail.com		3818788899	Av. Mate de Luna 999
+Julieta		Cabrera		44012345	julieta.cabrera@gmail.com	3819899900	Rivadavia 321
+
+1"B"-Primario (Mañana)
+Lautaro		Quiroga		43123456	lautaro.quiroga@gmail.com	3811112233	Av. Sarmiento 654
+Morena		Paz		43234567	morena.paz@gmail.com		3812223344	Balcarce 987
+Federico	Ramos		43345678	federico.ramos@gmail.com	3813334455	Av. Aconquija 147
+Milagros	Molina		43456789	milagros.molina@gmail.com	3814445566	Lamadrid 258
+Gonzalo		Ibáñez		43567890	gonzalo.ibanez@gmail.com	3815556677	Crisóstomo Álvarez 369
+Carla		Peralta		43678901	carla.peralta@gmail.com		3816667788	Av. Soldati 741
+Ezequiel	Bravo		43789012	ezequiel.bravo@gmail.com	3817778899	Junín 852
+Rocío		Varela		43890123	rocio.varela@gmail.com		3818889900	Ayacucho 963
+Pablo		Vera		43901234	pablo.vera@gmail.com		3819990011	Av. América 159
+Daniela		Juárez		43012345	daniela.juarez@gmail.com	3811234567	Monteagudo 753
+
+Ignacio		Valdez		46123456	ignacio.valdez@gmail.com	3812345678	Av. Rivadavia 321
+Martina		Walker		46234567	martina.walker@gmail.com	3813456789	San Lorenzo 654
+Simón		Yáñez		46345678	simon.yanez@gmail.com		3814567890	Córdoba 987
+Bianca		Zamora		46456789	bianca.zamora@gmail.com		3815678901	Tucumán 123
+Bruno		Alarcón		46567890	bruno.alarcon@gmail.com		3816789012	Av. Mitre 456
+Alma		Benítez		46678901	alma.benitez@gmail.com		3817890123	Catamarca 789
+Mateo		Cáceres		46789012	mateo.caceres@gmail.com		3818901234	Jujuy 101
+Lola		Duarte		46890123	lola.duarte@gmail.com		3819012345	Salta 202
+Gael		Espinoza	46901234	gael.espinoza@gmail.com		3810123456	Av. San Martín 303
+Renata		Flores		46012345	renata.flores@gmail.com		3811234567	Av. Corrientes 404
+
