@@ -95,6 +95,7 @@ export async function updateInsumo(formData: FormData) {
   const idInsumo = toInt(formData.get("idInsumo"));
   const nombre = normalizeText(formData.get("nombre"));
   const unidadMedida = normalizeText(formData.get("unidadMedida"));
+  const stockActual = toInt(formData.get("stockActual"), -1);
   const stockMinimo = toInt(formData.get("stockMinimo"), 0);
 
   if (!idInsumo) return { success: false, message: "ID inválido." };
@@ -115,13 +116,19 @@ export async function updateInsumo(formData: FormData) {
     return { success: false, message: "Ya existe otro insumo con ese nombre." };
   }
 
+  const updateData: any = {
+    nombre,
+    unidadMedida,
+    stockMinimo,
+  };
+
+  if (stockActual >= 0) {
+    updateData.stockActual = stockActual;
+  }
+
   await db.inventario.update({
     where: { idInsumo },
-    data: {
-      nombre,
-      unidadMedida,
-      stockMinimo,
-    },
+    data: updateData,
   });
 
   revalidatePath("/dashboard/inventario");

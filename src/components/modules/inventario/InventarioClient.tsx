@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
+import { consumirInsumo } from "@/lib/actions/movimiento-stock-actions";
 import InsumoFormModal from "./InsumoFormModal";
 import MovimientoStockModal from "./MovimientoStockModal";
 import PaginationControls from "@/components/shared/PaginationControls";
@@ -10,11 +11,11 @@ import {
   Package,
   AlertTriangle,
   PlusCircle,
-  MinusCircle,
-  SlidersHorizontal,
   Pencil,
   Search,
   Plus,
+  ShoppingCart,
+  Droplet,
 } from "lucide-react";
 
 type Insumo = {
@@ -56,6 +57,8 @@ export default function InventarioClient({
     return { month: now.getMonth(), year: now.getFullYear() };
   });
 
+  const [consumoLoading, setConsumoLoading] = useState<number | null>(null);
+
   /* ---------- Movimientos de stock ---------- */
   const [movOpen, setMovOpen] = useState(false);
   const [movInsumo, setMovInsumo] = useState<Insumo | null>(null);
@@ -65,6 +68,18 @@ export default function InventarioClient({
     setMovInsumo(i);
     setMovTipo(tipo);
     setMovOpen(true);
+  };
+
+  const onConsumir = async (insumo: Insumo) => {
+    setConsumoLoading(insumo.idInsumo);
+    try {
+      const res = await consumirInsumo(insumo.idInsumo);
+      if (!res.success) {
+        alert(res.message);
+      }
+    } finally {
+      setConsumoLoading(null);
+    }
   };
 
   const onNew = () => {
@@ -226,17 +241,28 @@ export default function InventarioClient({
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-3">
-                          <button title="Registrar Entrada" onClick={() => openMovimiento(i, "Entrada")} className="text-emerald-600 hover:text-emerald-800 transition-colors">
-                            <PlusCircle size={20} />
+                          <button 
+                            title="Consumo" 
+                            onClick={() => onConsumir(i)} 
+                            className="text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50"
+                            disabled={consumoLoading === i.idInsumo || i.stockActual === 0}
+                          >
+                            <Droplet size={20} />
                           </button>
-                          <button title="Registrar Salida" onClick={() => openMovimiento(i, "Salida")} className="text-orange-600 hover:text-orange-800 transition-colors">
-                            <MinusCircle size={20} />
+                          <button 
+                            title="Reposición" 
+                            onClick={() => openMovimiento(i, "Entrada")} 
+                            className="text-emerald-600 hover:text-emerald-800 transition-colors disabled:opacity-50"
+                            disabled={consumoLoading === i.idInsumo}
+                          >
+                            <ShoppingCart size={20} />
                           </button>
                           <div className="h-5 w-px bg-slate-200"></div>
-                          <button title="Ajustar Stock" onClick={() => openMovimiento(i, "Ajuste")} className="text-slate-500 hover:text-slate-800 transition-colors">
-                            <SlidersHorizontal size={18} />
-                          </button>
-                          <button title="Editar Insumo" onClick={() => onEdit(i)} className="text-slate-500 hover:text-slate-800 transition-colors">
+                          <button 
+                            title="Editar Insumo" 
+                            onClick={() => onEdit(i)} 
+                            className="text-slate-500 hover:text-slate-800 transition-colors"
+                          >
                             <Pencil size={18} />
                           </button>
                         </div>

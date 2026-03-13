@@ -68,7 +68,9 @@ export default function InsumoFormModal({
     fd.set("nombre", nombre.trim());
     fd.set("unidadMedida", unidadMedida.trim());
     fd.set("stockMinimo", stockMinimo || "0");
-    if (mode === "create") fd.set("stockActual", stockActual || "0");
+    
+    // Enviar stockActual tanto en create como en edit
+    fd.set("stockActual", stockActual || "0");
 
     startTransition(async () => {
       const res = mode === "create" ? await createInsumo(fd) : await updateInsumo(fd);
@@ -89,7 +91,7 @@ export default function InsumoFormModal({
           <p className="text-sm text-gray-600">
             {mode === "create"
               ? "Cargá el insumo con stock inicial."
-              : "Editá los datos generales (el stock se ajusta por movimientos)."}
+              : "Editá los datos del insumo, incluyendo el stock actual."}
           </p>
         </div>
 
@@ -146,15 +148,28 @@ export default function InsumoFormModal({
           )}
 
           {mode === "edit" && (
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Stock mínimo</label>
-              <input
-                value={stockMinimo}
-                onChange={(e) => setStockMinimo(onlyInt(e.target.value))}
-                inputMode="numeric"
-                className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                placeholder="0"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Stock actual</label>
+                <input
+                  value={stockActual}
+                  onChange={(e) => setStockActual(onlyInt(e.target.value))}
+                  inputMode="numeric"
+                  className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Stock mínimo</label>
+                <input
+                  value={stockMinimo}
+                  onChange={(e) => setStockMinimo(onlyInt(e.target.value))}
+                  inputMode="numeric"
+                  className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  placeholder="0"
+                />
+              </div>
             </div>
           )}
 

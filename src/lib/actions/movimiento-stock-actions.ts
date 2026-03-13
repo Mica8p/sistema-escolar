@@ -144,3 +144,69 @@ export async function createMovimientoStock(formData: FormData) {
     return { success: false, message: err?.message || "Error inesperado." };
   }
 }
+
+/* =========================
+   Consumir insumo (restar 1)
+========================= */
+
+export async function consumirInsumo(idInsumo: number) {
+  const session = await auth();
+  if (!session?.user) return { success: false, message: "No autorizado" };
+
+  const adminError = requireAdmin(session);
+  if (adminError) return adminError;
+
+  const idUsuario = session.user.idUsuario;
+  if (!idUsuario) return { success: false, message: "Usuario inválido." };
+
+  if (!idInsumo || idInsumo <= 0) {
+    return { success: false, message: "Insumo inválido." };
+  }
+
+  try {
+    const result = await db.$transaction(async (tx) => {
+      const insumo = await tx.inventario.findUnique({
+        where: { idInsumo },
+        select: { stockActual: true, nombre: true },
+      });
+
+      if (!insumo) {
+        throw new Error("El insumo no existe.");
+      }
+
+      if (insumo.stockActual <= 0) {
+        throw new Error(`No hay stock disponible de ${insumo.nombre}.`);
+      }
+
+      const nuevoStock = insumo.stockActual - 1;
+
+      await tx.inventario.update({
+        where: { idInsumo },
+        data: { stockActual: nuevoStock },
+      });
+
+      await tx.movimientoStock.create({
+        data: {
+          idInsumo,
+          idUsuario,
+          tipo: "Salida",
+          cantidad: -1,
+          fecha: new Date(),
+        },
+      });
+
+      return {
+        nuevoStock,
+        nombre: insumo.nombre,
+      };
+    });
+
+    revalidatePath("/dashboard/inventario");
+    return {
+      success: true,
+      message: `Consumo registrado. Nuevo stock de ${result.nombre}: ${result.nuevoStock}.`,
+    };
+  } catch (err: any) {
+    return { success: false, message: err?.message || "Error inesperado." };
+  }
+}
