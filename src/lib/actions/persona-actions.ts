@@ -31,13 +31,10 @@ export async function createPersonaAction(prevState: any, formData: FormData) {
 
     const { idRol, ...personaData } = validatedFields.data;
 
-    // Extraer hijos del FormData
-    const hijosArray: number[] = [];
-    const entries = Object.fromEntries(formData.entries());
-    if (entries.hijos) {
-        const hijosValue = Array.isArray(entries.hijos) ? entries.hijos : [entries.hijos];
-        hijosArray.push(...hijosValue.map(Number).filter(n => !isNaN(n)));
-    }
+    // Extraer TODOS los hijos del FormData (getAll es necesario para campos repetidos)
+    const hijosArray: number[] = formData.getAll('hijos')
+        .map(value => Number(value))
+        .filter(n => !isNaN(n));
 
     try {
         const rolId = Number(idRol);
@@ -62,23 +59,21 @@ export async function createPersonaAction(prevState: any, formData: FormData) {
         });
 
         // Si es padre, crear registro Padre y asociar hijos
-        if (isPadre) {
+        if (isPadre && hijosArray.length > 0) {
             const padre = await db.padre.create({
                 data: {
                     idPersona: newPersona.idPersona
                 }
             });
 
-            // Crear relaciones AlumnoPadre
-            if (hijosArray.length > 0) {
-                await db.alumnoPadre.createMany({
-                    data: hijosArray.map(idAlumno => ({
-                        idAlumno,
-                        idPadre: padre.idPadre,
-                        relacion: 'Padre'
-                    }))
-                });
-            }
+            // Crear relaciones AlumnoPadre para TODOS los hijos
+            await db.alumnoPadre.createMany({
+                data: hijosArray.map(idAlumno => ({
+                    idAlumno,
+                    idPadre: padre.idPadre,
+                    relacion: 'Padre'
+                }))
+            });
         }
     } catch (error) {
         console.error(error);

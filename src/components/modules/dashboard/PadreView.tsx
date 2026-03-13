@@ -1,13 +1,11 @@
 import db from "@/lib/db";
 import { getHijosConAsistenciaCompleta } from "@/service/padre.service";
 import { getCalificacionesHijo } from "@/service/calificaciones.service";
-import { getHorariosPorCurso } from "@/service/horario.service";
+import { getHorariosPorCurso, getHorarioConfig } from "@/service/horario.service";
 import { getDetalleCuenta } from "@/service/finanzas.service";
 import { getContadorNoLeidos } from "@/service/comunicado.service";
-import CardAsistenciaHijo from "@/components/modules/padres/CardAsistenciaHijo";
-import SeccionCalificaciones from "@/components/modules/padres/SeccionCalificaciones";
-import HorarioImprimible from "@/components/HorarioImprimible";
-import { FileText, Sparkles, Wallet } from "lucide-react";
+import PadreViewClient from "@/components/modules/dashboard/PadreViewClient";
+import { Sparkles, Wallet } from "lucide-react";
 import Link from "next/link";
 import WelcomeHeader from "./WelcomeHeader";
 
@@ -23,6 +21,7 @@ export default async function PadreView({ idPersona, idUsuario, idCiclo, idPadre
   const idsCursosHijos = relaciones.flatMap(r => r.alumno.matriculas.map(m => m.idCurso));
   const noLeidos = await getContadorNoLeidos(idUsuario, "PADRE", idsCursosHijos);
 
+  const { bloques, dias } = await getHorarioConfig();
   const rawHijos = await getHijosConAsistenciaCompleta(idPersona, idCiclo);
 
   const hijosData = await Promise.all(rawHijos.map(async (hijo: any) => {
@@ -31,13 +30,17 @@ export default async function PadreView({ idPersona, idUsuario, idCiclo, idPadre
       select: { idCurso: true, idMatricula: true }
     });
 
-    const [notas, horarios, cuenta] = await Promise.all([
+    const [notas, horarios, cuenta, curso] = await Promise.all([
       getCalificacionesHijo(hijo.idAlumno, idCiclo),
       matricula?.idCurso ? getHorariosPorCurso(matricula.idCurso, idCiclo) : [],
-      getDetalleCuenta(hijo.idAlumno)
+      getDetalleCuenta(hijo.idAlumno),
+      matricula?.idCurso ? db.curso.findUnique({ where: { idCurso: matricula.idCurso } }) : null
     ]);
 
     const deudaHijo = cuenta.cargos.reduce((acc: number, cargo: any) => acc + (cargo.saldo || 0), 0);
+    
+    // Filtrar bloques según el turno del curso
+    const bloquesFiltrados = curso ? bloques.filter(b => b.turno === curso.turno) : bloques;
 
     return {
       ...hijo,
@@ -46,7 +49,9 @@ export default async function PadreView({ idPersona, idUsuario, idCiclo, idPadre
       notas,
       horarios,
       deudaHijo,
-      cuenta
+      cuenta,
+      bloques: bloquesFiltrados,
+      dias
     };
   }));
 
@@ -82,43 +87,8 @@ export default async function PadreView({ idPersona, idUsuario, idCiclo, idPadre
         </Link>
       </div>
 
-      {/* LISTADO DE HIJOS */}
-      <div className="space-y-8">
-        {hijosData.map((hijo) => (
-          <div key={hijo.idAlumno} className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden">
-            {/* CABECERA HIJO */}
-            <div className="bg-slate-900 p-5 flex items-center justify-between text-white">
-               <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center font-black text-xl shadow-inner">
-                   {hijo.nombreCompleto?.charAt(0)}
-                 </div>
-                 <div>
-                   <h3 className="text-xl font-black tracking-tight uppercase italic">{hijo.nombreCompleto}</h3>
-                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">Resumen Académico</p>
-                 </div>
-               </div>
-
-               <Link
-                  href={`/dashboard/alumnos/${hijo.idMatricula}/boletin`}
-                  className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 px-4 py-2 rounded-xl transition-all group z-20"
-                >
-                  <FileText size={16} className="text-indigo-400 group-hover:scale-110 transition-transform" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Ver Boletín Anual</span>
-                </Link>
-            </div>
-
-            {/* CONTENIDO HIJO */}
-            <div className="p-6 bg-slate-50/20 grid grid-cols-1 lg:grid-cols-12 gap-6">
-               <div className="lg:col-span-4"><CardAsistenciaHijo hijoData={hijo} /></div>
-               <div className="lg:col-span-8"><SeccionCalificaciones notas={hijo.notas} /></div>
-
-               <div className="lg:col-span-12 border-t border-slate-100 pt-6">
-                 <HorarioImprimible horarios={hijo.horarios} nombreAlumno={hijo.nombreCompleto} curso={hijo.curso} />
-               </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* INFORMACIÓN DE HIJOS */}
+      <PadreViewClient hijosData={hijosData} />
     </div>
   );
 }

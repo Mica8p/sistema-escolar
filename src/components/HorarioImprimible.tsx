@@ -9,11 +9,18 @@ interface Props {
   horarios: any[];
   nombreAlumno: string;
   curso: string;
+  bloques: any[];
+  dias: any[];
 }
 
-export default function HorarioImprimible({ horarios, nombreAlumno, curso }: Props) {
+export default function HorarioImprimible({ horarios, nombreAlumno, curso, bloques, dias }: Props) {
   const horarioRef = useRef<HTMLDivElement>(null);
-  const anio = horarios[0]?.asignacion?.ciclo?.anio || "2026";
+  const anio = horarios?.[0]?.asignacion?.ciclo?.anio || "2026";
+
+  // Validar que tenemos datos necesarios
+  if (!horarios || horarios.length === 0 || !bloques || !dias) {
+    return null;
+  }
 
   return (
     <div className="space-y-4">
@@ -43,7 +50,7 @@ export default function HorarioImprimible({ horarios, nombreAlumno, curso }: Pro
         </div>
 
 
-        <GrillaSemanal horarios={horarios} />
+        <GrillaSemanal horarios={horarios} bloques={bloques} dias={dias} />
 
         <div className="hidden print:flex items-center justify-between mt-8 pt-4 border-t border-slate-100">
           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
