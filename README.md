@@ -38,7 +38,12 @@ CLOUDINARY_API_SECRET=tu_api_secret
 ```
 
 ### 4. Configurar la base de datos
-Ejecuta las migraciones de Prisma:
+Primero, genera el cliente de Prisma:
+```bash
+npx prisma generate
+```
+
+Luego, ejecuta las migraciones de Prisma:
 ```bash
 npx prisma migrate dev --url="file:./prisma/dev.db"
 ```
