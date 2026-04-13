@@ -1,9 +1,7 @@
 import db from "@/lib/db";
 
-export async function getUltimosMovimientos(limit = 20, idCiclo?: number) {
-  const where = idCiclo ? { insumo: { idCiclo } } : {};
+export async function getUltimosMovimientos(limit = 20) {
   return db.movimientoStock.findMany({
-    where,
     orderBy: { fecha: "desc" },
     take: limit,
     include: {

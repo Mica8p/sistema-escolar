@@ -40,17 +40,11 @@ type Movimiento = {
 export default function InventarioClient({
   insumos,
   movimientos,
-  cicloActual,
   totalGastos,
-  ciclos,
-  idCicloActual,
 }: {
   insumos: Insumo[];
   movimientos: Movimiento[];
-  cicloActual?: { idCiclo: number; anio: number; estado: boolean } | null;
   totalGastos: number;
-  ciclos: { idCiclo: number; anio: number; estado: boolean }[];
-  idCicloActual: number;
 }) {
   /* ---------- Insumos (alta / edición) ---------- */
   const [open, setOpen] = useState(false);
@@ -166,7 +160,6 @@ export default function InventarioClient({
           <h1 className="text-3xl font-bold text-gray-800">Inventario</h1>
           <p className="text-slate-600">
             Gestión de insumos, stock y movimientos.
-            {cicloActual && <span className="ml-2 font-semibold text-indigo-600">Ciclo {cicloActual.anio}</span>}
           </p>
         </div>
 
@@ -179,25 +172,7 @@ export default function InventarioClient({
         </button>
       </div>
 
-      {/* ---------- Selector de Ciclos ---------- */}
-      {ciclos.length > 1 && (
-        <div className="rounded-xl border bg-white p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-semibold text-gray-700">Cambiar ciclo:</label>
-            <select
-              value={idCicloActual}
-              onChange={(e) => router.push(`/dashboard/inventario?ciclo=${e.target.value}`)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
-            >
-              {ciclos.map((ciclo) => (
-                <option key={ciclo.idCiclo} value={ciclo.idCiclo}>
-                  {ciclo.anio} {ciclo.estado ? "(Activo)" : "(Inactivo)"}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KpiCard icon={<Package size={24} />} title="Total de Insumos" value={totalInsumos} color="blue" />
         <KpiCard icon={<AlertTriangle size={24} />} title="Insumos en Alerta" value={insumosEnAlerta} color="red" />

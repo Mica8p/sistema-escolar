@@ -230,7 +230,6 @@ model CicloLectivo {
   asignaciones AsignacionAcademica[]
   matriculas   Matricula[]
   cargos       Cargo[]
-  inventarios  Inventario[]
 
   @@map("CICLO_LECTIVO")
 }
@@ -482,13 +481,11 @@ model ComunicadoVisto {
 
 model Inventario {
   idInsumo     Int    @id @default(autoincrement())
-  idCiclo      Int?
   nombre       String
   stockActual  Int
   stockMinimo  Int
   unidadMedida String
 
-  ciclo       CicloLectivo?     @relation(fields: [idCiclo], references: [idCiclo])
   movimientos MovimientoStock[]
 
   @@map("INVENTARIO")

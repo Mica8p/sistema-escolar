@@ -1,33 +1,13 @@
 import db from "@/lib/db";
 
-export async function getInventario(idCiclo?: number) {
-  const where = idCiclo ? { idCiclo } : {};
+export async function getInventario() {
   return db.inventario.findMany({
-    where,
     orderBy: { nombre: "asc" },
   });
 }
 
-export async function getInventarioByCiclo(idCiclo: number) {
-  return db.inventario.findMany({
-    where: { idCiclo },
-    include: {
-      movimientos: {
-        orderBy: { fecha: "desc" },
-        include: {
-          gastos: {
-            select: { monto: true, concepto: true, categoria: true },
-          },
-        },
-      },
-    },
-    orderBy: { nombre: "asc" },
-  });
-}
-
-export async function getTotalGastosCiclo(idCiclo: number) {
+export async function getTotalGastosInventario() {
   const movimientos = await db.movimientoStock.findMany({
-    where: { insumo: { idCiclo } },
     include: {
       gastos: {
         select: { monto: true },
