@@ -388,8 +388,63 @@ async reincorporarDocente(idAsignacion: number) {
       }
     });
   });
-}
+},
 
+async getAllByDay(idCiclo: number, diaSemana: string, page: number = 1, limit: number = 10) {
+  const skip = (page - 1) * limit;
+
+  const whereCondition = {
+    persona: {
+      usuario: { estado: true }
+    },
+    asignaciones: {
+      some: {
+        idCiclo: idCiclo,
+        estado: true,
+        horarios: {
+          some: {
+            diaSemana: diaSemana as DiaSemana
+          }
+        }
+      }
+    }
+  };
+
+  const [profesores, total] = await db.$transaction([
+    db.profesor.findMany({
+      where: whereCondition,
+      include: {
+        persona: true,
+        asignaciones: {
+          where: {
+            estado: true,
+            idCiclo: idCiclo,
+            horarios: {
+              some: {
+                diaSemana: diaSemana as DiaSemana
+              }
+            }
+          },
+          include: {
+            materia: true,
+            curso: true,
+            horarios: {
+              where: {
+                diaSemana: diaSemana as DiaSemana
+              }
+            }
+          }
+        }
+      },
+      orderBy: { persona: { apellido: "asc" } },
+      skip,
+      take: limit
+    }),
+    db.profesor.count({ where: whereCondition })
+  ]);
+
+  return { profesores, total };
+}
 
 
 };

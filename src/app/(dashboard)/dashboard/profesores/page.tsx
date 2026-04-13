@@ -12,6 +12,7 @@ interface PageProps {
   searchParams: Promise<{ 
     editId?: string;
     page?: string;
+    day?: string;
    }>;
 }
 
@@ -20,6 +21,14 @@ export default async function DocentesPage({ searchParams }: PageProps) {
   const editId = params?.editId;
   const currentPage = Number(params?.page) || 1;
   const limit = 5;
+
+  // Obtener el día de la semana seleccionado o usar el de hoy
+  let selectedDay = params?.day;
+  if (!selectedDay) {
+    const diasSemana = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
+    const today = new Date();
+    selectedDay = diasSemana[today.getDay()];
+  }
 
   let idCicloActual = await getCicloActual();
 
@@ -40,7 +49,7 @@ export default async function DocentesPage({ searchParams }: PageProps) {
     where: { anio: (cicloActualInfo?.anio ?? 0) - 1 },
   });
 
-  const { profesores, total } = await ProfesorService.getAll(idCicloActual, currentPage, limit);
+  const { profesores, total } = await ProfesorService.getAllByDay(idCicloActual, selectedDay, currentPage, limit);
 
   const [personas, materias, cursos, historial, diasHabiles, bloquesHorario] = await Promise.all([
     ProfesorService.getPersonasDisponibles(),
@@ -96,6 +105,7 @@ export default async function DocentesPage({ searchParams }: PageProps) {
         suplentes={personas} 
         currentPage={currentPage}
         totalPages={totalPages}
+        selectedDay={selectedDay}
         />
 
       {/* Render the new client component for historial */}

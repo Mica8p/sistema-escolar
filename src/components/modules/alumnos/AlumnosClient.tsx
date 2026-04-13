@@ -58,6 +58,11 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
   }, [alumnos]);
 
   const filteredAlumnos = useMemo(() => {
+    // Si no hay curso seleccionado, no mostrar ningún alumno
+    if (selectedCurso === null) {
+      return [];
+    }
+    
     return alumnos.filter((alumno) => {
       const searchLower = search.toLowerCase();
       const nombreCompleto = `${alumno.persona.nombre} ${alumno.persona.apellido}`.toLowerCase();
@@ -68,8 +73,7 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
         alumno.persona.dni.includes(searchLower);
       
       // Filtro de curso
-      const matchesCurso = selectedCurso === null || 
-        alumno.matriculas.some(m => m.curso.idCurso === selectedCurso);
+      const matchesCurso = alumno.matriculas.some(m => m.curso.idCurso === selectedCurso);
       
       return matchesSearch && matchesCurso;
     });
@@ -94,7 +98,7 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
               }}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
             >
-              <option value="">-- Todos los Cursos --</option>
+              <option value="">-- Seleccione el curso --</option>
               {cursosDisponibles.map((curso) => (
                 <option key={curso.idCurso} value={curso.idCurso}>
                   {curso.grado}° "{curso.seccion}" - {curso.turno}
@@ -207,7 +211,9 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
               ) : (
                 <tr>
                   <td colSpan={6} className="p-10 text-center text-gray-400 italic">
-                    No hay alumnos que coincidan con el estado seleccionado en este ciclo.
+                    {selectedCurso === null 
+                      ? "Selecciona un curso en el filtro para ver los alumnos inscritos" 
+                      : "No hay alumnos que coincidan con los filtros seleccionados"}
                   </td>
                 </tr>
               )}

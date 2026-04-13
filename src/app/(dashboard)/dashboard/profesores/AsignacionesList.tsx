@@ -1,7 +1,7 @@
 'use client'; 
 
 import { useState } from 'react'; 
-import { BookOpen, UserX, Pencil } from 'lucide-react';
+import { BookOpen, UserX, Pencil, Calendar } from 'lucide-react';
 import { darDeBajaAction } from '@/lib/actions/profesor-actions';
 import { toast } from 'sonner';
 import BajaMateriaModal from '@/components/modules/profesores/BajaMateriaModal';
@@ -49,13 +49,25 @@ interface AsignacionesListProps {
   suplentes: Suplente[];
   currentPage: number;
   totalPages: number;
+  selectedDay: string;
 }
+
+const diasSemana = [
+  { label: 'Lunes', value: 'LUNES' },
+  { label: 'Martes', value: 'MARTES' },
+  { label: 'Miércoles', value: 'MIERCOLES' },
+  { label: 'Jueves', value: 'JUEVES' },
+  { label: 'Viernes', value: 'VIERNES' },
+  { label: 'Sábado', value: 'SABADO' },
+  { label: 'Domingo', value: 'DOMINGO' },
+];
 
 export function AsignacionesList({
   profesores,
   suplentes,
   currentPage,
   totalPages,
+  selectedDay,
 }: AsignacionesListProps) {
   const router = useRouter(); 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -83,18 +95,40 @@ export function AsignacionesList({
     }
   };
 
+  const handleDayChange = (day: string) => {
+    router.push(`?day=${day}`);
+  };
+
   const currentProfesorId = selectedAsignacion ? 
     profesores.find(p => p.asignaciones.some(a => a.idAsignacion === selectedAsignacion.id))?.persona.idPersona : undefined;
 
   const suplentesFiltrados = suplentes.filter(s => s.idPersona !== currentProfesorId);
 
+  const currentDayLabel = diasSemana.find(d => d.value === selectedDay)?.label || 'Hoy';
+
   return (
     <>
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
         <div className='p-4 bg-gray-50 border-b border-gray-200'>
-          <h2 className='font-bold text-gray-700 uppercase text-sm tracking-wider'>
-            Docentes con Actividad Hoy
-          </h2>
+          <div className='flex items-center justify-between gap-4 flex-wrap'>
+            <h2 className='font-bold text-gray-700 uppercase text-sm tracking-wider'>
+              Docentes con Actividad - {currentDayLabel}
+            </h2>
+            <div className='flex items-center gap-2'>
+              <Calendar size={16} className='text-gray-500' />
+              <select
+                value={selectedDay}
+                onChange={(e) => handleDayChange(e.target.value)}
+                className='px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer'
+              >
+                {diasSemana.map((dia) => (
+                  <option key={dia.value} value={dia.value}>
+                    {dia.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
         <table className='w-full text-left'>
           <thead className='bg-gray-50 border-b border-gray-200 text-gray-500 text-xs font-bold uppercase'>

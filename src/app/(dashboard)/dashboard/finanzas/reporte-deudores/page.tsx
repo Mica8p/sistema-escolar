@@ -5,8 +5,9 @@ import PaginationControls from "@/components/shared/PaginationControls";
 export default async function ReporteDeudoresPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const params = await searchParams;
   const todosLosAlumnos = await getAlumnosConEstadoDeCuenta();
 
   const deudores = todosLosAlumnos
@@ -19,7 +20,7 @@ export default async function ReporteDeudoresPage({
       }).format(a.deudaTotal),
     }));
 
-  const page = searchParams["page"] ?? "1";
+  const page = params["page"] ?? "1";
   const perPage = 5;
   const currentPage = Math.max(Number(page), 1);
 
