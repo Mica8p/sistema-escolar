@@ -243,13 +243,7 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
                   >
                     <Edit3 size={18} />
                   </Link>
-                  <GenericDeleteButton
-                    id={p.idPersona}
-                    action={deletePersona}
-                    title="Eliminar Persona"
-                    message={`Estás por eliminar a ${p.nombre} ${p.apellido}. Esta acción es IRREVERSIBLE. Se borrarán notas, asistencias y pagos. Si solo quieres darle la baja académica, hazlo desde Inscripciones.`}
-                    variant="danger"
-                  />
+                  
                 </td>
               </tr>
             );
