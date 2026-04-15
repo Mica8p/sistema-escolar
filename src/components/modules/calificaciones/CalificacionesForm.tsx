@@ -61,11 +61,14 @@ export default function CalificacionesTable({
   const esInstanciaDeCierre = ["DICIEMBRE", "FEBRERO", "JULIO_PREVIAS"].includes(nombrePeriodo);
 
   const handleAction = async (formData: FormData) => {
-    const res = await guardarNotaAction(null, formData);
+    const res = await guardarNotaAction(formData);
     if (res.ok) {
       toast.success("Calificación guardada");
       setEditando(null);
-      router.refresh();
+      // router.refresh();
+      window.location.reload();
+    } else {
+      toast.error(res.message || "Error al guardar");
     }
   };
 
@@ -225,13 +228,17 @@ export default function CalificacionesTable({
                       {estaBloqueado ? (
                         <CheckCircle2 size={20} className="mx-auto text-slate-300" />
                       ) : (
-                        <form id={`f-${m.idMatricula}`} action={handleAction}>
+                        <form id={`f-${m.idMatricula}`}>
                           <input type="hidden" name="idMatricula" value={m.idMatricula} />
                           <input type="hidden" name="idAsignacion" value={idAsignacion} />
                           <input type="hidden" name="idPeriodo" value={idPeriodo} />
                           <input type="hidden" name="tipo" value={tipo} />
                           {isEditMode ? (
-                            <button type="submit" className="bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-700 shadow-lg active:scale-95">
+                            <button type="button" onClick={() => {
+                              const form = document.getElementById(`f-${m.idMatricula}`) as HTMLFormElement;
+                              const formData = new FormData(form);
+                              handleAction(formData);
+                            }} className="bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-700 shadow-lg active:scale-95">
                               <Save size={18} />
                             </button>
                           ) : (

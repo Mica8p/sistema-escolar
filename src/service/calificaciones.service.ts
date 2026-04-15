@@ -158,23 +158,12 @@ export async function guardarNota(params: {
     throw new Error("Operación no permitida: El periodo académico se encuentra cerrado.");
   }
 
-  const asigActual = await db.asignacionAcademica.findUnique({
-    where: { idAsignacion: params.idAsignacion },
-    select: { idMateria: true, idCurso: true, idCiclo: true }
-  });
-
-  if (!asigActual) throw new Error("Asignación no válida");
-
   const existente = await db.nota.findFirst({
     where: {
       idMatricula: params.idMatricula,
       idPeriodo: params.idPeriodo,
       tipo: params.tipo,
-      asignacion: {
-        idMateria: asigActual.idMateria,
-        idCurso: asigActual.idCurso,
-        idCiclo: asigActual.idCiclo
-      }
+      idAsignacion: params.idAsignacion
     },
   });
 

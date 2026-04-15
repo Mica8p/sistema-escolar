@@ -131,7 +131,9 @@ export async function getNotasRecientesDocente(idProfesor: number, take = 8, idC
       matricula: { include: { alumno: { include: { persona: true } } } },
     },
   });
-}, idCiclo?: number) {
+}
+
+export async function getProximosCierresDocente(idProfesor: number, take = 5, idCiclo?: number) {
   let cicloId = idCiclo;
   if (!cicloId) {
     cicloId = await getCicloActual();
@@ -149,10 +151,7 @@ export async function getNotasRecientesDocente(idProfesor: number, take = 8, idC
           PeriodoNombre.JULIO_PREVIAS,
         ],
       },
-      ciclo: { asignaciones: { some: { idProfesor, idCiclo: cicloId
-        ],
-      },
-      ciclo: { asignaciones: { some: { idProfesor, idCiclo, estado: true } } },
+      ciclo: { asignaciones: { some: { idProfesor, idCiclo: cicloId, estado: true } } },
     },
     orderBy: { fechaInicio: "asc" },
     take,
