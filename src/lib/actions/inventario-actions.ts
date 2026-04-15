@@ -59,10 +59,7 @@ export async function createInsumo(formData: FormData) {
 
   const key = normalizeKey(nombre);
 
-  const idCicloActual = await getCicloActual();
-
   const existentes = await db.inventario.findMany({
-    where: { idCiclo: idCicloActual },
     select: { nombre: true },
   });
 
@@ -78,7 +75,6 @@ export async function createInsumo(formData: FormData) {
       unidadMedida,
       stockActual,
       stockMinimo,
-      idCiclo: idCicloActual,
     },
   });
 
@@ -110,7 +106,7 @@ export async function updateInsumo(formData: FormData) {
 
   const insumoActual = await db.inventario.findUnique({
     where: { idInsumo },
-    select: { idCiclo: true },
+    select: { nombre: true },
   });
 
   if (!insumoActual) return { success: false, message: "Insumo no encontrado." };
@@ -118,7 +114,7 @@ export async function updateInsumo(formData: FormData) {
   const key = normalizeKey(nombre);
 
   const existentes = await db.inventario.findMany({
-    where: { NOT: { idInsumo }, idCiclo: insumoActual.idCiclo },
+    where: { NOT: { idInsumo } },
     select: { nombre: true },
   });
 
