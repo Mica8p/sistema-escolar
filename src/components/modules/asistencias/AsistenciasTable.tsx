@@ -10,6 +10,7 @@ interface Props {
   fecha: string;
   matriculas: any[];
   asistenciaByMatricula: [number, any][];
+  estadisticasAsistencia?: Map<number, { presentes: number; ausentes: number; totalClases: number }>;
   readOnly?: boolean;
   idAsignacion: number;
   onAsistenciaChange?: (idMatricula: number, estado: EstadoAsistencia) => void;
@@ -20,6 +21,7 @@ export default function AsistenciasTable({
   fecha,
   matriculas,
   asistenciaByMatricula,
+  estadisticasAsistencia,
   readOnly = false,
   onAsistenciaChange
 }: Props) {
@@ -50,7 +52,7 @@ export default function AsistenciasTable({
         <thead className="bg-slate-800 text-white uppercase text-[10px] tracking-widest">
           <tr>
             <th className="px-6 py-5 font-black">Alumno / Legajo</th>
-            <th className="px-6 py-5 font-black text-center">Estado Actual</th>
+            <th className="px-6 py-5 font-black text-center">Asistencias/Faltas</th>
             {!readOnly && <th className="px-6 py-5 font-black text-center">Marcar Asistencia</th>}
           </tr>
         </thead>
@@ -77,18 +79,36 @@ export default function AsistenciasTable({
                 </td>
 
                 <td className="px-6 py-4 text-center">
-                   {estadoActual ? (
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${
-                        estadoActual === "PRESENTE" ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
-                        estadoActual === "AUSENTE" ? "bg-red-100 text-red-700 border-red-200" :
-                        estadoActual === "TARDE" ? "bg-amber-100 text-amber-700 border-amber-200" :
-                        "bg-blue-100 text-blue-700 border-blue-200"
-                      }`}>
-                        {estadoActual}
-                      </span>
-                   ) : <span className="px-3 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-full text-[9px] font-black uppercase tracking-tighter">
-                        ● Sin Registrar
-                      </span>}
+                  {(() => {
+                    const stats = estadisticasAsistencia?.get(m.idMatricula);
+                    if (!stats || stats.totalClases === 0) {
+                      return (
+                        <span className="px-3 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-full text-[9px] font-black uppercase tracking-tighter">
+                          Sin datos
+                        </span>
+                      );
+                    }
+
+                    const porcentajeAsistencia = ((stats.presentes / stats.totalClases) * 100).toFixed(1);
+                    const presentes = Math.round(stats.presentes);
+                    const ausentes = Math.round(stats.ausentes);
+
+                    return (
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-1 bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-full text-[9px] font-bold">
+                            ✓ {presentes}
+                          </span>
+                          <span className="px-2 py-1 bg-red-100 text-red-700 border border-red-200 rounded-full text-[9px] font-bold">
+                            ✗ {ausentes}
+                          </span>
+                        </div>
+                        <span className="text-[8px] text-slate-500 font-mono">
+                          {porcentajeAsistencia}% asistencia
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </td>
 
                 {/* BOTONES */}

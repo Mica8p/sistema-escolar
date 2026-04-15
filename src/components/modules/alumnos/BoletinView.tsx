@@ -105,10 +105,11 @@ export default function BoletinView({ matricula }: { matricula: any }) {
 
   // Cálculo de asistencias para el boletín
   // Reglas especiales: faltas justificadas cuentan como presente, 2 tardanzas cuentan como 1 presente
-  const presentes = matricula.asistencias.filter((a: any) => a.estado === 'Presente').length;
-  const faltasJustificadas = matricula.asistencias.filter((a: any) => a.estado === 'Justificado').length;
-  const faltasInjustificadas = matricula.asistencias.filter((a: any) => a.estado === 'Ausente').length;
-  const tardanzas = matricula.asistencias.filter((a: any) => a.estado === 'Tarde').length;
+  const asistencias = matricula.asistencias || [];
+  const presentes = asistencias.filter((a: any) => a.estado === 'Presente').length;
+  const faltasJustificadas = asistencias.filter((a: any) => a.estado === 'Justificado').length;
+  const faltasInjustificadas = asistencias.filter((a: any) => a.estado === 'Ausente').length;
+  const tardanzas = asistencias.filter((a: any) => a.estado === 'Tarde').length;
   
   // Para el boletín
   const presentesBoletin = presentes + faltasJustificadas + (tardanzas / 2); // Justificadas cuentan como presente, 2 tardanzas = 1 presente

@@ -184,16 +184,8 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
                         </Link>
 
                         {matriculaActual && (
-
                           <>
                             <div className="w-px h-4 bg-slate-200" />
-                            <GenericDeleteButton
-                              id={matriculaActual.idMatricula}
-                              action={deleteMatriculaAction}
-                              title="Eliminar Matrícula"
-                              message={`Estás por eliminar la inscripción de ${alumno.persona.nombre} en este ciclo. Esto no borra al alumno del sistema, solo su matrícula actual.`}
-                              variant="danger"
-                            />
 
                             <Link
                               href={`/dashboard/alumnos/${matriculaActual.idMatricula}/boletin`}

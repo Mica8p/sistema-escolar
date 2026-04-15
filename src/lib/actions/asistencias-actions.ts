@@ -63,3 +63,55 @@ export async function guardarAsistenciaAction(formData: FormData) {
     return { success: false, message: error.message };
   }
 }
+
+export async function getEstadisticasAsistenciaAction(idAsignacion: number) {
+  try {
+    const asig = await db.asignacionAcademica.findUnique({
+      where: { idAsignacion: Number(idAsignacion) },
+      include: { curso: true, ciclo: true },
+    });
+
+    if (!asig) throw new Error("Asignación no encontrada");
+
+    // Obtener todas las asistencias del curso en el ciclo actual
+    const asistencias = await db.asistencia.findMany({
+      where: {
+        matricula: {
+          idCurso: asig.idCurso,
+          idCiclo: asig.idCiclo,
+          estadoAcademico: "Activo"
+        }
+      }
+    });
+
+    // Calcular estadísticas por alumno
+    const estadisticasMap = new Map<number, { presentes: number; ausentes: number; totalClases: number }>();
+
+    for (const asistencia of asistencias) {
+      const idMatricula = asistencia.idMatricula;
+      const estado = asistencia.estado;
+
+      if (!estadisticasMap.has(idMatricula)) {
+        estadisticasMap.set(idMatricula, { presentes: 0, ausentes: 0, totalClases: 0 });
+      }
+
+      const stats = estadisticasMap.get(idMatricula)!;
+      stats.totalClases += 1;
+
+      if (estado === "Presente" || estado === "Justificado") {
+        stats.presentes += 1;
+      } else if (estado === "Ausente") {
+        stats.ausentes += 1;
+      } else if (estado === "Tarde") {
+        // Las tardes cuentan como media presente (2 tardes = 1 presente)
+        stats.presentes += 0.5;
+      }
+    }
+
+    // Convertir Map a array para serializar
+    return Array.from(estadisticasMap.entries());
+  } catch (error: any) {
+    console.error("Error en getEstadisticasAsistenciaAction:", error);
+    return [];
+  }
+}

@@ -5,6 +5,7 @@ import { getCicloActual } from "@/lib/ciclo-session";
 import { Materia, Turno } from "@prisma/client";
 import AsistenciasClient from "./AsistenciasClient";
 import db from "@/lib/db";
+import { getEstadisticasAsistenciaAction } from "@/lib/actions/asistencias-actions";
 
 export default async function AsistenciasPage({
   searchParams
@@ -94,6 +95,12 @@ export default async function AsistenciasPage({
     ? await getPlanillaAsistencia({ idAsignacion, idHorario, fecha: fechaSeleccionada, page: search ? currentPage : 0, search })
     : null;
 
+  const estadisticasAsistenciaArray = idAsignacion > 0
+    ? await getEstadisticasAsistenciaAction(idAsignacion)
+    : [];
+  
+  const estadisticasAsistencia = new Map(estadisticasAsistenciaArray as Array<[number, { presentes: number; ausentes: number; totalClases: number }]>);
+
   const totalPages = planilla && search
     ? Math.ceil(planilla.totalMatriculas / 5)
     : 1;
@@ -111,6 +118,7 @@ export default async function AsistenciasPage({
     nombreDiaSeleccionado={nombreDiaSeleccionado}
     idHorario={idHorario}
     planilla={planilla}
+    estadisticasAsistencia={estadisticasAsistencia}
     isAdmin={isAdmin}
     currentPage={currentPage}
     totalPages={totalPages}

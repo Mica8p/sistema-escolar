@@ -48,6 +48,7 @@ interface Props {
   nombreDiaSeleccionado: string;
   idHorario: number;
   planilla: Planilla | null;
+  estadisticasAsistencia: Map<number, { presentes: number; ausentes: number; totalClases: number }>;
   isAdmin: boolean;
   currentPage: number;
   totalPages: number;
@@ -67,6 +68,7 @@ export default function AsistenciasClient({
   nombreDiaSeleccionado,
   idHorario,
   planilla,
+  estadisticasAsistencia,
   isAdmin,
   currentPage,
   totalPages,
@@ -288,6 +290,7 @@ export default function AsistenciasClient({
               fecha={fechaISO}
               matriculas={filteredMatriculas}
               asistenciaByMatricula={Array.from(asistenciaMap.entries())}
+              estadisticasAsistencia={estadisticasAsistencia}
               readOnly={isAdmin}
               onAsistenciaChange={handleAsistenciaChange}
             />
