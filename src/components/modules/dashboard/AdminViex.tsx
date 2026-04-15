@@ -1,6 +1,6 @@
 import { getDashboardAdminData } from "@/service/admin-dashboard.service";
 import { StatCard, Panel } from "@/components/modules/dashboard/DashboarShared";
-import { Users, GraduationCap, ClipboardList, Megaphone, Plus, Wallet, ArrowRight, TrendingUp } from "lucide-react";
+import { Users, GraduationCap, ClipboardList, Plus, Wallet, ArrowRight, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import WelcomeHeader from "./WelcomeHeader";
 import ChartAsistenciaGlobal from "@/components/modules/dashboard/ChartAsistenciaGlobal";
@@ -59,11 +59,11 @@ export default async function AdminView({ idCiclo, userName, userRoles }: { idCi
 
           {/* GRÁFICO DE ASISTENCIA */}
           <Panel title="📈 Asistencia por Nivel Educativo">
-            <div className="h-[300px] w-full mt-4 bg-white rounded-[2rem] p-6 border border-slate-200/60 relative shadow-inner">
+            <div className="h-75 w-full mt-4 bg-white rounded-4xl p-6 border border-slate-200/60 relative shadow-inner">
                <ChartAsistenciaGlobal data={adminData.asistenciaGlobal} />
             </div>
             <div className="flex justify-center gap-6 mt-4">
-               {adminData.asistenciaGlobal.map((n: any) => (
+               {adminData.asistenciaGlobal.map((n: { nivel: string; porcentaje: number; color: string }) => (
                  <div key={n.nivel} className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: n.color }} />
                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
@@ -95,7 +95,7 @@ export default async function AdminView({ idCiclo, userName, userRoles }: { idCi
           <Panel title="📢 Comunicados Enviados">
             <div className="space-y-3 mt-4">
               {adminData?.comunicadosRecientes.length > 0 ? (
-                adminData.comunicadosRecientes.slice(0, 3).map((c: any) => (
+                adminData.comunicadosRecientes.slice(0, 3).map((c: { idComunicado: number; titulo: string; fecha: string | Date; usuario: { persona: { nombre: string } } }) => (
                   <Link
                     key={c.idComunicado}
                     href={`/dashboard/comunicados/${c.idComunicado}`}

@@ -6,8 +6,6 @@ import Link from "next/link";
 import { UserPlus, Mail, Fingerprint, Tag, CheckCircle2, ChevronLeft, ChevronRight, Edit3 } from "lucide-react";
 import EnableAccessButton from "@/components/modules/personas/EnableAccessButton";
 import DisablePersonaButton from "@/components/modules/personas/DisablePersonaButton";
-import GenericDeleteButton from "@/components/shared/GenericDeletButton";
-import { deletePersona } from "@/lib/actions/persona-actions";
 interface PersonasClientProps {
   personas: PersonaWithRelations[];
   success?: string;

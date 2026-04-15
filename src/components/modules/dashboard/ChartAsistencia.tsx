@@ -1,7 +1,15 @@
 "use client";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
-export default function ChartAsistencia({ data }: { data: any[] }) {
+interface AsistenciaData {
+  name: string;
+  presente: number;
+  tarde: number;
+  justificado: number;
+  ausente: number;
+}
+
+export default function ChartAsistencia({ data }: { data: AsistenciaData[] }) {
   if (!data || data.length === 0) return <div className="h-full flex items-center justify-center text-slate-400 text-xs italic">Esperando datos de asistencia...</div>;
 
   return (
