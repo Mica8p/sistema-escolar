@@ -1,25 +1,18 @@
 'use client';
 
 import { createCiclo, updateCiclo } from '@/lib/actions/ciclo-actions';
-import { clonarAsignacionesYHorarios } from '@/lib/actions/asignacion-actions';
 import { CicloLectivo } from '@prisma/client';
 import { useRouter } from 'next/navigation';
 import { useTransition, useState } from 'react';
-import ConfirmModal from '@/components/shared/ConfirmModal';
 
 interface CicloFormProps {
   ciclo?: CicloLectivo;
-  cicloAnteriorId?: number;
-  anioAnterior?: number;
 }
 
-export function CicloForm({ ciclo, cicloAnteriorId, anioAnterior }: CicloFormProps) {
+export function CicloForm({ ciclo }: CicloFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [showCopyModal, setShowCopyModal] = useState(false);
-  const [newCicloId, setNewCicloId] = useState<number | null>(null);
-  const [isCopying, setIsCopying] = useState(false);
   const isEditMode = !!ciclo;
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -37,40 +30,14 @@ export function CicloForm({ ciclo, cicloAnteriorId, anioAnterior }: CicloFormPro
         : await createCiclo(data);
 
       if (result.success) {
-        // Si es creación y hay ciclo anterior, mostrar opción de copiar
-        if (!isEditMode && cicloAnteriorId && result.idCiclo) {
-          setNewCicloId(result.idCiclo);
-          setShowCopyModal(true);
-        } else {
-          router.push('/dashboard/ciclos');
-        }
+        router.push('/dashboard/ciclos');
       } else {
         setError(result.message || "Ocurrió un error.");
       }
     });
   };
 
-  const handleConfirmCopy = async () => {
-    if (!newCicloId || !cicloAnteriorId) return;
-    
-    setIsCopying(true);
-    const result = await clonarAsignacionesYHorarios(cicloAnteriorId, newCicloId);
-    setIsCopying(false);
 
-    if ('success' in result) {
-      setShowCopyModal(false);
-      router.push('/dashboard/ciclos');
-    } else if ('error' in result) {
-      alert(result.error);
-      setShowCopyModal(false);
-      router.push('/dashboard/ciclos');
-    }
-  };
-
-  const handleSkipCopy = () => {
-    setShowCopyModal(false);
-    router.push('/dashboard/ciclos');
-  };
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
@@ -133,16 +100,7 @@ export function CicloForm({ ciclo, cicloAnteriorId, anioAnterior }: CicloFormPro
         </div>
       </form>
 
-      {/* Modal para copiar datos del ciclo anterior */}
-      <ConfirmModal
-        isOpen={showCopyModal}
-        onClose={handleSkipCopy}
-        onConfirm={handleConfirmCopy}
-        title="Copiar datos del ciclo anterior"
-        message={`¿Deseas copiar los profesores, materias y horarios del ciclo ${anioAnterior}? Esta acción solo se puede hacer una vez al crear el ciclo.`}
-        loading={isCopying}
-        variant="info"
-      />
+
     </>
   );
 }
