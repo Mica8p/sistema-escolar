@@ -21,7 +21,10 @@ export default async function AsistenciasPage({
   const currentPage = Number(params.page || "1");
   const search = params.search;
 
-  const asignaciones = await getAsignacionesParaUsuario({ isAdmin, idPersona, idCiclo });
+  const [asignaciones, cicloObj] = await Promise.all([
+    getAsignacionesParaUsuario({ isAdmin, idPersona, idCiclo }),
+    db.cicloLectivo.findUnique({ where: { idCiclo } })
+  ]);
 
   const cursosAgrupados = asignaciones.reduce((acc, a) => {
     const key = `${a.curso.grado}° ${a.curso.seccion}`;
@@ -85,7 +88,6 @@ export default async function AsistenciasPage({
 
   const idAsignacion = horarioElegido?.idAsignacion || 0;
   
-  const cicloObj = await db.cicloLectivo.findUnique({ where: { idCiclo } });
   const anioActual = cicloObj?.anio || 2026;
   
   const planilla = (idAsignacion > 0 && idHorario > 0)

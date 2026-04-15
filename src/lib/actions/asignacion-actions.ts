@@ -6,14 +6,14 @@ import { revalidatePath } from "next/cache";
 export async function clonarAsignacionesYHorarios(cicloOrigenId: number, cicloDestinoId: number) {
   try {
     return await db.$transaction(async (tx) => {
-      const asignacionesDestino = await tx.asignacionAcademica.findMany({
-        where: { idCiclo: cicloDestinoId },
-        select: { idAsignacion: true }
+      // Verificar si ya existen asignaciones en el ciclo destino
+      const asignacionesExistentes = await tx.asignacionAcademica.findMany({
+        where: { idCiclo: cicloDestinoId }
       });
-      const idsBorrar = asignacionesDestino.map(a => a.idAsignacion);
 
-      await tx.horario.deleteMany({ where: { idAsignacion: { in: idsBorrar } } });
-      await tx.asignacionAcademica.deleteMany({ where: { idCiclo: cicloDestinoId } });
+      if (asignacionesExistentes.length > 0) {
+        throw new Error("Este ciclo ya tiene asignaciones. No se pueden duplicar.");
+      }
 
       const asignacionesAnteriores = await tx.asignacionAcademica.findMany({
         where: { idCiclo: cicloOrigenId, estado: true },
@@ -21,7 +21,7 @@ export async function clonarAsignacionesYHorarios(cicloOrigenId: number, cicloDe
       });
 
       if (asignacionesAnteriores.length === 0) {
-        throw new Error("No hay asignaciones activas en el ciclo anterior para migrar.");
+        throw new Error("No hay asignaciones activas en el ciclo anterior para copiar.");
       }
 
       let asignacionesCreadas = 0;
@@ -59,6 +59,6 @@ export async function clonarAsignacionesYHorarios(cicloOrigenId: number, cicloDe
       return { success: true, count: asignacionesCreadas, horariosCount: horariosCreados };
     });
   } catch (error: any) {
-    return { error: error.message || "Error en la migración." };
+    return { error: error.message || "Error en la copia de asignaciones." };
   }
 }

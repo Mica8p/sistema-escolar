@@ -3,11 +3,13 @@ import PersonaForm from "@/components/modules/personas/PersonaForm";
 import db from "@/lib/db";
 
 export default async function NuevaPersonaPage() {
-  const roles = await PersonaService.getRoles();
-  const alumnos = await db.alumno.findMany({
-    include: { persona: true, matriculas: true },
-    orderBy: { persona: { apellido: 'asc' } }
-  });
+  const [roles, alumnos] = await Promise.all([
+    PersonaService.getRoles(),
+    db.alumno.findMany({
+      include: { persona: true, matriculas: true },
+      orderBy: { persona: { apellido: 'asc' } }
+    })
+  ]);
 
   return (
     <div className="max-w-2xl mx-auto">

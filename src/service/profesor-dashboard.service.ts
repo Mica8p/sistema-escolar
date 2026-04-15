@@ -23,8 +23,11 @@ function getDiaSemanaEnum(date = new Date()): DiaSemana {
   return map[date.getDay()];
 }
 
-export async function getClasesDeHoyDocente(idProfesor: number, date = new Date()) {
-  const idCiclo = await getCicloActual();
+export async function getClasesDeHoyDocente(idProfesor: number, date = new Date(), idCiclo?: number) {
+  let cicloId = idCiclo;
+  if (!cicloId) {
+    cicloId = await getCicloActual();
+  }
   const dia = getDiaSemanaEnum(date);
 
   return db.horario.findMany({
@@ -32,7 +35,7 @@ export async function getClasesDeHoyDocente(idProfesor: number, date = new Date(
       diaSemana: dia,
       asignacion: {
         idProfesor,
-        idCiclo,
+        idCiclo: cicloId,
         estado: true,
       },
     },
@@ -48,8 +51,11 @@ export async function getClasesDeHoyDocente(idProfesor: number, date = new Date(
   });
 }
 
-export async function getAsistenciasPendientesDocente(idProfesor: number, date = new Date()) {
-  const idCiclo = await getCicloActual();
+export async function getAsistenciasPendientesDocente(idProfesor: number, date = new Date(), idCiclo?: number) {
+  let cicloId = idCiclo;
+  if (!cicloId) {
+    cicloId = await getCicloActual();
+  }
   const dia = getDiaSemanaEnum(date);
   const { start, end } = getDayRange(date);
 
@@ -58,7 +64,7 @@ export async function getAsistenciasPendientesDocente(idProfesor: number, date =
       diaSemana: dia,
       asignacion: {
         idProfesor,
-        idCiclo,
+        idCiclo: cicloId,
         estado: true,
       },
     },
@@ -77,7 +83,7 @@ export async function getAsistenciasPendientesDocente(idProfesor: number, date =
       db.matricula.count({
         where: {
           idCurso,
-          idCiclo,
+          idCiclo: cicloId,
           estadoAcademico: EstadoAcademico.Activo,
         },
       }),
@@ -103,14 +109,17 @@ export async function getAsistenciasPendientesDocente(idProfesor: number, date =
 }
 
 
-export async function getNotasRecientesDocente(idProfesor: number, take = 8) {
-  const idCiclo = await getCicloActual();
+export async function getNotasRecientesDocente(idProfesor: number, take = 8, idCiclo?: number) {
+  let cicloId = idCiclo;
+  if (!cicloId) {
+    cicloId = await getCicloActual();
+  }
 
   return db.nota.findMany({
     where: {
       asignacion: {
         idProfesor,
-        idCiclo,
+        idCiclo: cicloId,
         estado: true,
       },
     },
@@ -122,22 +131,25 @@ export async function getNotasRecientesDocente(idProfesor: number, take = 8) {
       matricula: { include: { alumno: { include: { persona: true } } } },
     },
   });
-}
-
-
-export async function getProximosCierresDocente(idProfesor: number, take = 5) {
-  const idCiclo = await getCicloActual();
+}, idCiclo?: number) {
+  let cicloId = idCiclo;
+  if (!cicloId) {
+    cicloId = await getCicloActual();
+  }
   const ahora = new Date();
 
   return db.periodoAcademico.findMany({
     where: {
-      idCiclo,
+      idCiclo: cicloId,
       fechaInicio: { gte: ahora },
       nombre: {
         in: [
           PeriodoNombre.DICIEMBRE,
           PeriodoNombre.FEBRERO,
           PeriodoNombre.JULIO_PREVIAS,
+        ],
+      },
+      ciclo: { asignaciones: { some: { idProfesor, idCiclo: cicloId
         ],
       },
       ciclo: { asignaciones: { some: { idProfesor, idCiclo, estado: true } } },
@@ -150,14 +162,17 @@ export async function getProximosCierresDocente(idProfesor: number, take = 5) {
 
 
 
-export async function getRendimientoAsistenciaDocente(idProfesor: number) {
-  const idCiclo = await getCicloActual();
+export async function getRendimientoAsistenciaDocente(idProfesor: number, idCiclo?: number) {
+  let cicloId = idCiclo;
+  if (!cicloId) {
+    cicloId = await getCicloActual();
+  }
 
   const cursos = await db.curso.findMany({
-    where: { asignaciones: { some: { idProfesor, idCiclo, estado: true } } },
+    where: { asignaciones: { some: { idProfesor, idCiclo: cicloId, estado: true } } },
     include: {
       asignaciones: {
-        where: { idProfesor, idCiclo, estado: true },
+        where: { idProfesor, idCiclo: cicloId, estado: true },
         include: { horarios: { include: { asistencias: true } } }
       }
     }

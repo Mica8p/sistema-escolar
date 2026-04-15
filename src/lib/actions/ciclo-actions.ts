@@ -61,7 +61,7 @@ export async function createCiclo(data: { anio: number, estado: boolean }) {
     }
 
     revalidatePath("/dashboard/ciclos");
-    return { success: true };
+    return { success: true, idCiclo: newCiclo.idCiclo };
   } catch (error) {
     console.error("Error inesperado al crear ciclo:", error);
     return { success: false, message: "Error al crear el ciclo lectivo." };

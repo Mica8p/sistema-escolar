@@ -14,24 +14,24 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
   const { curso } = await searchParams;
   const idCiclo = await getCicloActual();
 
-  const cicloActualObj = await db.cicloLectivo.findUnique({
-    where: { idCiclo }
-  });
+  // Ejecutar todas las queries que siempre se hacen en paralelo
+  const [cicloActualObj, { bloques, dias }, profesorData] = await Promise.all([
+    db.cicloLectivo.findUnique({ where: { idCiclo } }),
+    getHorarioConfig(),
+    esDocente && !idProfesor && session?.user?.idPersona
+      ? db.profesor.findUnique({
+          where: { idPersona: Number(session.user.idPersona) }
+        })
+      : null
+  ]);
 
-  if (esDocente && !idProfesor && session?.user?.idPersona) {
-    const profesor = await db.profesor.findUnique({
-      where: { idPersona: Number(session.user.idPersona) }
-    });
-    if (profesor) {
-      idProfesor = profesor.idProfesor;
-    }
+  if (profesorData) {
+    idProfesor = profesorData.idProfesor;
   }
 
   let horarios: any[] = [];
   let idCurso = curso ? parseInt(curso) : null;
   let cursoSeleccionado = null;
-
-  const { bloques, dias } = await getHorarioConfig();
 
   if (esDocente && !esAdmin) {
     if (idProfesor) {
@@ -41,8 +41,12 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
     idCurso = null;
   } else {
     if (idCurso) {
-      horarios = await getHorariosPorCurso(idCurso, idCiclo);
-      cursoSeleccionado = await db.curso.findUnique({ where: { idCurso } });
+      const [horariosData, cursoData] = await Promise.all([
+        getHorariosPorCurso(idCurso, idCiclo),
+        db.curso.findUnique({ where: { idCurso } })
+      ]);
+      horarios = horariosData;
+      cursoSeleccionado = cursoData;
     } else if (esDocente && idProfesor) {
       horarios = await getHorariosPorDocente(idProfesor, idCiclo);
       horarios = horarios.filter((h: any) => h.asignacion.estado);

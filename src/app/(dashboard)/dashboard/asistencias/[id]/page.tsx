@@ -17,16 +17,19 @@ export default async function DetalleAsistenciaPage({
 
   const resolvedParams = await params;
   const idAlumno = parseInt(resolvedParams.id);
-  const idCiclo = await getCicloActual();
 
   if (isNaN(idAlumno)) {
     redirect("/dashboard");
   }
 
-  const alumno = await db.alumno.findUnique({
-    where: { idAlumno },
-    include: { persona: true }
-  });
+  // Obtener ciclo actual y datos del alumno en paralelo
+  const [idCiclo, alumno] = await Promise.all([
+    getCicloActual(),
+    db.alumno.findUnique({
+      where: { idAlumno },
+      include: { persona: true }
+    })
+  ]);
 
   if (!alumno) redirect("/dashboard");
 

@@ -18,23 +18,48 @@ export default async function ComunicadosPage() {
   const rolPrincipal = roles[0] || "USUARIO";
   const puedeCrear = roles.includes("ADMIN") || roles.includes("DOCENTE");
 
-  let idsCursosHijos: number[] = [];
-  if (rolPrincipal === "PADRE" && idPadre) {
-    const hijos = await db.alumnoPadre.findMany({
-      where: { idPadre: idPadre },
-      include: {
-        alumno: {
+  // Obtener hijos y comunicados en paralelo
+  const [hijos, comunicados] = await Promise.all([
+    rolPrincipal === "PADRE" && idPadre
+      ? db.alumnoPadre.findMany({
+          where: { idPadre: idPadre },
           include: {
-            matriculas: { where: { estadoAcademico: "Activo" } }
+            alumno: {
+              include: {
+                matriculas: { where: { estadoAcademico: "Activo" } }
+              }
+            }
           }
-        }
-      }
-    });
+        })
+      : Promise.resolve([]),
+    getComunicadosRecibidos(idUsuario, rolPrincipal, []) // Inicializar con array vacío
+  ]);
+
+  // Obtener IDs de cursos después si es necesario
+  let idsCursosHijos: number[] = [];
+  if (rolPrincipal === "PADRE" && hijos.length > 0) {
     idsCursosHijos = hijos.flatMap(h => h.alumno.matriculas.map(m => m.idCurso));
+    // Si hay cursos, obtener comunicados nuevamente con los IDs correctos
+    if (idsCursosHijos.length > 0) {
+      const comunicadosActualizados = await getComunicadosRecibidos(idUsuario, rolPrincipal, idsCursosHijos);
+      return (
+        <ComunicadosContent 
+          comunicados={comunicadosActualizados}
+          puedeCrear={puedeCrear}
+        />
+      );
+    }
   }
 
-  const comunicados = await getComunicadosRecibidos(idUsuario, rolPrincipal, idsCursosHijos);
+  return (
+    <ComunicadosContent 
+      comunicados={comunicados}
+      puedeCrear={puedeCrear}
+    />
+  );
+}
 
+function ComunicadosContent({ comunicados, puedeCrear }: { comunicados: any; puedeCrear: boolean }) {
   return (
     <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">
       <header className="flex justify-between items-center max-w-6xl mx-auto w-full">

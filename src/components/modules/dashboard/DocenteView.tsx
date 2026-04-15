@@ -34,14 +34,14 @@ export default async function DocenteView({ idProfesor, idUsuario, userName, use
   // Llama a la nueva función para obtener las notificaciones dinámicas
   const pendingNotifications: PendingNotification[] = await getDocenteDashboardPendingNotifications(idProfesor, idCiclo);
 
-  const clasesHoy = await getClasesDeHoyDocente(idProfesor);
+  const clasesHoy = await getClasesDeHoyDocente(idProfesor, new Date(), idCiclo);
   const idsCursos = Array.from(new Set(clasesHoy.map(h => h.asignacion.idCurso)));
 
   const [pendientes, notasRecientes, cierres, rendimiento, comunicados] = await Promise.all([
-    getAsistenciasPendientesDocente(idProfesor),
-    getNotasRecientesDocente(idProfesor, 5),
-    getProximosCierresDocente(idProfesor, 3),
-    getRendimientoAsistenciaDocente(idProfesor),
+    getAsistenciasPendientesDocente(idProfesor, new Date(), idCiclo),
+    getNotasRecientesDocente(idProfesor, 5, idCiclo),
+    getProximosCierresDocente(idProfesor, 3, idCiclo),
+    getRendimientoAsistenciaDocente(idProfesor, idCiclo),
     getComunicadosDashboard(idUsuario, idsCursos),
   ]);
 

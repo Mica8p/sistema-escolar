@@ -18,7 +18,7 @@ async getAll(idCiclo: number, page: number = 1, limit: number = 10) {
       }
     };
 
-    const [profesores, total] = await db.$transaction([
+    const [profesores, total] = await Promise.all([
       db.profesor.findMany({
         where: whereCondition,
         include: {
@@ -244,25 +244,28 @@ async eliminarAsignacion(idAsignacion: number) {
     return await db.materia.findMany({ orderBy: { nombre: "asc" } });
   },
 
-  async getHistorialAsignaciones() {
-  const idCiclo = await getCicloActual();
-  return await db.asignacionAcademica.findMany({
-    where: {
-      estado: false,
-      idCiclo: idCiclo
-    },
-    include: {
-      profesor: {
-        include: { persona: true }
-      },
-      materia: true,
-      curso: true
-    },
-    orderBy: {
-      idAsignacion: 'desc'
+  async getHistorialAsignaciones(idCiclo?: number) {
+    let cicloId = idCiclo;
+    if (!cicloId) {
+      cicloId = await getCicloActual();
     }
-  });
-},
+    return await db.asignacionAcademica.findMany({
+      where: {
+        estado: false,
+        idCiclo: cicloId
+      },
+      include: {
+        profesor: {
+          include: { persona: true }
+        },
+        materia: true,
+        curso: true
+      },
+      orderBy: {
+        idAsignacion: 'desc'
+      }
+    });
+  },
 
 async borrarAsignacionDefinitivamente(idAsignacion: number) {
   return await db.$transaction(async (tx) => {
@@ -410,7 +413,7 @@ async getAllByDay(idCiclo: number, diaSemana: string, page: number = 1, limit: n
     }
   };
 
-  const [profesores, total] = await db.$transaction([
+  const [profesores, total] = await Promise.all([
     db.profesor.findMany({
       where: whereCondition,
       include: {

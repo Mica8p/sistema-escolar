@@ -8,7 +8,9 @@ export default async function PersonasPage({
   searchParams: Promise<{ success?: string }>;
 }) {
   const idCiclo = await getCicloActual();
-  const personas = await PersonaService.getAll(undefined, idCiclo);
+  const [personas] = await Promise.all([
+    PersonaService.getAll(undefined, idCiclo)
+  ]);
   const { success } = await searchParams;
 
   return <PersonasClient personas={personas} success={success} />;

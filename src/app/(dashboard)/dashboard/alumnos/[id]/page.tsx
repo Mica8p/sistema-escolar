@@ -12,7 +12,7 @@ export default async function AlumnoPage({ params }: { params: { id: string } })
   }
 
   const cicloId = await getCicloActual();
-  const alumno = await AlumnoService.getById(id);
+  const alumno = await AlumnoService.getById(id, cicloId);
 
   if (!alumno) {
     return notFound();

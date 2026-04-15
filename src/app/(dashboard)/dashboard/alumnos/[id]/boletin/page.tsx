@@ -16,25 +16,30 @@ export default async function BoletinPage({ params }: { params: Promise<{ id: st
   const isDocente = userRoles.includes("DOCENTE");
   const idPersona = session.user.idPersona;
 
-  if (!isAdmin && !isDocente) {
-    const relacion = await db.alumnoPadre.findFirst({
-      where: {
-        padre: { idPersona: idPersona },
-        alumno: {
-          matriculas: {
-            some: { idMatricula: idMatricula }
+  // Ejecutar validación y obtención de boletín en paralelo
+  const [relacion, matricula] = await Promise.all([
+    !isAdmin && !isDocente
+      ? db.alumnoPadre.findFirst({
+          where: {
+            padre: { idPersona: idPersona },
+            alumno: {
+              matriculas: {
+                some: { idMatricula: idMatricula }
+              }
+            }
           }
-        }
-      }
-    });
+        })
+      : Promise.resolve(null),
+    getBoletinCompleto(idMatricula)
+  ]);
 
+  if (!isAdmin && !isDocente) {
     if (!relacion) {
       console.log(`🚫 Intento de acceso no autorizado: Padre ${idPersona} buscó Boletín ${idMatricula}`);
       return notFound();
     }
   }
 
-  const matricula = await getBoletinCompleto(idMatricula);
   if (!matricula) return notFound();
 
   return (

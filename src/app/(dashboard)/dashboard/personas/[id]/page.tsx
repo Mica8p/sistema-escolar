@@ -4,8 +4,11 @@ import { notFound } from "next/navigation";
 
 export default async function EditarPersonaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const persona = await PersonaService.getById(Number(id));
-  const roles = await PersonaService.getRoles();
+  
+  const [persona, roles] = await Promise.all([
+    PersonaService.getById(Number(id)),
+    PersonaService.getRoles()
+  ]);
 
   if (!persona) notFound();
 

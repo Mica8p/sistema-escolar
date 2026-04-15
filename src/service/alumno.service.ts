@@ -72,8 +72,11 @@ export const AlumnoService = {
   });
 },
 
-  async enroll(idPersona: number, idCurso: number) {
-    const idCiclo = await getCicloActual();
+  async enroll(idPersona: number, idCurso: number, idCiclo?: number) {
+    let cicloId = idCiclo;
+    if (!cicloId) {
+      cicloId = await getCicloActual();
+    }
 
     return await db.$transaction(async (tx) => {
       let alumno = await tx.alumno.findUnique({
@@ -94,7 +97,7 @@ export const AlumnoService = {
         data: {
           idAlumno: alumno.idAlumno,
           idCurso: idCurso,
-          idCiclo: idCiclo,
+          idCiclo: cicloId,
           fechaInscripcion: new Date(),
           estadoAcademico: EstadoAcademico.Activo,
         }
@@ -104,14 +107,17 @@ export const AlumnoService = {
     });
   },
 
-  async getById(idAlumno: number) {
-    const idCiclo = await getCicloActual();
+  async getById(idAlumno: number, idCiclo?: number) {
+    let cicloId = idCiclo;
+    if (!cicloId) {
+      cicloId = await getCicloActual();
+    }
     return await db.alumno.findUnique({
       where: { idAlumno: idAlumno },
       include: {
         persona: true,
         matriculas: {
-          where: { idCiclo },
+          where: { idCiclo: cicloId },
           include: {
             curso: true,
             notas: {

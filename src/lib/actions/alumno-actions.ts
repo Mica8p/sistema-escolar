@@ -3,6 +3,7 @@
 import db from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { AlumnoService } from "@/service/alumno.service";
+import { getCicloActual } from "@/lib/ciclo-session";
 import { z } from "zod";
 import { EstadoAcademico } from "@prisma/client";
 
@@ -72,7 +73,8 @@ export async function inscribirAlumnoAction(prevState: any, formData: FormData) 
   }
 
   try {
-    await AlumnoService.enroll(validatedFields.data.idPersona, validatedFields.data.idCurso);
+    const idCiclo = await getCicloActual();
+    await AlumnoService.enroll(validatedFields.data.idPersona, validatedFields.data.idCurso, idCiclo);
     revalidatePath("/dashboard/alumnos");
     return { success: true };
   } catch (error) {

@@ -32,47 +32,60 @@ export default async function DocentesPage({ searchParams }: PageProps) {
 
   let idCicloActual = await getCicloActual();
 
-  let cicloActualInfo = await db.cicloLectivo.findUnique({ where: { idCiclo: idCicloActual } });
-
-  if (!cicloActualInfo) {
-    const cicloFallback = await db.cicloLectivo.findFirst({
+  // Obtener ciclo actual y ciclo fallback en paralelo (sin depender uno del otro)
+  const [cicloActualInfo, cicloFallback, todosLosCiclos] = await Promise.all([
+    db.cicloLectivo.findUnique({ where: { idCiclo: idCicloActual } }),
+    db.cicloLectivo.findFirst({
       where: { estado: true },
       orderBy: { anio: 'desc' }
-    });
-    if (cicloFallback) {
-      idCicloActual = cicloFallback.idCiclo;
-      cicloActualInfo = cicloFallback;
-    }
+    }),
+    db.cicloLectivo.findMany({
+      orderBy: { anio: 'desc' }
+    })
+  ]);
+
+  // Si no existe el ciclo actual pero hay uno en fallback, usar ese
+  if (!cicloActualInfo && cicloFallback) {
+    idCicloActual = cicloFallback.idCiclo;
   }
 
-  const cicloAnterior = await db.cicloLectivo.findFirst({
-    where: { anio: (cicloActualInfo?.anio ?? 0) - 1 },
-  });
+  // Obtener ciclo anterior usando el array de todos los ciclos (sin query adicional)
+  const cicloActualAnio = cicloActualInfo?.anio ?? cicloFallback?.anio ?? 0;
+  const cicloAnterior = todosLosCiclos.find(c => c.anio === cicloActualAnio - 1) || null;
 
-  const { profesores, total } = await ProfesorService.getAllByDay(idCicloActual, selectedDay, currentPage, limit);
-
-  const [personas, materias, cursos, historial, diasHabiles, bloquesHorario] = await Promise.all([
+  // Ejecutar todas las queries restantes en paralelo
+  const [
+    { profesores, total },
+    personas,
+    materias,
+    cursos,
+    historial,
+    diasHabiles,
+    bloquesHorario,
+    asignacionAEditarData
+  ] = await Promise.all([
+    ProfesorService.getAllByDay(idCicloActual, selectedDay, currentPage, limit),
     ProfesorService.getPersonasDisponibles(),
     ProfesorService.getMaterias(),
     AlumnoService.getCursosDisponibles(),
-    ProfesorService.getHistorialAsignaciones(),
+    ProfesorService.getHistorialAsignaciones(idCicloActual),
     db.diaHabil.findMany({ where: { habilitado: true }, orderBy: { orden: 'asc' } }),
     db.bloqueHorario.findMany({ orderBy: { orden: 'asc' } }),
+    editId 
+      ? db.asignacionAcademica.findUnique({ 
+          where: { idAsignacion: Number(editId) },
+          include: {
+            horarios: true,
+            materia: true,
+            curso: true,
+            profesor: { include: { persona: true } }
+          }
+        })
+      : null
   ]);
 
   const totalPages = Math.ceil(total / limit);
-
-  const asignacionAEditar = editId 
-    ? await db.asignacionAcademica.findUnique({ 
-        where: { idAsignacion: Number(editId) },
-        include: {
-          horarios: true,
-          materia: true,
-          curso: true,
-          profesor: { include: { persona: true } }
-        }
-      }) 
-    : null;
+  const asignacionAEditar = asignacionAEditarData;
 
   return (
     <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
