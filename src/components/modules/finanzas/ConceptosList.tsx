@@ -2,9 +2,7 @@
 
 import { useState } from 'react';
 import { ConceptoDePago } from "@prisma/client";
-import { deleteConceptoAction } from "@/lib/actions/finanzas-actions";
 import { Pencil, ChevronLeft, ChevronRight } from "lucide-react";
-import GenericDeleteButton from "@/components/shared/GenericDeletButton";
 
 type ConceptosListProps = {
   conceptos: ConceptoDePago[];
@@ -35,6 +33,7 @@ export default function ConceptosList({ conceptos, onEdit }: ConceptosListProps)
             <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-widest">Concepto</th>
             <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-widest">Descripción</th>
             <th className="px-6 py-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Monto</th>
+            <th className="px-6 py-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Vencimiento</th>
             <th className="px-6 py-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Acciones</th>
           </tr>
         </thead>
@@ -50,6 +49,9 @@ export default function ConceptosList({ conceptos, onEdit }: ConceptosListProps)
               <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-black text-indigo-600">
                 ${concepto.montoFijo?.toLocaleString() || '0'}
               </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-slate-600">
+                {concepto.fechaVencimiento ? new Date(concepto.fechaVencimiento).toLocaleDateString() : '-'}
+              </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center justify-center gap-1">
                   <button
@@ -59,13 +61,6 @@ export default function ConceptosList({ conceptos, onEdit }: ConceptosListProps)
                   >
                     <Pencil size={16} />
                   </button>
-                  <GenericDeleteButton
-                    id={concepto.id}
-                    action={deleteConceptoAction}
-                    title="Eliminar Concepto"
-                    message={`¿Estás seguro de eliminar "${concepto.nombre}"?`}
-                    variant="danger"
-                  />
                 </div>
               </td>
             </tr>

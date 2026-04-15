@@ -20,6 +20,7 @@ export default function AlumnosDeudoresList({ alumnos }: { alumnos: AlumnoConDeu
   const [currentPage, setCurrentPage] = useState(1);
   const [cursoFilter, setCursoFilter] = useState('');
   const [turnoFilter, setTurnoFilter] = useState('');
+  const [estadoFilter, setEstadoFilter] = useState<'Con Deuda' | 'Al día'>('Con Deuda');
   const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 5;
 
@@ -43,10 +44,11 @@ export default function AlumnosDeudoresList({ alumnos }: { alumnos: AlumnoConDeu
       
       const cursoMatch = cursoFilter === '' || curso === cursoFilter;
       const turnoMatch = turnoFilter === '' || turno === turnoFilter;
+      const estadoMatch = alumno.estado === estadoFilter;
 
-      return searchMatch && cursoMatch && turnoMatch;
+      return searchMatch && cursoMatch && turnoMatch && estadoMatch;
     });
-  }, [alumnos, cursoFilter, turnoFilter, searchTerm]);
+  }, [alumnos, cursoFilter, turnoFilter, searchTerm, estadoFilter]);
 
   const totalPages = Math.ceil(filteredAlumnos.length / itemsPerPage);
   const paginatedAlumnos = filteredAlumnos.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -88,6 +90,17 @@ export default function AlumnosDeudoresList({ alumnos }: { alumnos: AlumnoConDeu
         >
           <option value="">Todos los turnos</option>
           {turnos.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <select
+          className="p-2 border bg-gray-200 text-gray-800 border-gray-300 rounded-md"
+          value={estadoFilter}
+          onChange={(e) => {
+            setEstadoFilter(e.target.value as 'Con Deuda' | 'Al día');
+            setCurrentPage(1);
+          }}
+        >
+          <option value="Con Deuda">Deudores</option>
+          <option value="Al día">Al día</option>
         </select>
       </div>
 

@@ -382,13 +382,14 @@ model Asistencia {
  * =======================
  */
 model ConceptoDePago {
-  id          Int      @id @default(autoincrement())
-  nombre      String   @unique
-  descripcion String?
-  montoFijo   Float?
-  cargos      Cargo[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               Int      @id @default(autoincrement())
+  nombre           String   @unique
+  descripcion      String?
+  montoFijo        Float?
+  fechaVencimiento DateTime?
+  cargos           Cargo[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@map("CONCEPTO_PAGO")
 }

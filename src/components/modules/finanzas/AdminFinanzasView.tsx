@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { ConceptoForm } from "@/components/modules/finanzas/ConceptoForm";
 import ConceptosList from "@/components/modules/finanzas/ConceptosList";
-import { GenerarCuotaMasivaDialog } from "@/components/modules/finanzas/generar-cuota-masiva-dialog";
 import AlumnosDeudoresList from "@/components/modules/finanzas/AlumnosDeudoresList";
 import { Settings, Users, DollarSign } from "lucide-react";
 
@@ -49,7 +48,6 @@ export default function AdminFinanzasView({ conceptos, alumnosDeudores }: Props)
           <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
             <Users className="w-5 h-5" /> Estado de Alumnos
           </h2>
-          <GenerarCuotaMasivaDialog conceptos={conceptos} />
         </div>
 
         <AlumnosDeudoresList alumnos={alumnosDeudores} />

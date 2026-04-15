@@ -203,7 +203,7 @@ export async function crearCargoMasivo(
   cicloId: number,
   conceptoId: number,
   monto: number,
-  fechaVencimiento: Date
+  fechaVencimiento?: Date | null
 ) {
   const matriculas = await db.matricula.findMany({
     where: { idCiclo: cicloId, estadoAcademico: 'Activo' },
@@ -333,6 +333,7 @@ export type ConceptoDePagoData = {
   nombre: string;
   descripcion?: string;
   montoFijo?: number;
+  fechaVencimiento?: Date;
 }
 
 export async function createConceptoDePago(data: ConceptoDePagoData) {
@@ -348,7 +349,8 @@ export async function createConceptoDePago(data: ConceptoDePagoData) {
     data: {
       nombre: data.nombre,
       descripcion: data.descripcion,
-      montoFijo: data.montoFijo ?? 0
+      montoFijo: data.montoFijo ?? 0,
+      fechaVencimiento: data.fechaVencimiento || null
     }
   });
   revalidatePath("/dashboard/finanzas/conceptos");
@@ -361,7 +363,8 @@ export async function updateConceptoDePago(id: number, data: ConceptoDePagoData)
     data: {
       nombre: data.nombre,
       descripcion: data.descripcion,
-      montoFijo: data.montoFijo ?? 0
+      montoFijo: data.montoFijo ?? 0,
+      fechaVencimiento: data.fechaVencimiento || null
     }
   });
   revalidatePath("/dashboard/finanzas/conceptos");

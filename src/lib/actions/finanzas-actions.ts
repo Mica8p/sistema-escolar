@@ -1,15 +1,18 @@
 'use server';
 
 import { auth } from "@/auth";
+import db from "@/lib/db";
 import {
     registrarPago,
     RegistrarPagoData,
     createConceptoDePago as createConcepto,
     updateConceptoDePago as updateConcepto,
     deleteConceptoDePago as deleteConcepto,
-    ConceptoDePagoData
+    ConceptoDePagoData,
+    crearCargoMasivo
 } from "@/service/finanzas.service";
 import { revalidatePath } from "next/cache";
+import { getCicloActual } from "@/lib/ciclo-session";
 
 export async function registrarPagoAction(data: Omit<RegistrarPagoData, 'usuarioId'>) {
     const session = await auth();
@@ -38,8 +41,21 @@ export async function registrarPagoAction(data: Omit<RegistrarPagoData, 'usuario
 
 export async function createConceptoAction(data: ConceptoDePagoData) {
     try {
-        await createConcepto(data);
+        const concepto = await createConcepto({
+            nombre: data.nombre,
+            descripcion: data.descripcion,
+            montoFijo: data.montoFijo,
+            fechaVencimiento: data.fechaVencimiento
+        });
+
+        // Generar deudas para todos los alumnos
+        const cicloId = await getCicloActual();
+        if (cicloId && concepto.montoFijo) {
+            await crearCargoMasivo(cicloId, concepto.id, concepto.montoFijo, concepto.fechaVencimiento);
+        }
+
         revalidatePath('/dashboard/finanzas/conceptos');
+        revalidatePath('/dashboard/finanzas', 'layout');
         return { success: true };
     } catch (error: any) {
         return { success: false, message: error.message || "Error al crear el concepto" };
@@ -48,8 +64,21 @@ export async function createConceptoAction(data: ConceptoDePagoData) {
 
 export async function updateConceptoAction(id: number, data: ConceptoDePagoData) {
     try {
-        await updateConcepto(id, data);
+        await updateConcepto(id, {
+            nombre: data.nombre,
+            descripcion: data.descripcion,
+            montoFijo: data.montoFijo,
+            fechaVencimiento: data.fechaVencimiento
+        });
+        await db.cargo.updateMany({
+            where: { conceptoId: id },
+            data: {
+                monto: data.montoFijo,
+                fechaVencimiento: data.fechaVencimiento || null
+            }
+        });
         revalidatePath('/dashboard/finanzas/conceptos');
+        revalidatePath('/dashboard/finanzas', 'layout');
         return { success: true };
     } catch (error: any) {
         return { success: false, message: error.message || "Error al actualizar el concepto" };

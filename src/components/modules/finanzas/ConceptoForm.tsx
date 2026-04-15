@@ -3,6 +3,7 @@
 import { useForm } from "react-hook-form";
 import { useTransition, useEffect } from "react";
 import { createConceptoAction, updateConceptoAction } from "@/lib/actions/finanzas-actions";
+import { ConceptoDePagoData } from "@/service/finanzas.service";
 import { toast } from "sonner";
 import { Tag, FileText, DollarSign, Loader2, Save } from "lucide-react";
 
@@ -10,14 +11,15 @@ type FormValues = {
   nombre: string;
   descripcion: string;
   montoFijo: number | string;
+  fechaVencimiento: string;
 };
 
 export function ConceptoForm({ conceptoAEditar, onCancel }: { conceptoAEditar?: any, onCancel?: () => void }) {
   const [isPending, startTransition] = useTransition();
   const isEditing = !!conceptoAEditar;
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
-    defaultValues: { nombre: "", descripcion: "", montoFijo: "" }
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+    defaultValues: { nombre: "", descripcion: "", montoFijo: "", fechaVencimiento: "" }
   });
 
   useEffect(() => {
@@ -25,19 +27,22 @@ export function ConceptoForm({ conceptoAEditar, onCancel }: { conceptoAEditar?: 
       reset({
         nombre: conceptoAEditar.nombre,
         descripcion: conceptoAEditar.descripcion || "",
-        montoFijo: conceptoAEditar.montoFijo || ""
+        montoFijo: conceptoAEditar.montoFijo || "",
+        fechaVencimiento: conceptoAEditar.fechaVencimiento ? new Date(conceptoAEditar.fechaVencimiento).toISOString().split('T')[0] : ""
       });
     } else {
-      reset({ nombre: "", descripcion: "", montoFijo: "" });
+      reset({ nombre: "", descripcion: "", montoFijo: "", fechaVencimiento: "" });
     }
   }, [conceptoAEditar, reset]);
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: FormValues) => {
   startTransition(async () => {
     try {
-      const dataFormateada = {
-        ...data,
-        montoFijo: data.montoFijo ? Number(data.montoFijo) : 0
+      const dataFormateada: ConceptoDePagoData = {
+        nombre: data.nombre,
+        descripcion: data.descripcion,
+        montoFijo: data.montoFijo ? Number(data.montoFijo) : 0,
+        fechaVencimiento: data.fechaVencimiento ? new Date(data.fechaVencimiento) : undefined
       };
 
       let res;
@@ -125,6 +130,21 @@ export function ConceptoForm({ conceptoAEditar, onCancel }: { conceptoAEditar?: 
               className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-50 rounded-2xl text-sm text-slate-700 font-black outline-none focus:bg-white focus:border-indigo-500 transition-all"
               placeholder="0.00"
               {...register("montoFijo")}
+            />
+          </div>
+        </div>
+
+        {/* CAMPO: FECHA DE VENCIMIENTO */}
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
+            Vencimiento de la cuota
+          </label>
+          <div className="relative group">
+            <input
+              id="fechaVencimiento"
+              type="date"
+              className="w-full pl-4 pr-4 py-3.5 bg-slate-50 border-2 border-slate-50 rounded-2xl text-sm text-slate-700 font-black outline-none focus:bg-white focus:border-indigo-500 transition-all"
+              {...register("fechaVencimiento")}
             />
           </div>
         </div>
