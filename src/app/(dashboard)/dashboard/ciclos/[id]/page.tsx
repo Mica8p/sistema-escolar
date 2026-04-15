@@ -3,18 +3,19 @@ import { CicloService } from "@/service/ciclo.service";
 import { notFound } from "next/navigation";
 
 interface EditPageProps {
-    params: {
+    params: Promise<{
         id: string;
-    }
+    }>
 }
 
 export default async function EditCicloPage({ params }: EditPageProps) {
-  const id = Number(params.id);
-  if (isNaN(id)) {
+  const { id } = await params;
+  const cicloId = Number(id);
+  if (isNaN(cicloId)) {
     return notFound();
   }
 
-  const ciclo = await CicloService.getById(id);
+  const ciclo = await CicloService.getById(cicloId);
 
   if (!ciclo) {
     return notFound();
