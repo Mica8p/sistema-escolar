@@ -25,7 +25,8 @@ export async function getPlanillaAsistencia(params: {
   search?: string;
 }) {
   const PAGE_SIZE = 5;
-  const skip = ((params.page || 1) - 1) * PAGE_SIZE;
+  const isFullList = params.page === 0; // Si page es 0, obtener todos
+  const skip = isFullList ? 0 : ((params.page || 1) - 1) * PAGE_SIZE;
   
   const fechaBusqueda = new Date(params.fecha);
   fechaBusqueda.setHours(0, 0, 0, 0);
@@ -48,7 +49,7 @@ export async function getPlanillaAsistencia(params: {
       OR: [
         { persona: { nombre: { contains: params.search, mode: 'insensitive' } } },
         { persona: { apellido: { contains: params.search, mode: 'insensitive' } } },
-        { persona: { dni: { contains: params.search } } }
+        { persona: { dni: { contains: params.search, mode: 'insensitive' } } }
       ]
     };
   }
@@ -59,7 +60,7 @@ export async function getPlanillaAsistencia(params: {
     where: whereClause,
     include: { alumno: { include: { persona: true } } },
     orderBy: { alumno: { persona: { apellido: "asc" } } },
-    take: PAGE_SIZE,
+    take: isFullList ? undefined : PAGE_SIZE,
     skip,
   });
 

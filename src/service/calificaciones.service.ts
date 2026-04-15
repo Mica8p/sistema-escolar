@@ -81,7 +81,8 @@ export async function getPlanilla(params: {
   search?: string;
 }) {
   const PAGE_SIZE = 5;
-  const skip = (params.page - 1) * PAGE_SIZE;
+  const isFullList = params.page === 0; // Si page es 0, obtener todos
+  const skip = isFullList ? 0 : (params.page - 1) * PAGE_SIZE;
 
   const asig = await db.asignacionAcademica.findUnique({
     where: { idAsignacion: params.idAsignacion },
@@ -114,7 +115,7 @@ export async function getPlanilla(params: {
       alumno: { include: { persona: true } }
     },
     orderBy: { alumno: { persona: { apellido: "asc" } } },
-    take: PAGE_SIZE,
+    take: isFullList ? undefined : PAGE_SIZE,
     skip,
   });
 

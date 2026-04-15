@@ -12,7 +12,6 @@ import { getCicloActual } from "@/lib/ciclo-session";
 import { getCursos, getTurnos } from "@/service/curso.service";
 import FiltrosCalificaciones from "@/components/modules/calificaciones/FiltrosCalificaciones";
 import PaginationControls from "@/components/shared/PaginationControls";
-import PlanillaSearchBar from "@/components/modules/calificaciones/PlanillaSearchBar";
 
 const PAGE_SIZE = 5;
 
@@ -86,14 +85,14 @@ export default async function CalificacionesPage({
           idAsignacion,
           idPeriodo,
           tipo: tipoValido,
-          page: currentPage,
+          page: search ? currentPage : 0, // Si hay search, paginar; si no, obtener todos
           search,
         })
       : null;
 
-  const totalPages = planilla
+  const totalPages = planilla && search
     ? Math.ceil(planilla.totalMatriculas / PAGE_SIZE)
-    : 0;
+    : 1; // Si no hay search, no paginar
 
   const qs = (next: { asig?: number; periodo?: number; tipo?: TipoEvaluacion; page?: number, search?: string }) => {
     const p = new URLSearchParams();
@@ -285,7 +284,6 @@ export default async function CalificacionesPage({
         <div className="min-h-[450px] relative p-4">
           {planilla ? (
             <>
-              <PlanillaSearchBar placeholder="Buscar por Apellido o DNI..." />
               <CalificacionesTable
                 idAsignacion={idAsignacion}
                 idPeriodo={idPeriodo}

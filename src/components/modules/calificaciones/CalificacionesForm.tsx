@@ -2,7 +2,7 @@
 
 import { Nota } from "@prisma/client";
 import { guardarNotaAction } from "@/lib/actions/calificaciones-actions";
-import { Save, User, Edit2, Lock, CheckCircle2 } from "lucide-react";
+import { Save, User, Edit2, Lock, CheckCircle2, Search } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -53,7 +53,18 @@ export default function CalificacionesTable({
 }: CalificacionesTableProps) {
   const router = useRouter();
   const [editando, setEditando] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const notaMap = new Map<number, Nota>(notaByMatricula);
+
+  // Filtrar matriculas basado en searchTerm
+  const filteredMatriculas = matriculas.filter(m => {
+    if (!searchTerm) return true;
+    const nombre = m.alumno.persona.nombre.toLowerCase();
+    const apellido = m.alumno.persona.apellido.toLowerCase();
+    const dni = m.alumno.persona.dni;
+    const term = searchTerm.toLowerCase();
+    return nombre.includes(term) || apellido.includes(term) || dni.includes(term);
+  });
 
   // 1. LÓGICA GLOBAL DE PERIODO
   const periodoCerrado = periodoActual?.cerrado;
@@ -91,6 +102,20 @@ export default function CalificacionesTable({
         </div>
       )}
 
+      {/* BARRA DE BÚSQUEDA */}
+      <div className="mb-4 flex justify-center">
+        <div className="relative max-w-sm w-full">
+          <Search className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar por Apellido, Nombre o DNI..."
+            className="peer block w-full rounded-full border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm outline-none placeholder:text-slate-400 text-slate-700 focus:ring-2 focus:ring-indigo-400"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="w-full overflow-x-auto">
         <table className="w-full border-separate border-spacing-y-2">
           <thead className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">
@@ -103,7 +128,7 @@ export default function CalificacionesTable({
             </tr>
           </thead>
           <tbody>
-            {matriculas.map((m: MatriculaConAlumno) => {
+            {filteredMatriculas.map((m: MatriculaConAlumno) => {
               const notaObj = notaMap.get(m.idMatricula);
               const valorNota = notaObj?.nota;
               const tieneNota = valorNota !== undefined && valorNota !== null;

@@ -73,6 +73,7 @@ export default function AsistenciasClient({
   search,
 }: Props) {
   const [asistenciaMap, setAsistenciaMap] = useState<AsistenciaMap>(new Map());
+  const [searchTerm, setSearchTerm] = useState(search || '');
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -81,6 +82,9 @@ export default function AsistenciasClient({
       setAsistenciaMap(new Map(planilla.asistenciaByMatricula));
     }
   }, [planilla]);
+
+  const cursoSeleccionado = cursos.find(c => c.idCurso === idCurso);
+  const turnosDelCurso = cursoSeleccionado?.turnos || [];
 
   const { presentes, ausentes, tardes, justificados } = useMemo(() => {
     let p = 0, a = 0, t = 0, j = 0;
@@ -102,17 +106,17 @@ export default function AsistenciasClient({
     });
   };
 
-  const turnosDelCurso = cursos.find(c => c.idCurso === idCurso)?.turnos || [];
+  const filteredMatriculas = planilla?.matriculas.filter(m => {
+    if (!searchTerm) return true;
+    const nombre = m.alumno.persona.nombre.toLowerCase();
+    const apellido = m.alumno.persona.apellido.toLowerCase();
+    const dni = m.alumno.persona.dni;
+    const term = searchTerm.toLowerCase();
+    return nombre.includes(term) || apellido.includes(term) || dni.includes(term);
+  }) || [];
 
   const handleSearchChange = (value: string) => {
-    const params = new URLSearchParams(searchParams);
-    if (value) {
-      params.set("search", value);
-    } else {
-      params.delete("search");
-    }
-    params.set("page", "1");
-    router.push(`?${params.toString()}`);
+    setSearchTerm(value);
   };
 
   return (
@@ -270,8 +274,8 @@ export default function AsistenciasClient({
                 type="text"
                 placeholder="Buscar por Apellido o DNI..."
                 className="w-full pl-10 pr-4 py-2 bg-slate-50 border-2 border-slate-100 rounded-xl text-sm text-slate-700 font-bold outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                defaultValue={search}
               />
             </div>
           )}
@@ -282,7 +286,7 @@ export default function AsistenciasClient({
               idAsignacion={idAsignacion}
               idHorario={idHorario}
               fecha={fechaISO}
-              matriculas={planilla.matriculas}
+              matriculas={filteredMatriculas}
               asistenciaByMatricula={Array.from(asistenciaMap.entries())}
               readOnly={isAdmin}
               onAsistenciaChange={handleAsistenciaChange}

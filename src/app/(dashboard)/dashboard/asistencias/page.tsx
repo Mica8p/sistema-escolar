@@ -91,12 +91,12 @@ export default async function AsistenciasPage({
   const anioActual = cicloObj?.anio || 2026;
   
   const planilla = (idAsignacion > 0 && idHorario > 0)
-    ? await getPlanillaAsistencia({ idAsignacion, idHorario, fecha: fechaSeleccionada, page: currentPage, search })
+    ? await getPlanillaAsistencia({ idAsignacion, idHorario, fecha: fechaSeleccionada, page: search ? currentPage : 0, search })
     : null;
 
-  const totalPages = planilla
+  const totalPages = planilla && search
     ? Math.ceil(planilla.totalMatriculas / 5)
-    : 0;
+    : 1;
   
   return <AsistenciasClient
     asig={planilla?.asig}
