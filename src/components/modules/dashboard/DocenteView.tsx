@@ -119,33 +119,33 @@ export default async function DocenteView({ idProfesor, idUsuario, userName, use
           {/* --- FIN NOTIFICACIÓN FIJA DE NOTAS PENDIENTES --- */}
 
           {/* AGENDA TIMELINE */}
-          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-2xl shadow-slate-200/40">
+          <div className="bg-white text-slate-900 p-8 rounded-[2.5rem] border border-slate-200 shadow-2xl shadow-slate-200/40">
             <div className="flex justify-between items-center mb-10">
-              <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2 italic uppercase">
+              <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2 italic uppercase">
                 <Clock className="text-indigo-500" size={20} /> Agenda de Hoy
               </h3>
             </div>
 
             {clasesHoy.length ? (
-              <div className="relative border-l-2 border-slate-100 ml-3 space-y-6">
+              <div className="relative border-l-2 border-slate-200 ml-3 space-y-6">
                 {clasesHoy.map((h: any) => {
                   const esAhora = h.idHorario === claseActual?.idHorario;
                   const yaPaso = horaActual > h.horaFin;
 
                   return (
-                    <div key={h.idHorario} className={`relative pl-10 transition-all duration-500 ${yaPaso ? 'opacity-40' : ''}`}>
-                      <div className={`absolute -left-[11px] top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-4 border-white shadow-md ${esAhora ? 'bg-indigo-600 animate-pulse' : yaPaso ? 'bg-slate-300' : 'bg-white'}`} />
+                    <div key={h.idHorario} className="relative pl-10 transition-all duration-500">
+                      <div className={`absolute -left-[11px] top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-4 border-white shadow-md ${esAhora ? 'bg-indigo-600 animate-pulse' : yaPaso ? 'bg-slate-300' : 'bg-slate-100'}`} />
 
-                      <div className={`p-4 rounded-[2rem] border transition-all ${esAhora ? 'bg-indigo-50/50 border-indigo-200 ring-1 ring-indigo-200' : 'bg-white border-slate-100'}`}>
+                      <div className={`p-4 rounded-[2rem] border transition-all ${esAhora ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200' : 'bg-slate-50 border-slate-200'}`}>
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                           <div className="flex items-center gap-6">
-                            <div className="flex flex-col items-center border-r border-slate-100 pr-6">
-                              <span className={`text-sm font-black tracking-tighter ${esAhora ? 'text-indigo-600' : 'text-slate-600'}`}>{h.horaInicio}</span>
-                              <span className="text-[10px] font-bold text-slate-400">{h.horaFin}</span>
+                            <div className="flex flex-col items-center border-r border-slate-200 pr-6">
+                              <span className={`text-sm font-black tracking-tighter ${esAhora ? 'text-indigo-600' : 'text-slate-900'}`}>{h.horaInicio}</span>
+                              <span className="text-[10px] font-bold text-slate-900">{h.horaFin}</span>
                             </div>
                             <div>
-                              <h4 className="text-md font-black text-slate-800 uppercase tracking-tighter">{h.asignacion.materia.nombre}</h4>
-                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                              <h4 className="text-md font-black text-slate-900 uppercase tracking-tighter">{h.asignacion.materia.nombre}</h4>
+                              <p className="text-[10px] text-slate-900 font-bold uppercase tracking-widest">
                                 {h.asignacion.curso.grado}° "{h.asignacion.curso.seccion}" · {h.asignacion.curso.turno}
                               </p>
                             </div>
@@ -158,7 +158,7 @@ export default async function DocenteView({ idProfesor, idUsuario, userName, use
                             ) : (
                               <Link
                                 href={`/dashboard/asistencias?mat=${h.asignacion.idMateria}&horario=${h.idHorario}`}
-                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${yaPaso ? 'text-slate-400 hover:text-indigo-600' : 'bg-slate-50 text-slate-600 hover:bg-indigo-600 hover:text-white'}`}
+                                className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-slate-100 text-slate-900 hover:bg-indigo-600 hover:text-white"
                               >
                                 {yaPaso ? 'Ver Historial' : 'Pasar Lista'}
                               </Link>
