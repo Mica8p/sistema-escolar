@@ -78,7 +78,8 @@ export default function PadreViewClient({ hijosData }: PadreViewClientProps) {
             <button
               type="button"
               onClick={() => {
-                window.location.href = `/dashboard/padres/expediente/${hijoSeleccionado.idAlumno}`;
+                console.log('Click expediente, id:', hijoSeleccionado.idAlumno);
+                router.push(`/dashboard/expediente/${hijoSeleccionado.idAlumno}`);
               }}
               className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 px-4 py-2 rounded-xl transition-all group z-20"
             >
