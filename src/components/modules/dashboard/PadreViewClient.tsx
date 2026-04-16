@@ -68,8 +68,8 @@ export default function PadreViewClient({ hijosData }: PadreViewClientProps) {
                 {hijoSeleccionado.nombreCompleto}
               </h2>
               <p className="text-[10px] uppercase tracking-widest text-slate-300">
-                {hijoSeleccionado.curso.grado}° "{hijoSeleccionado.curso.seccion}" -{" "}
-                {hijoSeleccionado.curso.turno}
+                {hijoSeleccionado.curso} -{" "}
+                {hijoSeleccionado.cursoObj?.turno || 'Sin turno'}
               </p>
             </div>
           </div>
@@ -78,7 +78,6 @@ export default function PadreViewClient({ hijosData }: PadreViewClientProps) {
             <button
               type="button"
               onClick={() => {
-                console.log('Click expediente, id:', hijoSeleccionado.idAlumno);
                 router.push(`/dashboard/expediente/${hijoSeleccionado.idAlumno}`);
               }}
               className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 px-4 py-2 rounded-xl transition-all group z-20"
@@ -117,7 +116,7 @@ export default function PadreViewClient({ hijosData }: PadreViewClientProps) {
               <HorarioImprimible
                 horarios={hijoSeleccionado.horarios}
                 nombreAlumno={hijoSeleccionado.nombreCompleto}
-                curso={hijoSeleccionado.curso}
+                curso={hijoSeleccionado.cursoObj ? `${hijoSeleccionado.cursoObj.grado}° "${hijoSeleccionado.cursoObj.seccion}"` : hijoSeleccionado.curso}
                 bloques={hijoSeleccionado.bloques}
                 dias={hijoSeleccionado.dias}
               />

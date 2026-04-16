@@ -46,6 +46,7 @@ export default async function PadreView({ idPersona, idUsuario, idCiclo, idPadre
       ...hijo,
       idMatricula: matricula?.idMatricula,
       idCurso: matricula?.idCurso,
+      cursoObj: curso, // Objeto curso separado
       notas,
       horarios,
       deudaHijo,
