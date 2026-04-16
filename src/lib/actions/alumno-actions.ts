@@ -128,3 +128,43 @@ export async function deleteMatriculaAction(idMatricula: number) {
     return { success: false, message: error.message };
   }
 }
+
+const DatosPersonalesSchema = z.object({
+  dni: z.string().min(7).max(8),
+  fechaNacimiento: z.string().min(1),
+  email: z.string().email(),
+  telefono: z.string().optional(),
+  direccion: z.string().optional()
+});
+
+export async function updateDatosPersonalesAction(idAlumno: number, idPersona: number, prevState: any, formData: FormData) {
+  const validatedFields = DatosPersonalesSchema.safeParse(Object.fromEntries(formData.entries()));
+
+  if (!validatedFields.success) {
+    return { success: false, message: 'Error de validación: Verificá los datos ingresados.' };
+  }
+
+  const { dni, email, telefono, direccion, fechaNacimiento } = validatedFields.data;
+
+  try {
+    await db.$transaction(async (tx) => {
+      // Actualizar datos de persona
+      await tx.persona.update({
+        where: { idPersona },
+        data: { dni, email, telefono, direccion }
+      });
+
+      // Actualizar fecha de nacimiento del alumno
+      await tx.alumno.update({
+        where: { idAlumno },
+        data: { fechaNacimiento: new Date(fechaNacimiento) }
+      });
+    });
+
+    revalidatePath(`/dashboard/alumnos/${idAlumno}`);
+    return { success: true, message: 'Datos personales actualizados correctamente.' };
+  } catch (error) {
+    console.error('Error al actualizar datos personales:', error);
+    return { success: false, message: 'Error al actualizar los datos personales.' };
+  }
+}

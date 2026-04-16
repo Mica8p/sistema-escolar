@@ -2,8 +2,8 @@
 
 import { useState, useTransition, useMemo } from "react";
 import { EstadoAcademico } from "@prisma/client";
-import { cambiarEstadoMatriculaAction, vincularPadre, desvincularPadre, updateMatriculaCursoAction } from "@/lib/actions/alumno-actions";
-import { getTutoresDisponiblesAction } from "@/lib/actions/persona-actions";
+import { cambiarEstadoMatriculaAction, vincularPadre, desvincularPadre, updateMatriculaCursoAction, updateDatosPersonalesAction } from "@/lib/actions/alumno-actions";
+import { getTutoresDisponiblesAction, updatePersonaAction } from "@/lib/actions/persona-actions";
 import { getAllCursos } from "@/lib/actions/curso-actions";
 import {
   User, Calendar, MapPin, Phone, Mail,
@@ -41,12 +41,52 @@ export default function AlumnoDetalle({ alumno, cicloId, isReadOnly = false }: A
   const [cursos, setCursos] = useState<any[]>([]);
   const [selectedCurso, setSelectedCurso] = useState<string>("");
 
+  const [isEditingDatosPersonales, setIsEditingDatosPersonales] = useState(false);
+  const [datosPersonalesForm, setDatosPersonalesForm] = useState({
+    dni: alumno.persona.dni || "",
+    fechaNacimiento: alumno.fechaNacimiento ? new Date(alumno.fechaNacimiento).toISOString().split('T')[0] : "",
+    email: alumno.persona.email || "",
+    telefono: alumno.persona.telefono || "",
+    direccion: alumno.persona.direccion || ""
+  });
+
   const handleEditCurso = async () => {
     if (!matriculaActual) return;
     const cursosList = await getAllCursos();
     setCursos(cursosList);
     setSelectedCurso(matriculaActual.curso.idCurso.toString());
     setIsEditingCurso(true);
+  };
+
+  const handleEditDatosPersonales = () => {
+    setDatosPersonalesForm({
+      dni: alumno.persona.dni || "",
+      fechaNacimiento: alumno.fechaNacimiento ? new Date(alumno.fechaNacimiento).toISOString().split('T')[0] : "",
+      email: alumno.persona.email || "",
+      telefono: alumno.persona.telefono || "",
+      direccion: alumno.persona.direccion || ""
+    });
+    setIsEditingDatosPersonales(true);
+  };
+
+  const handleUpdateDatosPersonales = () => {
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("dni", datosPersonalesForm.dni);
+      formData.append("fechaNacimiento", datosPersonalesForm.fechaNacimiento);
+      formData.append("email", datosPersonalesForm.email);
+      formData.append("telefono", datosPersonalesForm.telefono);
+      formData.append("direccion", datosPersonalesForm.direccion);
+
+      const res = await updateDatosPersonalesAction(alumno.idAlumno, alumno.persona.idPersona, null, formData);
+      if (res.success) {
+        setIsEditingDatosPersonales(false);
+        // Recargar la página para mostrar los cambios
+        window.location.reload();
+      } else {
+        alert(res.message);
+      }
+    });
   };
 
   const handleUpdateCurso = () => {
@@ -128,46 +168,126 @@ export default function AlumnoDetalle({ alumno, cicloId, isReadOnly = false }: A
         {/* Columna Izquierda: Datos Personales */}
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-              <User size={18} className="text-blue-600" /> Datos Personales
-            </h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-start gap-3">
-                <FileText size={16} className="text-slate-400 mt-0.5" />
-                <div>
-                  <p className="text-slate-500 text-xs">DNI</p>
-                  <p className="font-medium text-slate-900">{alumno.persona.dni}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Calendar size={16} className="text-slate-400 mt-0.5" />
-                <div>
-                  <p className="text-slate-500 text-xs">Fecha de Nacimiento</p>
-                  <p className="font-medium text-slate-900">{new Date(alumno.fechaNacimiento).toLocaleDateString()}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Mail size={16} className="text-slate-400 mt-0.5" />
-                <div>
-                  <p className="text-slate-500 text-xs">Email</p>
-                  <p className="font-medium text-slate-900">{alumno.persona.email}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Phone size={16} className="text-slate-400 mt-0.5" />
-                <div>
-                  <p className="text-slate-500 text-xs">Teléfono</p>
-                  <p className="font-medium text-slate-900">{alumno.persona.telefono || "-"}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <MapPin size={16} className="text-slate-400 mt-0.5" />
-                <div>
-                  <p className="text-slate-500 text-xs">Dirección</p>
-                  <p className="font-medium text-slate-900">{alumno.persona.direccion || "-"}</p>
-                </div>
-              </div>
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+                <User size={18} className="text-blue-600" /> Datos Personales
+              </h3>
+              {!isEditingDatosPersonales && !isReadOnly && (
+                <button
+                  onClick={handleEditDatosPersonales}
+                  className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                  <Pencil size={14} /> Editar
+                </button>
+              )}
             </div>
+
+            {!isEditingDatosPersonales ? (
+              <div className="space-y-3 text-sm">
+                <div className="flex items-start gap-3">
+                  <FileText size={16} className="text-slate-400 mt-0.5" />
+                  <div>
+                    <p className="text-slate-500 text-xs">DNI</p>
+                    <p className="font-medium text-slate-900">{alumno.persona.dni}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Calendar size={16} className="text-slate-400 mt-0.5" />
+                  <div>
+                    <p className="text-slate-500 text-xs">Fecha de Nacimiento</p>
+                    <p className="font-medium text-slate-900">{new Date(alumno.fechaNacimiento).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Mail size={16} className="text-slate-400 mt-0.5" />
+                  <div>
+                    <p className="text-slate-500 text-xs">Email</p>
+                    <p className="font-medium text-slate-900">{alumno.persona.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Phone size={16} className="text-slate-400 mt-0.5" />
+                  <div>
+                    <p className="text-slate-500 text-xs">Teléfono</p>
+                    <p className="font-medium text-slate-900">{alumno.persona.telefono || "-"}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <MapPin size={16} className="text-slate-400 mt-0.5" />
+                  <div>
+                    <p className="text-slate-500 text-xs">Dirección</p>
+                    <p className="font-medium text-slate-900">{alumno.persona.direccion || "-"}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">DNI</label>
+                  <input
+                    type="text"
+                    value={datosPersonalesForm.dni}
+                    onChange={(e) => setDatosPersonalesForm(prev => ({ ...prev, dni: e.target.value }))}
+                    className="w-full p-2 text-sm border border-slate-300 rounded bg-white text-slate-900"
+                    placeholder="Ingrese DNI"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Fecha de Nacimiento</label>
+                  <input
+                    type="date"
+                    value={datosPersonalesForm.fechaNacimiento}
+                    onChange={(e) => setDatosPersonalesForm(prev => ({ ...prev, fechaNacimiento: e.target.value }))}
+                    className="w-full p-2 text-sm border border-slate-300 rounded bg-white text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={datosPersonalesForm.email}
+                    onChange={(e) => setDatosPersonalesForm(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full p-2 text-sm border border-slate-300 rounded bg-white text-slate-900"
+                    placeholder="Ingrese email"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Teléfono</label>
+                  <input
+                    type="text"
+                    value={datosPersonalesForm.telefono}
+                    onChange={(e) => setDatosPersonalesForm(prev => ({ ...prev, telefono: e.target.value }))}
+                    className="w-full p-2 text-sm border border-slate-300 rounded bg-white text-slate-900"
+                    placeholder="Ingrese teléfono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Dirección</label>
+                  <textarea
+                    value={datosPersonalesForm.direccion}
+                    onChange={(e) => setDatosPersonalesForm(prev => ({ ...prev, direccion: e.target.value }))}
+                    className="w-full p-2 text-sm border border-slate-300 rounded bg-white text-slate-900"
+                    placeholder="Ingrese dirección"
+                    rows={3}
+                  />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={handleUpdateDatosPersonales}
+                    disabled={isPending}
+                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {isPending ? "Guardando..." : "Guardar"}
+                  </button>
+                  <button
+                    onClick={() => setIsEditingDatosPersonales(false)}
+                    className="flex-1 bg-slate-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-slate-600"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

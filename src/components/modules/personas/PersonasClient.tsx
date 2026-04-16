@@ -19,7 +19,12 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
       .find((r) => r.rol.nombre.toLowerCase() === "admin");
     return adminRole ? adminRole.rol.idRol.toString() : "";
   });
-  const [selectedStatus, setSelectedStatus] = useState("todos");
+  const [selectedStatus, setSelectedStatus] = useState(() => {
+    const adminRole = personas
+      .flatMap((p) => p.usuario?.roles ?? [])
+      .find((r) => r.rol.nombre.toLowerCase() === "admin");
+    return adminRole ? "activo" : "todos";
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -132,6 +137,11 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
           onChange={(e) => {
             setSelectedRole(e.target.value);
             setCurrentPage(1);
+            // Si se selecciona admin, cambiar automáticamente a "activo"
+            const selectedRoleName = availableRoles.find(r => r.id.toString() === e.target.value)?.nombre?.toLowerCase();
+            if (selectedRoleName === 'admin') {
+              setSelectedStatus('activo');
+            }
           }}
           className="w-full md:w-64 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
         >
