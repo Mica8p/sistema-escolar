@@ -27,7 +27,7 @@ export default function EnviadoCard({ msg }: { msg: any }) {
     <>
       <div
         onClick={() => setIsExpanded(!isExpanded)}
-        className={`bg-white p-6 rounded-[2rem border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group ${
+        className={`bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group ${
           isDeleting ? "opacity-50 grayscale" : ""
         }`}
       >

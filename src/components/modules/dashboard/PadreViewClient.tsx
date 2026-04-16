@@ -6,12 +6,14 @@ import { FileText, ChevronDown } from "lucide-react";
 import CardAsistenciaHijo from "@/components/modules/padres/CardAsistenciaHijo";
 import SeccionCalificaciones from "@/components/modules/padres/SeccionCalificaciones";
 import HorarioImprimible from "@/components/HorarioImprimible";
+import { useRouter } from "next/navigation";
 
 interface PadreViewClientProps {
   hijosData: any[];
 }
 
 export default function PadreViewClient({ hijosData }: PadreViewClientProps) {
+  const router = useRouter();
   const [hijoSeleccionadoId, setHijoSeleccionadoId] = useState<number>(
     hijosData[0]?.idAlumno || 0
   );
@@ -54,7 +56,7 @@ export default function PadreViewClient({ hijosData }: PadreViewClientProps) {
       )}
 
       {/* INFORMACIÓN DEL HIJO SELECCIONADO */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden">
+      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-visible">
         {/* CABECERA HIJO */}
         <div className="bg-slate-900 p-5 flex items-center justify-between text-white">
           <div className="flex items-center gap-4">
@@ -73,14 +75,17 @@ export default function PadreViewClient({ hijosData }: PadreViewClientProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
-              href={`/dashboard/alumnos/${hijoSeleccionado.idAlumno}`}
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = `/dashboard/padres/expediente/${hijoSeleccionado.idAlumno}`;
+              }}
               className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 px-4 py-2 rounded-xl transition-all group z-20"
             >
               <span className="text-[10px] font-black uppercase tracking-widest group-hover:scale-110 transition-transform">
                 Expediente
               </span>
-            </Link>
+            </button>
 
             <Link
               href={`/dashboard/alumnos/${hijoSeleccionado.idMatricula}/boletin`}

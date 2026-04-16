@@ -1,12 +1,21 @@
+import { useState } from "react";
 import { Award, ChevronDown, Calendar } from "lucide-react";
 
 export default function SeccionCalificaciones({ notas }: { notas: any[] }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Mostrar 5 materias por página
+
   const materiasAgrupadas = notas.reduce((acc: any, curr) => {
     const nombre = curr.asignacion.materia.nombre;
     if (!acc[nombre]) acc[nombre] = [];
     acc[nombre].push(curr);
     return acc;
   }, {});
+
+  const materiaNames = Object.keys(materiasAgrupadas);
+  const totalPages = Math.ceil(materiaNames.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedMaterias = materiaNames.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="space-y-6">
@@ -15,7 +24,7 @@ export default function SeccionCalificaciones({ notas }: { notas: any[] }) {
       </h3>
 
       <div className="space-y-4">
-        {Object.keys(materiasAgrupadas).map((materia) => {
+        {paginatedMaterias.map((materia) => {
           const notasMateria = materiasAgrupadas[materia];
           const promedio = (notasMateria.reduce((s: any, n: any) => s + n.nota, 0) / notasMateria.length).toFixed(1);
 
@@ -49,6 +58,28 @@ export default function SeccionCalificaciones({ notas }: { notas: any[] }) {
           );
         })}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center mt-4 px-6">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Anterior
+          </button>
+          <span className="text-sm text-gray-700">
+            Página {currentPage} de {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
     </div>
   );
 }

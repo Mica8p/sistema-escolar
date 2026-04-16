@@ -44,9 +44,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const rolesArray = usuario.roles.map((r) => r.rol.nombre);
 
+        // Filtrar roles: padres no pueden tener ADMIN
+        const filteredRoles = rolesArray.filter((rol) => !(rolesArray.includes("PADRE") && rol === "ADMIN"));
+
         const [prof, padre] = await Promise.all([
           db.profesor.findUnique({ where: { idPersona: usuario.idPersona }, select: { idProfesor: true } }),
-          rolesArray.includes("PADRE")
+          filteredRoles.includes("PADRE")
             ? db.padre.findUnique({ where: { idPersona: usuario.idPersona }, select: { idPadre: true } })
             : null
         ]);
@@ -55,7 +58,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: String(usuario.idUsuario),
           name: `${usuario.persona.nombre} ${usuario.persona.apellido}`,
           email: usuario.persona.email ?? null,
-          roles: rolesArray,
+          roles: filteredRoles,
           idUsuario: usuario.idUsuario,
           idPersona: usuario.idPersona,
           idProfesor: prof?.idProfesor ?? null,

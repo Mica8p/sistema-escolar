@@ -19,9 +19,10 @@ import ConfirmModal from "@/components/shared/ConfirmModal";
 interface AlumnoDetalleProps {
   alumno: any;
   cicloId: number;
+  isReadOnly?: boolean;
 }
 
-export default function AlumnoDetalle({ alumno, cicloId }: AlumnoDetalleProps) {
+export default function AlumnoDetalle({ alumno, cicloId, isReadOnly = false }: AlumnoDetalleProps) {
   const [isPending, startTransition] = useTransition();
 
   const [modalEstado, setModalEstado] = useState<{ open: boolean, nuevo: EstadoAcademico | null }>({
@@ -177,7 +178,7 @@ export default function AlumnoDetalle({ alumno, cicloId }: AlumnoDetalleProps) {
               <h3 className="font-semibold text-slate-800 flex items-center gap-2">
                 <GraduationCap size={18} className="text-blue-600" /> Situación Académica
               </h3>
-              {matriculaActual && !isEditingCurso && (
+              {matriculaActual && !isEditingCurso && !isReadOnly && (
                  <button onClick={handleEditCurso} className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
                    <Pencil size={14} /> Cambiar Curso
                  </button>
@@ -192,7 +193,7 @@ export default function AlumnoDetalle({ alumno, cicloId }: AlumnoDetalleProps) {
                     {matriculaActual.curso.grado}° "{matriculaActual.curso.seccion}" - {matriculaActual.curso.turno}
                   </p>
                 </div>
-              ) : (
+              ) : !isReadOnly ? (
                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 mb-6">
                   <p className="text-sm font-semibold text-blue-900 mb-2">Seleccionar nuevo curso:</p>
                   <select
@@ -211,11 +212,11 @@ export default function AlumnoDetalle({ alumno, cicloId }: AlumnoDetalleProps) {
                     <button onClick={handleUpdateCurso} disabled={isPending} className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded">Guardar</button>
                   </div>
                 </div>
-              )
+              ) : null
             ) : null}
 
             {/* Gestión de Ciclo de Vida */}
-            {matriculaActual && (
+            {matriculaActual && !isReadOnly && (
               <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-100">
                 {estadoActual === "Activo" ? (
                   <>
@@ -251,9 +252,11 @@ export default function AlumnoDetalle({ alumno, cicloId }: AlumnoDetalleProps) {
               <h3 className="font-semibold text-slate-800 flex items-center gap-2">
                 <Users size={18} className="text-blue-600" /> Grupo Familiar / Tutores
               </h3>
-              <button onClick={handleOpenVincular} className="text-sm text-blue-600 font-medium flex items-center gap-1">
-                <Plus size={16} /> Vincular
-              </button>
+              {!isReadOnly && (
+                <button onClick={handleOpenVincular} className="text-sm text-blue-600 font-medium flex items-center gap-1">
+                  <Plus size={16} /> Vincular
+                </button>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -263,17 +266,19 @@ export default function AlumnoDetalle({ alumno, cicloId }: AlumnoDetalleProps) {
                     <p className="font-medium text-slate-900">{rel.padre.persona.apellido}, {rel.padre.persona.nombre}</p>
                     <p className="text-xs text-slate-500">{rel.relacion} • {rel.padre.persona.dni} • {rel.padre.persona.telefono || "Sin tel"}</p>
                   </div>
-                  <GenericDeleteButton
-                    id={rel.padre.idPadre}
-                    action={(idPadre) => desvincularPadre(alumno.idAlumno, idPadre)}
-                    title="Desvincular Tutor"
-                    message={`¿Desvincular a ${rel.padre.persona.apellido} ${rel.padre.persona.nombre} de este alumno?`}
-                  />
+                  {!isReadOnly && (
+                    <GenericDeleteButton
+                      id={rel.padre.idPadre}
+                      action={(idPadre) => desvincularPadre(alumno.idAlumno, idPadre)}
+                      title="Desvincular Tutor"
+                      message={`¿Desvincular a ${rel.padre.persona.apellido} ${rel.padre.persona.nombre} de este alumno?`}
+                    />
+                  )}
                 </div>
               ))}
             </div>
 
-            {showVincular && (
+            {showVincular && !isReadOnly && (
               <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100 space-y-3">
                 <select className="w-full p-2 text-sm border rounded bg-white text-slate-900" value={selectedTutor} onChange={(e) => setSelectedTutor(e.target.value)}>
                   <option value="">-- Seleccionar Persona --</option>
