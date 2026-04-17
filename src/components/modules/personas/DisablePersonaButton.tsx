@@ -28,7 +28,7 @@ export default function DisablePersonaButton({ idPersona, rol, disabled }: Disab
         } else {
           toast.error(res.message);
         }
-      } catch (error) {
+      } catch {
         toast.error("Error al intentar inhabilitar al usuario.");
       }
     });

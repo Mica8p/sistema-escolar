@@ -2,6 +2,7 @@
 
 import { cambiarEstadoMatriculaAction } from "@/lib/actions/alumno-actions";
 import { EstadoAcademico } from "@prisma/client";
+import { useState } from "react";
 
 interface ToggleEstadoMatriculaButtonProps {
   idMatricula: number;
@@ -15,12 +16,19 @@ export function ToggleEstadoMatriculaButton({
   path,
 }: ToggleEstadoMatriculaButtonProps) {
 
-  const action = cambiarEstadoMatriculaAction.bind(
-    null,
-    idMatricula,
-    estadoActual === 'Activo' ? 'Suspendido' : 'Activo',
-    path
-  );
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleToggle = async () => {
+    setIsLoading(true);
+    try {
+      const nuevoEstado = estadoActual === 'Activo' ? 'Suspendido' : 'Activo';
+      await cambiarEstadoMatriculaAction(idMatricula, nuevoEstado, path);
+    } catch (error) {
+      console.error("Error al cambiar estado:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const isActivo = estadoActual === "Activo";
   const buttonText = isActivo ? "Suspender Alumno" : "Reactivar Alumno";
@@ -34,10 +42,12 @@ export function ToggleEstadoMatriculaButton({
   }
 
   return (
-    <form action={action}>
-      <button type="submit" className={buttonClass}>
-        {buttonText}
-      </button>
-    </form>
+    <button 
+      onClick={handleToggle}
+      disabled={isLoading}
+      className={buttonClass + (isLoading ? " opacity-50 cursor-not-allowed" : "")}
+    >
+      {isLoading ? "Procesando..." : buttonText}
+    </button>
   );
 }

@@ -1,7 +1,30 @@
-import { Alumno } from "@prisma/client";
+import { Alumno, EstadoAcademico } from "@prisma/client";
+
+interface Nota {
+  idNota: number;
+  nota: number | string;
+  tipo: string;
+  asignacion: {
+    materia: {
+      nombre: string;
+    };
+  };
+}
+
+interface Curso {
+  grado: string;
+  seccion: string;
+  turno: string;
+}
+
+interface Matricula {
+  curso: Curso;
+  estadoAcademico: EstadoAcademico;
+  notas: Nota[];
+}
 
 type AlumnoExtendido = Alumno & {
-  matriculas: any[];
+  matriculas: Matricula[];
 };
 
 
@@ -14,13 +37,13 @@ export default function AcademicInfo({ alumno }: { alumno: AlumnoExtendido }) {
 
       {matriculaActual ? (
         <div>
-          <p className="text-gray-800"><strong>Curso:</strong> {matriculaActual.curso.grado}° "{matriculaActual.curso.seccion}" - {matriculaActual.curso.turno}</p>
+          <p className="text-gray-800"><strong>Curso:</strong> {matriculaActual.curso.grado}° &quot;{matriculaActual.curso.seccion}&quot; - {matriculaActual.curso.turno}</p>
           <p className="text-gray-800"><strong>Estado:</strong> {matriculaActual.estadoAcademico}</p>
 
           <h3 className="text-lg font-semibold text-gray-700 mt-4 mb-2">Calificaciones</h3>
           {matriculaActual.notas.length > 0 ? (
             <ul className="space-y-2">
-              {matriculaActual.notas.map((nota: any) => (
+              {matriculaActual.notas.map((nota: Nota) => (
                 <li key={nota.idNota} className="flex justify-between items-center bg-gray-50 p-3 rounded-md">
                   <div>
                     <span className="font-semibold">{nota.asignacion.materia.nombre}</span>

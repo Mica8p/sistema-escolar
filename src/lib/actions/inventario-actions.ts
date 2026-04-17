@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
-import { getCicloActual } from "@/lib/ciclo-session";
 import db from "@/lib/db";
 
 /* =========================
@@ -27,7 +26,13 @@ function normalizeKey(value: unknown) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-function requireAdmin(session: any) {
+interface AuthSessionWithRoles {
+  user?: {
+    roles?: string[];
+  };
+}
+
+function requireAdmin(session: AuthSessionWithRoles) {
   const roles = session?.user?.roles ?? [];
   const isAdmin = roles.includes("ADMIN");
   if (!isAdmin) {
@@ -124,7 +129,12 @@ export async function updateInsumo(formData: FormData) {
     return { success: false, message: "Ya existe otro insumo con ese nombre en este ciclo." };
   }
 
-  const updateData: any = {
+  const updateData: {
+    nombre: string;
+    unidadMedida: string;
+    stockMinimo: number;
+    stockActual?: number;
+  } = {
     nombre,
     unidadMedida,
     stockMinimo,

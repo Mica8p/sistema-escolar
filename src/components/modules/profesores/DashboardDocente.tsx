@@ -13,10 +13,54 @@ export default function DashboardDocente({
   data,
 }: {
   data: {
-    clasesHoy: any[];
-    pendientes: any[];
-    notasRecientes: any[];
-    cierres: any[];
+    clasesHoy: Array<{
+      idHorario: number;
+      horaInicio: string;
+      horaFin: string;
+      aula?: string;
+      asignacion: {
+        materia: { nombre: string };
+        curso: { grado: string; seccion: string };
+        ciclo: { anio: number };
+      };
+    }>;
+    pendientes: Array<{
+      horario: {
+        idHorario: number;
+        horaInicio: string;
+        horaFin: string;
+        asignacion: {
+          materia: { nombre: string };
+          curso: { grado: string; seccion: string };
+        };
+      };
+      faltan: number;
+      asistenciasCargadas: number;
+      totalAlumnos: number;
+    }>;
+    notasRecientes: Array<{
+      idNota: number;
+      asignacion: {
+        materia: { nombre: string };
+        curso: { grado: string; seccion: string };
+      };
+      matricula: {
+        alumno: {
+          persona: { apellido: string; nombre: string };
+        };
+      };
+      nota: number;
+      fechaCarga: string;
+      tipo: string;
+      periodo: { nombre: string };
+    }>;
+    cierres: Array<{
+      idPeriodo: number;
+      nombre: string;
+      ciclo: { anio: number };
+      fechaInicio: Date;
+      fechaFin: Date;
+    }>;
   };
 }) {
   const { clasesHoy, pendientes, notasRecientes, cierres } = data;
@@ -34,7 +78,7 @@ export default function DashboardDocente({
         <Panel title="Clases de hoy">
           {clasesHoy.length ? (
             <ul className="space-y-2">
-              {clasesHoy.map((h: any) => (
+              {clasesHoy.map((h) => (
                 <li key={h.idHorario} className="rounded-2xl border border-slate-200 bg-white p-4">
                   <div className="font-black text-slate-800">
                     {h.horaInicio} - {h.horaFin} {h.aula ? `· Aula ${h.aula}` : ""}
@@ -53,7 +97,7 @@ export default function DashboardDocente({
         <Panel title="Asistencias pendientes (hoy)">
           {pendientes.length ? (
             <ul className="space-y-2">
-              {pendientes.map((p: any) => (
+              {pendientes.map((p) => (
                 <li key={p.horario.idHorario} className="rounded-2xl border border-slate-200 bg-white p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div>
@@ -85,7 +129,7 @@ export default function DashboardDocente({
         <Panel title="Notas cargadas recientemente">
           {notasRecientes.length ? (
             <ul className="space-y-2">
-              {notasRecientes.map((n: any) => {
+              {notasRecientes.map((n) => {
                 const persona = n.matricula.alumno.persona;
                 return (
                   <li key={n.idNota} className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -112,7 +156,7 @@ export default function DashboardDocente({
         <Panel title="Próximos cierres">
           {cierres.length ? (
             <ul className="space-y-2">
-              {cierres.map((p: any) => (
+              {cierres.map((p) => (
                 <li key={p.idPeriodo} className="rounded-2xl border border-slate-200 bg-white p-4">
                   <div className="font-black text-slate-800">{p.nombre}</div>
                   <div className="text-sm text-slate-500 font-medium">

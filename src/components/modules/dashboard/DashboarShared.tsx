@@ -1,4 +1,3 @@
-import { LucideIcon } from "lucide-react";
 import React, { ReactNode } from "react";
 
 
@@ -9,7 +8,7 @@ interface PanelProps {
 
 export function WelcomeBanner({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-indigo-600 to-blue-500 p-8 shadow-lg shadow-indigo-200/40">
+    <div className="relative overflow-hidden rounded-4xl bg-linear-to-r from-indigo-600 to-blue-500 p-8 shadow-lg shadow-indigo-200/40">
       <div className="relative z-10">
         <h1 className="text-3xl font-black tracking-tight text-white mb-2">
           {title}
@@ -25,8 +24,15 @@ export function WelcomeBanner({ title, subtitle }: { title: string; subtitle: st
   );
 }
 
-export function StatCard({ icon, title, value, color }: any) {
-  const shadowColors: any = {
+interface StatCardProps {
+  icon: ReactNode;
+  title: string;
+  value: string | number;
+  color: 'indigo' | 'emerald' | 'blue' | 'purple';
+}
+
+export function StatCard({ icon, title, value, color }: StatCardProps) {
+  const shadowColors: Record<string, string> = {
     indigo: "shadow-indigo-400/40",
     emerald: "shadow-emerald-200/60",
     blue: "shadow-blue-300/40",
@@ -35,7 +41,7 @@ export function StatCard({ icon, title, value, color }: any) {
 
   return (
     <div className={`
-      bg-white p-4 rounded-[2rem] border transition-all duration-300
+      bg-white p-4 rounded-4xl border transition-all duration-300
       border-slate-400/50
       shadow-xl ${shadowColors[color] || "shadow-slate-300/50"}
 

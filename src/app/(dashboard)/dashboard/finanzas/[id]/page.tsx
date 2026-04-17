@@ -1,15 +1,13 @@
-import { getDetalleCuenta, getConceptosDePago } from "@/service/finanzas.service";
+import { getDetalleCuenta } from "@/service/finanzas.service";
 import EstadoCuentaSummary from "@/components/modules/finanzas/EstadoCuentaSummary";
 import CargosList from "@/components/modules/finanzas/CargosList";
 import PagosList from "@/components/modules/finanzas/PagosList";
 import { RegistrarPagoWrapper } from "@/components/modules/finanzas/RegistrarPagoWrapper";
-import { CrearDeudaDialog } from "@/components/modules/finanzas/crear-deuda-dialog";
 import { DollarSign, ReceiptText } from "lucide-react";
 
 export default async function DetalleFinancieroPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const alumno = await getDetalleCuenta(Number(id));
-  const conceptos = await getConceptosDePago();
 
   return (
     <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">
@@ -22,7 +20,6 @@ export default async function DetalleFinancieroPage({ params }: { params: Promis
         </div>
         <div className="flex items-center gap-3">
           <RegistrarPagoWrapper alumno={alumno} />
-          <CrearDeudaDialog alumnoId={alumno.idAlumno} conceptos={conceptos} />
         </div>
       </div>
 
@@ -50,9 +47,9 @@ export default async function DetalleFinancieroPage({ params }: { params: Promis
               pagos={alumno.pagos}
               alumnoData={{
                 nombre: `${alumno.persona.nombre} ${alumno.persona.apellido}`,
-                legajo: (alumno as any).legajo || `LEG-${alumno.idAlumno}`,
-                curso: (alumno as any).matriculas?.[0]?.curso
-                  ? `${(alumno as any).matriculas[0].curso.grado}° "${(alumno as any).matriculas[0].curso.seccion}"`
+                legajo: alumno.legajo || `LEG-${alumno.idAlumno}`,
+                curso: alumno.matriculas?.[0]?.curso
+                  ? `${alumno.matriculas[0].curso.grado}° "${alumno.matriculas[0].curso.seccion}"`
                   : "Sin Curso"
               }}
             />

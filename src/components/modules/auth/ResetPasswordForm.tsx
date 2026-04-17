@@ -5,7 +5,7 @@ import { Loader2, Lock, Eye, EyeOff } from "lucide-react";
 import { resetPassword } from "@/lib/actions/auth-actions";
 
 export default function ResetPasswordForm({ token }: { token: string }) {
-  const [state, formAction, isPending] = useActionState(resetPassword, { message: null, isError: false, success: false });
+  const [state, formAction, isPending] = useActionState(resetPassword, { message: "", isError: false, success: false });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 

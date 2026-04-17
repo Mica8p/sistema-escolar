@@ -7,5 +7,8 @@ export default defineConfig({
     // Usar DIRECT_URL para migraciones (más confiable)
     url: process.env.DIRECT_URL || process.env.DATABASE_URL,
   },
+  migrations: {
+    seed: "npx tsx prisma/seed.ts",
+  },
 });
 

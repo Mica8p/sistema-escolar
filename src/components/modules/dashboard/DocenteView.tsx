@@ -8,7 +8,7 @@ import {
   // Asumiendo que getDocenteDashboardPendingNotifications está en profesor-dashboard.service o lo importaremos directamente
 } from "@/service/profesor-dashboard.service";
 import { StatCard, Panel, Empty } from "@/components/modules/dashboard/DashboarShared";
-import { Calendar, UserCheck, ClipboardList, GraduationCap, Clock, Zap, ClipboardCheck, ArrowRight } from "lucide-react";
+import { Calendar, UserCheck, ClipboardList, GraduationCap, Clock } from "lucide-react";
 import Link from "next/link";
 import ChartAsistencia from "./ChartAsistencia";
 import { getCicloActual } from "@/lib/ciclo-session";
@@ -27,7 +27,24 @@ interface PendingNotification {
   }[];
 }
 
-export default async function DocenteView({ idProfesor, idUsuario, userName, userRoles }: { idProfesor: number | null, idUsuario: number, userName: string, userRoles: string[] }) {
+// Define la interfaz para los comunicados
+interface Comunicado {
+  idComunicado: number;
+  titulo: string;
+  target: string;
+  fecha: Date;
+  idUsuario: number;
+  contenido: string;
+  idTarget: number | null;
+  vistos: {
+    idUsuario: number;
+    id: number;
+    idComunicado: number;
+    fechaLectura: Date;
+  }[];
+}
+
+export default async function DocenteView({ idProfesor, idUsuario, userName }: { idProfesor: number | null, idUsuario: number, userName: string }) {
   if (!idProfesor) return <Empty text="Usuario sin perfil docente asociado." />;
 
   const idCiclo = await getCicloActual();
@@ -55,7 +72,7 @@ export default async function DocenteView({ idProfesor, idUsuario, userName, use
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-      <WelcomeHeader name={userName} roles={userRoles} />
+      <WelcomeHeader name={userName} />
 
       {/* --- SECCIÓN 1: ESTADO DE LA JORNADA --- */}
       {clasesHoy.length > 0 && (
@@ -73,7 +90,7 @@ export default async function DocenteView({ idProfesor, idUsuario, userName, use
           </div>
           <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-indigo-600 to-blue-500 transition-all duration-1000 ease-out"
+              className="h-full bg-linear-to-r from-indigo-600 to-blue-500 transition-all duration-1000 ease-out"
               style={{ width: `${progresoDia}%` }}
             />
           </div>
@@ -102,7 +119,7 @@ export default async function DocenteView({ idProfesor, idUsuario, userName, use
               <p className="font-bold text-lg mb-2">⚠️ ¡ATENCIÓN! Notas Pendientes por Cargar</p>
               {pendingNotifications.map((notif, index) => (
                 <div key={index} className="mb-4 last:mb-0">
-                  <p className="font-semibold">El período "{notif.periodoNombre}" cierra en {notif.diasFaltantes} día(s).</p>
+                  <p className="font-semibold">El período &quot;{notif.periodoNombre}&quot; cierra en {notif.diasFaltantes} día(s).</p>
                   <p className="text-sm">Debes cargar las notas de las siguientes asignaciones:</p>
                   <ul className="list-disc list-inside ml-4 text-sm">
                     {notif.asignacionesPendientes.map((asig, idx) => (
@@ -126,17 +143,17 @@ export default async function DocenteView({ idProfesor, idUsuario, userName, use
               </h3>
             </div>
 
-            {clasesHoy.length ? (
+            {clasesHoy.length > 0 ? (
               <div className="relative border-l-2 border-slate-200 ml-3 space-y-6">
-                {clasesHoy.map((h: any) => {
+                {clasesHoy.map((h: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
                   const esAhora = h.idHorario === claseActual?.idHorario;
                   const yaPaso = horaActual > h.horaFin;
 
                   return (
                     <div key={h.idHorario} className="relative pl-10 transition-all duration-500">
-                      <div className={`absolute -left-[11px] top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-4 border-white shadow-md ${esAhora ? 'bg-indigo-600 animate-pulse' : yaPaso ? 'bg-slate-300' : 'bg-slate-100'}`} />
+                      <div className={`absolute -left-2.75 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-4 border-white shadow-md ${esAhora ? 'bg-indigo-600 animate-pulse' : yaPaso ? 'bg-slate-300' : 'bg-slate-100'}`} />
 
-                      <div className={`p-4 rounded-[2rem] border transition-all ${esAhora ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200' : 'bg-slate-50 border-slate-200'}`}>
+                      <div className={`p-4 rounded-4xl border transition-all ${esAhora ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200' : 'bg-slate-50 border-slate-200'}`}>
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                           <div className="flex items-center gap-6">
                             <div className="flex flex-col items-center border-r border-slate-200 pr-6">
@@ -146,7 +163,7 @@ export default async function DocenteView({ idProfesor, idUsuario, userName, use
                             <div>
                               <h4 className="text-md font-black text-slate-900 uppercase tracking-tighter">{h.asignacion.materia.nombre}</h4>
                               <p className="text-[10px] text-slate-900 font-bold uppercase tracking-widest">
-                                {h.asignacion.curso.grado}° "{h.asignacion.curso.seccion}" · {h.asignacion.curso.turno}
+                                {h.asignacion.curso.grado}° &quot;{h.asignacion.curso.seccion}&quot; · {h.asignacion.curso.turno}
                               </p>
                             </div>
                           </div>
@@ -170,7 +187,9 @@ export default async function DocenteView({ idProfesor, idUsuario, userName, use
                   );
                 })}
               </div>
-            ) : <Empty text="No tenés clases programadas para hoy." />}
+            ) : (
+              <Empty text="No tenés clases programadas para hoy." />
+            )}
           </div>
         </div>
 
@@ -185,7 +204,7 @@ export default async function DocenteView({ idProfesor, idUsuario, userName, use
             }
           >
             <div className="space-y-3">
-              {comunicados?.slice(0,3).map((com: any) => (
+              {comunicados?.slice(0,3).map((com: Comunicado) => (
                 <Link key={com.idComunicado} href={`/dashboard/comunicados/${com.idComunicado}`} className="block p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-white hover:border-indigo-200 transition-all group">
                   <div className="flex justify-between items-center mb-1">
                       <span className="text-[8px] font-black uppercase bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-md">{com.target}</span>
@@ -199,7 +218,7 @@ export default async function DocenteView({ idProfesor, idUsuario, userName, use
           </Panel>
 
           <Panel title="📊 Rendimiento de Asistencia">
-            <div className="h-[250px] w-full mt-2 relative">
+            <div className="h-62.5 w-full mt-2 relative">
                {rendimiento && rendimiento.length > 0 ? <ChartAsistencia data={rendimiento} /> : <Empty text="Sin datos suficientes." />}
             </div>
              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] text-center mt-4 italic">Promedio últimos 30 días</p>

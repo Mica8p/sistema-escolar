@@ -31,7 +31,7 @@ export default function EnableAccessButton({ idPersona, dni, isActive }: Props) 
         } else {
           toast.error(result.message);
         }
-      } catch (error) {
+      } catch {
         toast.error("Ocurrió un error inesperado al procesar el acceso.");
       }
     });

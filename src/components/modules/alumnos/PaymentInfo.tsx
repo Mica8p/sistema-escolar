@@ -1,6 +1,16 @@
 
+import { EstadoCuota } from "@prisma/client";
+
+type Cargo = {
+  id: number;
+  concepto: { nombre: string };
+  fechaVencimiento: Date;
+  monto: number;
+  estado: EstadoCuota;
+};
+
 type AlumnoExtendido = {
-  cargos: any[];
+  cargos: Cargo[];
 };
 
 export default function PaymentInfo({ alumno }: { alumno: AlumnoExtendido }) {

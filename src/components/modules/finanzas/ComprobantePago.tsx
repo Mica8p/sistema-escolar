@@ -4,12 +4,26 @@ import { useRef } from "react";
 import { GraduationCap } from "lucide-react";
 import BotonImprimir from "@/components/BotonDescarga";
 
-export default function ComprobantePago({ pago, alumno }: any) {
+type PagoComprobante = {
+  idPago: string;
+  monto: number;
+  fecha: string;
+  metodo: string;
+  concepto: string;
+};
+
+type AlumnoComprobante = {
+  nombre: string;
+  legajo: string;
+  curso: string;
+};
+
+export default function ComprobantePago({ pago, alumno }: { pago: PagoComprobante; alumno: AlumnoComprobante }) {
   const receiptRef = useRef<HTMLDivElement>(null);
 
   if (!pago || !alumno) return null;
 
-  const idFinal = String(pago.id || pago.idPago || "000000");
+  const idFinal = String(pago.idPago || "000000");
 
   return (
     <div className="inline-block">

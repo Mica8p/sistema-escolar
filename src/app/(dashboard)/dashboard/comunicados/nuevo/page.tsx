@@ -9,8 +9,9 @@ import { getCursosParaComunicado } from "@/service/curso.service";
 export default async function NuevoComunicadoPage() {
 
   const session = await auth();
-  const roles = (session?.user as any)?.roles || [];
-  const idProfesor = (session?.user as any)?.idProfesor;
+  const user = session?.user as { roles?: string[]; idProfesor?: number } | undefined;
+  const roles = user?.roles || [];
+  const idProfesor = user?.idProfesor;
   const rolPrincipal = roles.includes("ADMIN") ? "ADMIN" : "DOCENTE";
 
   const cursos = await getCursosParaComunicado(rolPrincipal, idProfesor);

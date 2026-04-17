@@ -85,7 +85,7 @@ export default async function DocentesPage({ searchParams }: PageProps) {
   ]);
 
   const totalPages = Math.ceil(total / limit);
-  const asignacionAEditar = asignacionAEditarData;
+  const asignacionAEditar = asignacionAEditarData as typeof asignacionAEditarData ?? undefined;
 
   return (
     <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
@@ -104,7 +104,7 @@ export default async function DocentesPage({ searchParams }: PageProps) {
         )}
 
       <FormAsignacion
-        editData={asignacionAEditar as any}
+        editData={asignacionAEditar}
         personas={personas}
         materias={materias}
         cursos={cursos}

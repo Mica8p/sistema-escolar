@@ -58,7 +58,7 @@ export async function clonarAsignacionesYHorarios(cicloOrigenId: number, cicloDe
 
       return { success: true, count: asignacionesCreadas, horariosCount: horariosCreados };
     });
-  } catch (error: any) {
-    return { error: error.message || "Error en la copia de asignaciones." };
+  } catch (error: unknown) {
+    return { error: error instanceof Error ? error.message : "Error en la copia de asignaciones." };
   }
 }

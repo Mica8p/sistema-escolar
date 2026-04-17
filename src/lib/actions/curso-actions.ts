@@ -1,7 +1,7 @@
 'use server';
 
 import { cursoService } from '@/service/curso.service';
-import { Curso, Turno, Nivel } from '@prisma/client';
+import { Curso } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 export async function getAllCursos() {
@@ -44,7 +44,7 @@ export async function deleteCurso(id: number) {
     await cursoService.delete(id);
     revalidatePath('/dashboard/cursos');
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, message: 'No se puede eliminar un curso con alumnos o materias asignadas.' };
   }
 }

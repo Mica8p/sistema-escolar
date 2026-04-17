@@ -5,18 +5,22 @@ import { getCicloActual } from "@/lib/ciclo-session";
 export const AlumnoService = {
   async getAll(idCiclo: number, estado?: string) {
 
-    const matriculaWhere: any = {
+    const matriculaWhere: Prisma.MatriculaWhereInput = {
       idCiclo: idCiclo,
     }
 
     if(estado && estado !== "Todos") {
-      const mapEstados: Record<string, string> = {
+      const mapEstados: Record<string, EstadoAcademico> = {
         "Activos": "Activo",
         "Baja": "Retirado",
         "Egresados": "Egresado",
         "Suspendidos": "Suspendido"
       };
-      matriculaWhere.estadoAcademico = mapEstados[estado] || estado;
+      const estadoAcademico = mapEstados[estado];
+
+      if (estadoAcademico) {
+        matriculaWhere.estadoAcademico = { equals: estadoAcademico };
+      }
     }
 
     return await db.alumno.findMany({

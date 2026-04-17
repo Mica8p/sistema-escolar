@@ -38,7 +38,7 @@ export async function darDeBajaAlumno(idAlumno: number) {
           where: { idPersona: alumno.idPersona },
           data: { estado: false },
         });
-      } catch (e) {
+      } catch {
         console.log("El alumno no tenía usuario asociado o ya estaba inactivo.");
       }
     }

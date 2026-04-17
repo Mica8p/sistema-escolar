@@ -5,7 +5,29 @@ import { Send, Eye, Calendar, ChevronDown, ChevronUp, Users, Trash2 } from "luci
 import { eliminarComunicado } from "@/lib/actions/comunicado-actions";
 import ConfirmModal from "@/components/shared/ConfirmModal";
 
-export default function EnviadoCard({ msg }: { msg: any }) {
+interface EnviadosCardProps {
+  msg: {
+    idComunicado: number;
+    titulo: string;
+    target: string;
+    fecha: Date;
+    idUsuario: number;
+    contenido: string;
+    idTarget: number | null;
+    curso?: {
+      grado: string;
+      seccion: string;
+    } | null;
+    vistos: {
+      idUsuario: number;
+      id: number;
+      idComunicado: number;
+      fechaLectura: Date;
+    }[];
+  };
+}
+
+export default function EnviadoCard({ msg }: EnviadosCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -27,7 +49,7 @@ export default function EnviadoCard({ msg }: { msg: any }) {
     <>
       <div
         onClick={() => setIsExpanded(!isExpanded)}
-        className={`bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group ${
+        className={`bg-white p-6 rounded-4xl border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group ${
           isDeleting ? "opacity-50 grayscale" : ""
         }`}
       >
@@ -42,7 +64,7 @@ export default function EnviadoCard({ msg }: { msg: any }) {
                 <Users size={12} /> Para: {msg.target}
                 {msg.curso ? (
                   <span className="text-slate-700 font-bold">
-                    ({msg.curso.grado}° "{msg.curso.seccion}")
+                    ({msg.curso.grado}° &quot;{msg.curso.seccion}&quot;)
                   </span>
                 ) : msg.idTarget ? (
                   <span className="ml-1 text-slate-700">(ID: {msg.idTarget})</span>

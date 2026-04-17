@@ -12,9 +12,9 @@ export const dynamic = 'force-dynamic';
 export default async function AlumnosPage({
   searchParams,
 }: {
-  searchParams: { estado?: string };
+  searchParams: Promise<{ estado?: string }>;
 }) {
-  const { estado } = (await (searchParams as any)) || {};
+  const { estado } = await searchParams;
   const cicloId = await getCicloActual();
 
   const currentStatusParam = estado;

@@ -25,7 +25,7 @@ export async function createCiclo(data: { anio: number, estado: boolean }) {
   const validation = cicloSchema.safeParse(data);
 
   if (!validation.success) {
-    return { success: false, message: validation.error.errors[0].message };
+    return { success: false, message: validation.error.issues[0].message };
   }
 
   const { anio, estado } = validation.data;
@@ -44,7 +44,7 @@ export async function createCiclo(data: { anio: number, estado: boolean }) {
 
     revalidatePath("/dashboard/ciclos");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, message: "Error al crear el ciclo lectivo." };
   }
 }
@@ -53,7 +53,7 @@ export async function updateCiclo(id: number, data: { anio: number, estado: bool
     const validation = cicloSchema.safeParse(data);
 
     if (!validation.success) {
-        return { success: false, message: validation.error.errors[0].message };
+        return { success: false, message: validation.error.issues[0].message };
     }
 
     const { anio, estado } = validation.data;
@@ -73,7 +73,7 @@ export async function updateCiclo(id: number, data: { anio: number, estado: bool
 
         revalidatePath("/dashboard/ciclos");
         return { success: true };
-    } catch (error) {
+    } catch {
         return { success: false, message: "Error al actualizar el ciclo lectivo." };
     }
 }
@@ -85,7 +85,7 @@ export async function deleteCiclo(id: number) {
     });
     revalidatePath("/dashboard/ciclos");
     return { success: true };
-  } catch (error) {
+  } catch {
 
     return { success: false, message: "Error al eliminar el ciclo lectivo." };
   }

@@ -60,7 +60,7 @@ const InscripcionSchema = z.object({
   idCurso: z.coerce.number().min(1, "Debe seleccionar un curso."),
 });
 
-export async function inscribirAlumnoAction(prevState: any, formData: FormData) {
+export async function inscribirAlumnoAction(prevState: unknown, formData: FormData) {
   const validatedFields = InscripcionSchema.safeParse({
     idPersona: formData.get("idPersona"),
     idCurso: formData.get("idCurso"),
@@ -124,8 +124,8 @@ export async function deleteMatriculaAction(idMatricula: number) {
     await AlumnoService.deleteMatricula(idMatricula);
     revalidatePath("/dashboard/alumnos");
     return { success: true, message: "Inscripción eliminada correctamente." };
-  } catch (error: any) {
-    return { success: false, message: error.message };
+  } catch (error: unknown) {
+    return { success: false, message: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -137,7 +137,7 @@ const DatosPersonalesSchema = z.object({
   direccion: z.string().optional()
 });
 
-export async function updateDatosPersonalesAction(idAlumno: number, idPersona: number, prevState: any, formData: FormData) {
+export async function updateDatosPersonalesAction(idAlumno: number, idPersona: number, prevState: unknown, formData: FormData) {
   const validatedFields = DatosPersonalesSchema.safeParse(Object.fromEntries(formData.entries()));
 
   if (!validatedFields.success) {

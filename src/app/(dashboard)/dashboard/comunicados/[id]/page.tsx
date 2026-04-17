@@ -2,7 +2,6 @@ import { getComunicadoById } from "@/service/comunicado.service";
 import { ArrowLeft, Calendar, User, Tag } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { marcarComoLeido } from "@/lib/actions/comunicado-actions";
 import { auth } from "@/auth";
 import AutoLectura from "@/components/modules/comunicados/AutoLectura";
 

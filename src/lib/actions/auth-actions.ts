@@ -1,6 +1,6 @@
 "use server";
 
-import { signIn, signOut, auth } from "@/auth";
+import { signIn, signOut, auth, AccountDisabledError } from "@/auth";
 import { AuthError } from "next-auth";
 import db from "@/lib/db";
 import bcrypt from "bcryptjs";
@@ -23,15 +23,14 @@ export async function authenticate(
     });
 
   } catch (error) {
+    if (error instanceof AccountDisabledError) {
+      return "Tu cuenta está deshabilitada. Contacta al administrador.";
+    }
     if (error instanceof AuthError) {
-      switch (error.type) {
-        case "CredentialsSignin":
-          return "DNI o contraseña incorrectos.";
-        case "AccountDisabled":
-          return "Tu cuenta está deshabilitada. Contacta al administrador.";
-        default:
-          return "Algo salió mal. Intentá de nuevo.";
+      if (error.type === "CredentialsSignin") {
+        return "DNI o contraseña incorrectos.";
       }
+      return "Algo salió mal. Intentá de nuevo.";
     }
     throw error;
   }
@@ -88,7 +87,7 @@ export async function requestPasswordReset(
   }
 }
 
-export async function changePasswordAction(prevState: any, formData: FormData) {
+export async function changePasswordAction(prevState: unknown, formData: FormData) {
   const session = await auth();
   if (!session?.user?.idUsuario) return { success: false, message: "No autorizado" };
 
@@ -117,7 +116,7 @@ export async function changePasswordAction(prevState: any, formData: FormData) {
 
         return { success: true, message: "Contraseña actualizada correctamente." };
 
-      } catch (error) {
+      } catch {
 
         return { success: false, message: "Error al actualizar la contraseña." };
 

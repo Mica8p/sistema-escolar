@@ -20,7 +20,7 @@ const CreatePersonaSchema = PersonaSchema.extend({
 });
 
 
-export async function createPersonaAction(prevState: any, formData: FormData) {
+export async function createPersonaAction(prevState: unknown, formData: FormData) {
     const validatedFields = CreatePersonaSchema.safeParse(Object.fromEntries(formData.entries()));
 
     if (!validatedFields.success) {
@@ -75,16 +75,16 @@ export async function createPersonaAction(prevState: any, formData: FormData) {
                 }))
             });
         }
-    } catch (error) {
+    } catch (error: unknown) {
         console.error(error);
-        return { success: false, message: 'Error al crear la persona' };
+        return { success: false, message: error instanceof Error ? error.message : 'Error al crear la persona' };
     }
 
     revalidatePath('/dashboard/personas');
     return { success: true, message: 'Persona creada correctamente. Ahora serás redirigido.' };
 }
 
-export async function updatePersonaAction(idPersona: number, prevState: any, formData: FormData) {
+export async function updatePersonaAction(idPersona: number, prevState: unknown, formData: FormData) {
     const validatedFields = PersonaSchema.safeParse(Object.fromEntries(formData.entries()));
 
     if (!validatedFields.success) {
@@ -92,6 +92,7 @@ export async function updatePersonaAction(idPersona: number, prevState: any, for
     }
 
     const { idRol, ...personaData } = validatedFields.data;
+    void idRol;
 
     try {
         await db.persona.update({
@@ -101,8 +102,8 @@ export async function updatePersonaAction(idPersona: number, prevState: any, for
         revalidatePath('/dashboard/personas');
         revalidatePath(`/dashboard/personas/${idPersona}`);
         return { success: true, message: 'Datos actualizados correctamente. Ahora serás redirigido.' };
-    } catch (error) {
-        return { success: false, message: 'Error al actualizar la persona' };
+    } catch (error: unknown) {
+        return { success: false, message: error instanceof Error ? error.message : 'Error al actualizar la persona' };
     }
 }
 
@@ -145,7 +146,7 @@ export async function habilitarAccesoAction(idPersona: number, dni: string) {
       });
       revalidatePath('/dashboard/personas');
       return { success: true, message: 'Acceso habilitado y contraseña restablecida al DNI.' };
-    } catch (error) {
+    } catch {
       return { success: false, message: 'Error al habilitar el acceso.' };
     }
   }
@@ -358,8 +359,8 @@ export async function deletePersona(idPersona: number) {
         revalidatePath('/dashboard/personas');
         revalidatePath('/dashboard/alumnos');
         return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error(error);
-        return { success: false, message: error.message || 'Error al eliminar la persona' };
+        return { success: false, message: error instanceof Error ? error.message : 'Error al eliminar la persona' };
     }
 }

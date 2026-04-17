@@ -66,7 +66,7 @@ export default function HorarioConfigManager({ diasHabiles, bloquesManana, bloqu
                 } else {
                     toast.warning('Se guardaron los cambios, pero hubo algunas alertas.');
                 }
-            } catch (error) {
+            } catch {
                 toast.error('Ocurrió un error al intentar guardar todo.');
             }
         });
@@ -98,7 +98,7 @@ export default function HorarioConfigManager({ diasHabiles, bloquesManana, bloqu
                 <button
                     onClick={handleGuardarTodo}
                     disabled={isPending}
-                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-100 transition-all hover:scale-105 disabled:bg-slate-300"
+                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-4xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-100 transition-all hover:scale-105 disabled:bg-slate-300"
                 >
                     <Save size={18} />
                     {isPending ? 'Guardando...' : 'Guardar Configuración Completa'}

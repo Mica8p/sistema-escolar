@@ -7,20 +7,83 @@ import {
   FormState,
 } from "@/lib/actions/profesor-actions";
 import { useRouter } from "next/navigation";
-import { AlertCircle, CheckCircle2, X } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
 import {
   getHorariosPorCurso,
   getHorarios,
   getHorariosPorPersona,
 } from "@/lib/actions/horario-actions";
-import { BloqueHorario, DiaHabil } from "@prisma/client";
+import { BloqueHorario, DiaHabil, Turno, DiaSemana } from "@prisma/client";
 import HorarioMatrix from "./HorarioMatrix";
 
+interface HorarioOcupado {
+  idAsignacion: number;
+  diaSemana: DiaSemana;
+  asignacion: {
+    materia: {
+      nombre: string;
+    };
+    profesor?: {
+      persona: {
+        apellido: string;
+      };
+    };
+    curso?: {
+      grado: string;
+      seccion: string;
+    };
+  };
+  horaInicio: string;
+  horaFin: string;
+}
+
+interface PersonaConProfesor {
+  idPersona: number;
+  nombre: string;
+  apellido: string;
+  profesor?: {
+    idProfesor: number;
+  };
+}
+
+interface MateriaSimple {
+  idMateria: number;
+  nombre: string;
+}
+
+interface CursoSimple {
+  idCurso: number;
+  grado: string;
+  seccion: string;
+  turno: string;
+}
+
+interface AsignacionEdit {
+  idAsignacion: number;
+  profesor?: {
+    idPersona: number;
+    persona: {
+      nombre: string;
+      apellido: string;
+    };
+  } | null;
+  materia: {
+    idMateria: number;
+    nombre: string;
+  };
+  curso: {
+    idCurso: number;
+    grado: string;
+    seccion: string;
+  };
+  estado: boolean;
+}
+
 interface Props {
-  personas: any[];
-  materias: any[];
-  cursos: any[];
-  editData?: any;
+  personas: PersonaConProfesor[];
+  materias: MateriaSimple[];
+  cursos: CursoSimple[];
+  editData?: AsignacionEdit;
   idCiclo: number;
   diasHabiles: DiaHabil[];
   bloquesHorario: BloqueHorario[];
@@ -39,18 +102,19 @@ export default function FormAsignacion({
 }: Props) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const [horario, setHorario] = useState<any[]>([]);
-  const [horarioCurso, setHorarioCurso] = useState<any[]>([]);
+  const [horario, setHorario] = useState<unknown[]>([]);
+  const [horarioCurso, setHorarioCurso] = useState<unknown[]>([]);
   const [loadingHorario, setLoadingHorario] = useState(false);
   const [selectedCurso, setSelectedCurso] = useState<number | null>(
-    editData?.idCurso || null
+    editData?.curso?.idCurso || null
   );
   const [selectedProfesor, setSelectedProfesor] = useState<number | null>(
     editData?.profesor?.idPersona || null
   );
   const [selectedSlots, setSelectedSlots] = useState<
-    { dia: string; hora: string }[]
+    { dia: DiaSemana; hora: string }[]
   >([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const actionToUse = editData ? editarDocenteAction : asignarDocenteAction;
   const [state, formAction, isPending] = useActionState(
@@ -64,8 +128,28 @@ export default function FormAsignacion({
       setSelectedSlots([]);
       setSelectedProfesor(null);
       formRef.current?.reset();
+      // Incrementar refresh key para recargar los horarios
+      setRefreshKey(prev => prev + 1);
     }
   }, [state, editData]);
+
+  // Efecto adicional para refrescar horarios cuando hay éxito
+  useEffect(() => {
+    if (state.success && selectedCurso && !editData) {
+      const refreshHorarios = async () => {
+        setLoadingHorario(true);
+        try {
+          const horarioCursoData = await getHorariosPorCurso(selectedCurso, idCiclo);
+          setHorarioCurso(horarioCursoData);
+        } catch (error) {
+          console.error("Error refrescando horarios del curso:", error);
+        } finally {
+          setLoadingHorario(false);
+        }
+      };
+      refreshHorarios();
+    }
+  }, [state.success, selectedCurso, idCiclo, editData]);
 
   useEffect(() => {
     if (editData) {
@@ -112,9 +196,9 @@ export default function FormAsignacion({
     if (!editData) {
       setSelectedSlots([]);
     }
-  }, [selectedProfesor, selectedCurso, idCiclo, editData]);
+  }, [selectedProfesor, selectedCurso, idCiclo, editData, refreshKey]);
 
-  const handleSlotSelect = (dia: string, hora: string) => {
+  const handleSlotSelect = (dia: DiaSemana, hora: string) => {
     setSelectedSlots((prev) => {
       const index = prev.findIndex(
         (slot) => slot.dia === dia && slot.hora === hora
@@ -132,7 +216,6 @@ export default function FormAsignacion({
   };
 
   const cursoSeleccionado = cursos.find((c) => c.idCurso === selectedCurso);
-  const profesorSeleccionado = personas.find(p => p.idPersona === selectedProfesor);
 
   return (
     <div
@@ -223,8 +306,8 @@ export default function FormAsignacion({
           <select
             name="idMateria"
             required
-            key={editData?.idMateria}
-            defaultValue={editData?.idMateria || ""}
+            key={editData?.materia?.idMateria}
+            defaultValue={editData?.materia?.idMateria || ""}
             className="w-full p-2 border rounded-md bg-white text-gray-600"
           >
             <option value="">Seleccionar...</option>
@@ -243,8 +326,8 @@ export default function FormAsignacion({
           <select
             name="idCurso"
             required
-            key={editData?.idCurso}
-            defaultValue={editData?.idCurso || ""}
+            key={editData?.curso?.idCurso}
+            defaultValue={editData?.curso?.idCurso || ""}
             className="w-full p-2 border rounded-md bg-white text-gray-600"
             onChange={(e) => setSelectedCurso(Number(e.target.value))}
           >
@@ -284,9 +367,9 @@ export default function FormAsignacion({
 
       {selectedCurso && cursoSeleccionado && (
         <HorarioMatrix
-          horarioProfesor={horario}
-          horarioCurso={horarioCurso}
-          turno={cursoSeleccionado.turno}
+          horarioProfesor={horario as HorarioOcupado[]}
+          horarioCurso={horarioCurso as HorarioOcupado[]}
+          turno={cursoSeleccionado.turno as Turno}
           loading={loadingHorario}
           onSlotSelect={handleSlotSelect}
           selectedSlots={selectedSlots}

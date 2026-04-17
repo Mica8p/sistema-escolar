@@ -30,8 +30,6 @@ export default async function ReporteDeudoresPage({
   );
 
   const totalPages = Math.ceil(deudores.length / perPage);
-  const hasNextPage = currentPage < totalPages;
-  const hasPrevPage = currentPage > 1;
 
   const totalDeudores = deudores.length;
   const montoGlobal = deudores.reduce((acc, a) => acc + a.deudaTotal, 0);
@@ -55,8 +53,7 @@ export default async function ReporteDeudoresPage({
         montoGlobal={montoGlobal}
       />
       <PaginationControls
-        hasNextPage={hasNextPage}
-        hasPrevPage={hasPrevPage}
+        currentPage={currentPage}
         totalPages={totalPages}
       />
     </div>

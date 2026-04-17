@@ -1,5 +1,5 @@
 import db from "@/lib/db";
-import { Settings, Clock } from "lucide-react";
+import { Settings } from "lucide-react";
 import HorarioConfigManager from "./HorarioConfigManager";
 
 export default async function ConfiguracionHorariosPage() {

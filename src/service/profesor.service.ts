@@ -76,7 +76,7 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
     });
     if (tronoOcupado) throw new Error("Esta materia ya tiene un docente activo.");
 
-    // 3. Validar conflictos de horario usando el idProfesor correcto
+    // 3. Validar conflictos de horario del profesor y del curso
     for (const slot of slots) {
       const [newHoraInicio, newHoraFin] = slot.hora.split(" - ");
       
@@ -86,7 +86,8 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
       const nuevoInicioMinutos = newHH * 60 + newMM;
       const nuevoFinMinutos = newHHFin * 60 + newMMFin;
       
-      const conflicto = await tx.horario.findFirst({
+      // 3a. Validar conflictos del profesor (no puede estar en otro curso a la misma hora)
+      const conflictoProfesor = await tx.horario.findFirst({
         where: {
           asignacion: { 
             idProfesor: profesor.idProfesor,
@@ -98,9 +99,9 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
       });
 
       // Si encontramos horarios en ese día, verificar solapamiento
-      if (conflicto) {
-        const [hh, mm] = conflicto.horaInicio.split(":").map(Number);
-        const [hhFin, mmFin] = conflicto.horaFin.split(":").map(Number);
+      if (conflictoProfesor) {
+        const [hh, mm] = conflictoProfesor.horaInicio.split(":").map(Number);
+        const [hhFin, mmFin] = conflictoProfesor.horaFin.split(":").map(Number);
         const inicioMinutos = hh * 60 + mm;
         const finMinutos = hhFin * 60 + mmFin;
         
@@ -109,7 +110,53 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
         
         if (hayInterseccion) {
           throw new Error(
-            `El docente ya tiene otra clase el ${slot.dia} de ${conflicto.horaInicio} a ${conflicto.horaFin}.`
+            `El docente ya tiene otra clase el ${slot.dia} de ${conflictoProfesor.horaInicio} a ${conflictoProfesor.horaFin}.`
+          );
+        }
+      }
+
+      // 3b. Validar conflictos en el curso (otro profesor no puede tener clase en el mismo horario)
+      const conflictoCurso = await tx.horario.findFirst({
+        where: {
+          asignacion: {
+            idCurso: idCurso,
+            idCiclo: idCiclo,
+            estado: true
+          },
+          diaSemana: slot.dia as DiaSemana,
+        },
+        include: {
+          asignacion: {
+            include: {
+              profesor: {
+                include: { persona: true }
+              },
+              materia: true,
+              curso: true
+            }
+          }
+        }
+      });
+
+      if (conflictoCurso) {
+        const [hh, mm] = conflictoCurso.horaInicio.split(":").map(Number);
+        const [hhFin, mmFin] = conflictoCurso.horaFin.split(":").map(Number);
+        const inicioMinutos = hh * 60 + mm;
+        const finMinutos = hhFin * 60 + mmFin;
+        
+        // Verificar solapamiento
+        const hayInterseccion = !(nuevoFinMinutos <= inicioMinutos || nuevoInicioMinutos >= finMinutos);
+        
+        if (hayInterseccion) {
+          const nombreProfesor = conflictoCurso.asignacion.profesor?.persona
+            ? `${conflictoCurso.asignacion.profesor.persona.apellido} ${conflictoCurso.asignacion.profesor.persona.nombre}`
+            : "Otro profesor";
+          const nombreMateria = conflictoCurso.asignacion.materia?.nombre || "una materia";
+          const nombreCurso = conflictoCurso.asignacion.curso
+            ? `${conflictoCurso.asignacion.curso.grado}°${conflictoCurso.asignacion.curso.seccion}`
+            : "este curso";
+          throw new Error(
+            `En el ${nombreCurso} ya hay una clase el ${slot.dia}: ${nombreProfesor} tiene ${nombreMateria} de ${conflictoCurso.horaInicio} a ${conflictoCurso.horaFin}.`
           );
         }
       }
@@ -127,7 +174,10 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
     });
 
     if (existeActiva) {
-      throw new Error(`¡Cuidado! ${existeActiva.profesor.persona.apellido} ya está activo en esta materia. Primero debés darle la baja.`);
+      const nombreProfesor = existeActiva.profesor?.persona
+        ? `${existeActiva.profesor.persona.apellido} ${existeActiva.profesor.persona.nombre}`
+        : "otro docente";
+      throw new Error(`¡Cuidado! ${nombreProfesor} ya está activo en esta materia. Primero debés darle la baja.`);
     }
 
     // 5. Crear la asignación académica
@@ -168,12 +218,15 @@ async eliminarAsignacion(idAsignacion: number) {
     return await db.$transaction(async (tx) => {
       const asignacion = await tx.asignacionAcademica.findUnique({
         where: { idAsignacion },
-        select: { idProfesor: true, idCiclo: true },
+        select: { idProfesor: true, idCiclo: true, idCurso: true },
       });
 
       if (!asignacion) {
         throw new Error("Asignación no encontrada");
       }
+
+      // Usar el nuevo idCurso si se proporciona, si no usar el actual
+      const idCursoFinal = data.idCurso || asignacion.idCurso;
 
       for (const slot of slots) {
         const [newHoraInicio, newHoraFin] = slot.hora.split(" - ");
@@ -184,7 +237,8 @@ async eliminarAsignacion(idAsignacion: number) {
         const nuevoInicioMinutos = newHH * 60 + newMM;
         const nuevoFinMinutos = newHHFin * 60 + newMMFin;
 
-        const horariosExistentes = await tx.horario.findMany({
+        // Validar conflictos del profesor (no puede estar en otro curso a la misma hora)
+        const horariosProfesor = await tx.horario.findMany({
           where: {
             idAsignacion: { not: idAsignacion },
             asignacion: {
@@ -196,8 +250,8 @@ async eliminarAsignacion(idAsignacion: number) {
           },
         });
 
-        // Verificar solapamiento con cada horario existente
-        for (const conflicto of horariosExistentes) {
+        // Verificar solapamiento con cada horario existente del profesor
+        for (const conflicto of horariosProfesor) {
           const [hh, mm] = conflicto.horaInicio.split(":").map(Number);
           const [hhFin, mmFin] = conflicto.horaFin.split(":").map(Number);
           const inicioMinutos = hh * 60 + mm;
@@ -209,6 +263,54 @@ async eliminarAsignacion(idAsignacion: number) {
           if (hayInterseccion) {
             throw new Error(
               `El docente ya tiene otra clase el ${slot.dia} de ${conflicto.horaInicio} a ${conflicto.horaFin}.`
+            );
+          }
+        }
+
+        // Validar conflictos en el curso (otro profesor no puede tener clase en el mismo horario)
+        const horariosCurso = await tx.horario.findMany({
+          where: {
+            idAsignacion: { not: idAsignacion },
+            asignacion: {
+              idCurso: idCursoFinal,
+              idCiclo: asignacion.idCiclo,
+              estado: true
+            },
+            diaSemana: slot.dia as DiaSemana,
+          },
+          include: {
+            asignacion: {
+              include: {
+                profesor: {
+                  include: { persona: true }
+                },
+                materia: true,
+                curso: true
+              }
+            }
+          }
+        });
+
+        // Verificar solapamiento con cada horario existente en el curso
+        for (const conflicto of horariosCurso) {
+          const [hh, mm] = conflicto.horaInicio.split(":").map(Number);
+          const [hhFin, mmFin] = conflicto.horaFin.split(":").map(Number);
+          const inicioMinutos = hh * 60 + mm;
+          const finMinutos = hhFin * 60 + mmFin;
+          
+          // Verificar solapamiento
+          const hayInterseccion = !(nuevoFinMinutos <= inicioMinutos || nuevoInicioMinutos >= finMinutos);
+          
+          if (hayInterseccion) {
+            const nombreProfesor = conflicto.asignacion.profesor?.persona
+              ? `${conflicto.asignacion.profesor.persona.apellido} ${conflicto.asignacion.profesor.persona.nombre}`
+              : "Otro profesor";
+            const nombreMateria = conflicto.asignacion.materia?.nombre || "una materia";
+            const nombreCurso = conflicto.asignacion.curso
+              ? `${conflicto.asignacion.curso.grado}°${conflicto.asignacion.curso.seccion}`
+              : "este curso";
+            throw new Error(
+              `En el ${nombreCurso} ya hay una clase el ${slot.dia}: ${nombreProfesor} tiene ${nombreMateria} de ${conflicto.horaInicio} a ${conflicto.horaFin}.`
             );
           }
         }
@@ -352,6 +454,10 @@ async reincorporarDocente(idAsignacion: number) {
     if (!asig) throw new Error("Asignación no encontrada");
     if (asig.estado) return asig; // Ya está activo
 
+    const profesorNombre = asig.profesor?.persona
+      ? `${asig.profesor.persona.nombre} ${asig.profesor.persona.apellido}`
+      : 'el profesor';
+
     const reemplazante = await tx.asignacionAcademica.findFirst({
       where: {
         idMateria: asig.idMateria,
@@ -366,19 +472,18 @@ async reincorporarDocente(idAsignacion: number) {
         where: { idAsignacion: reemplazante.idAsignacion },
         data: {
           estado: false,
-          motivoBaja: `Reemplazado por reincorporación de ${asig.profesor.persona.nombre} ${asig.profesor.persona.apellido}`,
+          motivoBaja: `Reemplazado por reincorporación de ${profesorNombre}`,
           fechaBaja: new Date(),
-        }
+        },
       });
-      
-      // Mover historial de vuelta a la asignación original
+
       await tx.nota.updateMany({
         where: { idAsignacion: reemplazante.idAsignacion },
-        data: { idAsignacion: idAsignacion }
+        data: { idAsignacion: idAsignacion },
       });
       await tx.horario.updateMany({
         where: { idAsignacion: reemplazante.idAsignacion },
-        data: { idAsignacion: idAsignacion }
+        data: { idAsignacion: idAsignacion },
       });
     }
 

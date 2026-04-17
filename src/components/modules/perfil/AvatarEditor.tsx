@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { deleteAvatarAction, updateAvatarAction } from "@/lib/actions/perfil-actions";
 
 type ActionState = { ok: boolean; message: string };
@@ -114,7 +115,7 @@ export default function AvatarEditor({
         title={`${nombre} ${apellido}`}
       >
         {preview ? (
-          <img src={preview} alt="Avatar" className="h-full w-full object-cover" />
+          <Image src={preview} alt="Avatar" width={size} height={size} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <span className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-700 select-none">

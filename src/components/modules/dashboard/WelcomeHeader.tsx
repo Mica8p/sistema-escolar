@@ -1,14 +1,21 @@
 import { Sparkles, Zap, UserCheck } from "lucide-react";
 import Link from "next/link";
 
-interface WelcomeProps {
-  name: string;
-  roles: string[];
-  claseActual?: any;
+interface ClaseActual {
+  idHorario: number;
+  horaFin: string;
+  asignacion: {
+    materia: { nombre: string };
+    curso: { grado: string | number; seccion: string };
+  };
 }
 
-export default function WelcomeHeader({ name, roles, claseActual }: WelcomeProps) {
-  const esDocente = roles.includes("DOCENTE");
+interface WelcomeProps {
+  name: string;
+  claseActual?: ClaseActual;
+}
+
+export default function WelcomeHeader({ name, claseActual }: WelcomeProps) {
   const hora = new Date().getHours();
 
   let saludo = "¡Hola";
@@ -34,7 +41,7 @@ export default function WelcomeHeader({ name, roles, claseActual }: WelcomeProps
         </div>
 
         {claseActual ? (
-          <div className="relative z-20 flex flex-col md:flex-row items-center gap-4 bg-white/10 backdrop-blur-xl p-4 rounded-[2rem] border border-white/20 animate-in zoom-in-95 duration-500">
+          <div className="relative z-20 flex flex-col md:flex-row items-center gap-4 bg-white/10 backdrop-blur-xl p-4 rounded-4xl border border-white/20 animate-in zoom-in-95 duration-500">
             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-indigo-600 shadow-lg">
                <Zap size={24} fill="currentColor" />
             </div>
@@ -46,7 +53,7 @@ export default function WelcomeHeader({ name, roles, claseActual }: WelcomeProps
                 {claseActual.asignacion.materia.nombre}
               </h2>
               <p className="text-[10px] text-indigo-100 font-bold opacity-80">
-                {claseActual.asignacion.curso.grado}° "{claseActual.asignacion.curso.seccion}" · Hasta {claseActual.horaFin}
+                {claseActual.asignacion.curso.grado}° &quot;{claseActual.asignacion.curso.seccion}&quot; · Hasta {claseActual.horaFin}
               </p>
             </div>
             <Link

@@ -4,7 +4,6 @@ import { getHorariosByAsignaciones, getPlanillaAsistencia } from "@/service/asis
 import { getCicloActual } from "@/lib/ciclo-session";
 import { Materia, Turno } from "@prisma/client";
 import AsistenciasClient from "./AsistenciasClient";
-import db from "@/lib/db";
 import { getEstadisticasAsistenciaAction } from "@/lib/actions/asistencias-actions";
 
 export default async function AsistenciasPage({
@@ -19,13 +18,8 @@ export default async function AsistenciasPage({
   const idCiclo = await getCicloActual();
   const isAdmin = session.user.roles.includes("ADMIN");
   const idPersona = session.user.idPersona ?? 0;
-  const currentPage = Number(params.page || "1");
-  const search = params.search;
 
-  const [asignaciones, cicloObj] = await Promise.all([
-    getAsignacionesParaUsuario({ isAdmin, idPersona, idCiclo }),
-    db.cicloLectivo.findUnique({ where: { idCiclo } })
-  ]);
+  const asignaciones = await getAsignacionesParaUsuario({ isAdmin, idPersona, idCiclo });
 
   const cursosAgrupados = asignaciones.reduce((acc, a) => {
     const key = `${a.curso.grado}° ${a.curso.seccion}`;
@@ -84,41 +78,36 @@ export default async function AsistenciasPage({
   const horariosRaw = await getHorariosByAsignaciones(idsAsignaciones);
   const horariosFiltrados = horariosRaw.filter(h => h.diaSemana === nombreDiaSeleccionado);
   
-  const horariosPorCurso = horariosFiltrados.reduce((acc, h) => {
-    const asig = asignacionesDeMateria.find(a => a.idAsignacion === h.idAsignacion);
-    if (!asig) return acc;
-
-    const key = asig.idCurso;
-    if (!acc[key]) {
-      acc[key] = [];
-    }
-    acc[key].push(h);
-    return acc;
-  }, {} as Record<number, typeof horariosFiltrados>);
-  
   const idHorario = params.horario ? Number(params.horario) : (horariosFiltrados[0]?.idHorario || 0);
   const horarioElegido = horariosFiltrados.find(h => h.idHorario === idHorario);
 
   const idAsignacion = horarioElegido?.idAsignacion || 0;
   
-  const anioActual = cicloObj?.anio || 2026;
-  
   const planilla = (idAsignacion > 0 && idHorario > 0)
-    ? await getPlanillaAsistencia({ idAsignacion, idHorario, fecha: fechaSeleccionada, page: search ? currentPage : 0, search })
+    ? await getPlanillaAsistencia({ 
+        idAsignacion, 
+        idHorario, 
+        fecha: fechaSeleccionada, 
+        page: 0
+      })
     : null;
+
+  // Convertir Map a array de tuplas si es necesario
+  const planillaConverted = planilla ? {
+    ...planilla,
+    asistenciaByMatricula: Array.from(planilla.asistenciaByMatricula instanceof Map 
+      ? planilla.asistenciaByMatricula.entries() 
+      : planilla.asistenciaByMatricula)
+  } : null;
 
   const estadisticasAsistenciaArray = idAsignacion > 0
     ? await getEstadisticasAsistenciaAction(idAsignacion)
     : [];
   
   const estadisticasAsistencia = new Map(estadisticasAsistenciaArray as Array<[number, { presentes: number; ausentes: number; totalClases: number }]>);
-
-  const totalPages = planilla && search
-    ? Math.ceil(planilla.totalMatriculas / 5)
-    : 1;
   
   return <AsistenciasClient
-    asig={planilla?.asig}
+    asig={planillaConverted?.asig}
     cursos={cursos}
     idCurso={idCurso}
     turno={turno}
@@ -129,12 +118,9 @@ export default async function AsistenciasPage({
     idAsignacion={idAsignacion}
     nombreDiaSeleccionado={nombreDiaSeleccionado}
     idHorario={idHorario}
-    planilla={planilla}
+    planilla={planillaConverted}
     estadisticasAsistencia={estadisticasAsistencia}
     isAdmin={isAdmin}
-    currentPage={currentPage}
-    totalPages={totalPages}
-    search={search}
   />;
 }
 

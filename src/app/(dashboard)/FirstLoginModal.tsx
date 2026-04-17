@@ -6,13 +6,7 @@ import { LockKeyhole, Save } from "lucide-react";
 import { toast } from "sonner";
 
 export default function FirstLoginModal({ shouldForceChange }: { shouldForceChange?: boolean }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    if (shouldForceChange) {
-      setIsOpen(true);
-    }
-  }, [shouldForceChange]);
+  const [isOpen, setIsOpen] = useState(shouldForceChange || false);
 
   const [state, formAction, isPending] = useActionState(changePasswordAction, null);
 
@@ -42,7 +36,7 @@ export default function FirstLoginModal({ shouldForceChange }: { shouldForceChan
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
+      <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
         <div className="bg-indigo-600 p-8 text-white text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
 

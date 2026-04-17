@@ -14,10 +14,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!session) redirect("/login");
 
-  const roles = (session.user as any).roles || [];
-  const idUsuario = (session.user as any).idUsuario;
-  const idPadre = (session.user as any).idPadre;
-  const shouldForceChange = (session.user as any).isDefaultPassword;
+  const roles = session.user.roles || [];
+  const idUsuario = session.user.idUsuario;
+  const idPadre = session.user.idPadre;
+  const shouldForceChange = session.user.isDefaultPassword;
 
   const rolPrincipal = roles[0] || "USUARIO";
   let idsCursosHijos: number[] = [];

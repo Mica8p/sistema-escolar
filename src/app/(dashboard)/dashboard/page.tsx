@@ -28,7 +28,6 @@ export default async function DashboardPage() {
           idProfesor={user.idProfesor ?? null}
           idUsuario={user.idUsuario}
           userName={user.name ?? "Docente"}
-          userRoles={roles}
         />
       )}
 
@@ -37,10 +36,9 @@ export default async function DashboardPage() {
         <PadreView
           idPersona={user.idPersona}
           idUsuario={user.idUsuario}
-          idPadre={(user as any).idPadre}
+          idPadre={user.idPadre}
           idCiclo={idCiclo}
           userName={user.name ?? "Padre/Madre"}
-          userRoles={roles}
         />
       )}
 
@@ -49,7 +47,6 @@ export default async function DashboardPage() {
         <AdminView
           idCiclo={idCiclo}
           userName={user.name ?? "Admin"}
-          userRoles={roles}
         />
       )}
 

@@ -35,7 +35,7 @@ export default function PlanillaSearchBar({ placeholder, onSearchChange }: { pla
       <label htmlFor="search-planilla" className="sr-only">
         Buscar
       </label>
-      <SearchIcon className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-400" />
+      <SearchIcon className="absolute left-3 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-400" />
       <input
         id="search-planilla"
         className="peer block w-full rounded-full border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm outline-none placeholder:text-slate-400 text-slate-700 focus:ring-2 focus:ring-indigo-400"

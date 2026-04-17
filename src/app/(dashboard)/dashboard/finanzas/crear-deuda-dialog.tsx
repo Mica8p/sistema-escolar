@@ -48,7 +48,7 @@ export function CrearDeudaDialog({ alumnoId, conceptos }: { alumnoId: number; co
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95">
         <div className="p-8 pb-0 flex flex-col items-center text-center relative">
           <button onClick={() => setOpen(false)} className="absolute top-0 right-0 p-2 text-slate-400 hover:bg-slate-50 rounded-full">

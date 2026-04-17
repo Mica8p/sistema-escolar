@@ -10,5 +10,5 @@ export default async function InventarioPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const cicloParam = params?.ciclo ? Number(params.ciclo) : undefined;
 
-  return <InventarioView cicloParam={cicloParam} />;
+  return <InventarioView />;
 }

@@ -1,22 +1,21 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { consumirInsumo } from "@/lib/actions/movimiento-stock-actions";
 import InsumoFormModal from "./InsumoFormModal";
 import MovimientoStockModal from "./MovimientoStockModal";
+import EditarMovimientoModal from "./EditarMovimientoModal";
 import PaginationControls from "@/components/shared/PaginationControls";
 import {
   Archive,
   Package,
   AlertTriangle,
-  PlusCircle,
   Pencil,
   Search,
   Plus,
   ShoppingCart,
   MinusCircle,
-  ChevronDown,
 } from "lucide-react";
 
 type Insumo = {
@@ -52,7 +51,7 @@ export default function InventarioClient({
   const [selected, setSelected] = useState<Insumo | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"todos" | "alerta" | "sin-stock">("todos");
+  const [statusFilter, setStatusFilter] = useState<"todos" | "alerta" | "sin-stock">("alerta");
   const [activeTab, setActiveTab] = useState<"stock" | "historial">("stock");
 
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -60,12 +59,13 @@ export default function InventarioClient({
   });
 
   const [consumoLoading, setConsumoLoading] = useState<number | null>(null);
-  const router = useRouter();
 
   /* ---------- Movimientos de stock ---------- */
   const [movOpen, setMovOpen] = useState(false);
   const [movInsumo, setMovInsumo] = useState<Insumo | null>(null);
   const [movTipo, setMovTipo] = useState<"Entrada" | "Salida" | "Ajuste">("Salida");
+  const [editMovOpen, setEditMovOpen] = useState(false);
+  const [selectedMov, setSelectedMov] = useState<Movimiento | null>(null);
 
   const openMovimiento = (i: Insumo, tipo: "Entrada" | "Salida" | "Ajuste") => {
     setMovInsumo(i);
@@ -320,6 +320,7 @@ export default function InventarioClient({
                   <th className="px-4 py-3 text-right font-semibold">Cantidad</th>
                   <th className="px-4 py-3 text-left font-semibold">Usuario</th>
                   <th className="px-4 py-3 text-left font-semibold">Gasto Asociado</th>
+                  <th className="px-4 py-3 text-right font-semibold">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -350,6 +351,18 @@ export default function InventarioClient({
                           <span className="text-xs text-gray-500">—</span>
                         )}
                       </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => {
+                            setSelectedMov(m);
+                            setEditMovOpen(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          title="Editar movimiento"
+                        >
+                          <Pencil size={18} />
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -378,6 +391,7 @@ export default function InventarioClient({
       {/* ---------- Modales ---------- */}
       <InsumoFormModal open={open} onClose={() => setOpen(false)} mode={mode} insumo={selected} />
       <MovimientoStockModal open={movOpen} onClose={() => setMovOpen(false)} insumo={movInsumo} tipoInicial={movTipo} />
+      <EditarMovimientoModal open={editMovOpen} onClose={() => setEditMovOpen(false)} movimiento={selectedMov} />
     </div>
   );
 }

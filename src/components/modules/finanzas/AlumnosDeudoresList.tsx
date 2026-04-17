@@ -45,8 +45,10 @@ export default function AlumnosDeudoresList({ alumnos }: { alumnos: AlumnoConDeu
       const cursoMatch = cursoFilter === '' || curso === cursoFilter;
       const turnoMatch = turnoFilter === '' || turno === turnoFilter;
       const estadoMatch = alumno.estado === estadoFilter;
+      // Requiere que al menos un filtro (curso o turno) esté seleccionado
+      const hasFilter = cursoFilter !== '' || turnoFilter !== '';
 
-      return searchMatch && cursoMatch && turnoMatch && estadoMatch;
+      return searchMatch && cursoMatch && turnoMatch && estadoMatch && hasFilter;
     });
   }, [alumnos, cursoFilter, turnoFilter, searchTerm, estadoFilter]);
 
@@ -78,7 +80,7 @@ export default function AlumnosDeudoresList({ alumnos }: { alumnos: AlumnoConDeu
             setCurrentPage(1);
           }}
         >
-          <option value="">Todos los cursos</option>
+          <option value="">-- Seleccione el Curso --</option>
           {cursos.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <select
@@ -88,7 +90,7 @@ export default function AlumnosDeudoresList({ alumnos }: { alumnos: AlumnoConDeu
             setCurrentPage(1);
           }}
         >
-          <option value="">Todos los turnos</option>
+          <option value="">-- Seleccione el Turno --</option>
           {turnos.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
         <select

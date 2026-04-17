@@ -5,9 +5,21 @@ import { vincularPadre, desvincularPadre } from '@/lib/actions/alumno-actions';
 import { getTutoresDisponiblesAction } from '@/lib/actions/persona-actions';
 import { Trash2 } from 'lucide-react';
 
+type PadreRelacion = {
+  padre: {
+    idPadre: number;
+    persona: {
+      nombre: string;
+      apellido: string;
+      dni: string;
+    };
+  };
+  relacion: string;
+};
+
 type AlumnoExtendido = {
   idAlumno: number;
-  padres: any[];
+  padres: PadreRelacion[];
 };
 
 type TutorDisponible = {

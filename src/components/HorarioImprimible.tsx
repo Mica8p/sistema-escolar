@@ -1,16 +1,41 @@
 "use client";
 
 import { useRef } from "react";
-import { GraduationCap, Calendar } from "lucide-react";
+import { GraduationCap } from "lucide-react";
+import { BloqueHorario, DiaHabil } from "@prisma/client";
+
+interface HorarioCompleto {
+  diaSemana: string;
+  horaInicio: string;
+  asignacion: {
+    materia: {
+      nombre: string;
+    };
+    curso: {
+      grado: string;
+      seccion: string;
+      turno: string;
+    };
+    ciclo: {
+      anio: number;
+    };
+    profesor: {
+      persona?: {
+        apellido: string | null;
+      }
+    } | null | undefined;
+  };
+  aula?: string | null;
+}
 import BotonImprimirHorario from "@/components/BotonDescarga";
 import GrillaSemanal from "@/components/modules/horarios/GrillaSemanal";
 
 interface Props {
-  horarios: any[];
+  horarios: HorarioCompleto[];
   nombreAlumno: string;
   curso: string;
-  bloques: any[];
-  dias: any[];
+  bloques: BloqueHorario[];
+  dias: DiaHabil[];
 }
 
 export default function HorarioImprimible({ horarios, nombreAlumno, curso, bloques, dias }: Props) {

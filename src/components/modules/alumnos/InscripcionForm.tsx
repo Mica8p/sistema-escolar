@@ -4,9 +4,11 @@ import { useActionState } from 'react';
 import { inscribirAlumnoAction } from "@/lib/actions/alumno-actions";
 import { UserPlus } from "lucide-react";
 
+import { Persona, Curso } from "@prisma/client";
+
 interface InscripcionFormProps {
-  personas: any[];
-  cursos: any[];
+  personas: Persona[];
+  cursos: Curso[];
 }
 
 export function InscripcionForm({ personas, cursos }: InscripcionFormProps) {
@@ -52,7 +54,7 @@ export function InscripcionForm({ personas, cursos }: InscripcionFormProps) {
             <option value="">-- Elegir Curso --</option>
             {cursos.map((c) => (
               <option key={c.idCurso} value={c.idCurso}>
-                {c.grado}° "{c.seccion}" - {c.nivel} ({c.turno})
+                {c.grado}° &quot;{c.seccion}&quot; - {c.nivel} ({c.turno})
               </option>
             ))}
           </select>
@@ -69,7 +71,7 @@ export function InscripcionForm({ personas, cursos }: InscripcionFormProps) {
 
       {personas.length === 0 && (
         <p className="text-sm text-orange-600 mt-3 font-medium animate-pulse">
-          * No hay personas nuevas con rol 'ALUMNO' para inscribir. Cargá más personas primero.
+          * No hay personas nuevas con rol &apos;ALUMNO&apos; para inscribir. Cargá más personas primero.
         </p>
       )}
 

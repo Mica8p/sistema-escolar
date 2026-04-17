@@ -1,7 +1,7 @@
 "use server";
 
 import db from "@/lib/db";
-import { MetodoPago, EstadoCuota } from "@prisma/client";
+import { MetodoPago, EstadoCuota, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 
@@ -211,17 +211,29 @@ export async function crearCargoMasivo(
 
   if (matriculas.length === 0) return { count: 0 };
 
-  const cargosData = matriculas.map(m => ({
-    alumnoId: m.idAlumno,
-    conceptoId,
-    monto,
-    fechaVencimiento,
-    estado: 'Pendiente' as EstadoCuota,
-    cicloId,
-  }));
+  const cargosData = matriculas.map(m => {
+    if (fechaVencimiento != null) {
+      return {
+        alumnoId: m.idAlumno,
+        conceptoId,
+        monto,
+        fechaVencimiento,
+        estado: 'Pendiente',
+        cicloId,
+      };
+    }
+
+    return {
+      alumnoId: m.idAlumno,
+      conceptoId,
+      monto,
+      estado: 'Pendiente',
+      cicloId,
+    };
+  });
 
   return db.cargo.createMany({
-    data: cargosData,
+    data: cargosData as Prisma.CargoCreateManyInput[],
   });
 }
 

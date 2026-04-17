@@ -4,10 +4,31 @@ import db from "@/lib/db";
 import GrillaSemanal from "@/components/modules/horarios/GrillaSemanal";
 import { auth } from "@/auth";
 
+interface HorarioCompleto {
+  diaSemana: string;
+  horaInicio: string;
+  asignacion: {
+    materia: {
+      nombre: string;
+    };
+    curso: {
+      grado: string;
+      seccion: string;
+      turno: string;
+    };
+    profesor?: {
+      persona?: {
+        apellido: string | null;
+      };
+    };
+  };
+  aula?: string | null;
+}
+
 export default async function HorariosPage({ searchParams }: { searchParams: Promise<{ curso?: string }> }) {
   const session = await auth();
   const roles = session?.user?.roles ?? [];
-  let idProfesor = (session?.user as any)?.idProfesor;
+  let idProfesor = session?.user?.idProfesor;
   const esDocente = roles.includes("DOCENTE");
   const esAdmin = roles.includes("ADMIN");
 
@@ -29,27 +50,50 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
     idProfesor = profesorData.idProfesor;
   }
 
-  let horarios: any[] = [];
+  let horarios: HorarioCompleto[] = [];
   let idCurso = curso ? parseInt(curso) : null;
   let cursoSeleccionado = null;
 
   if (esDocente && !esAdmin) {
     if (idProfesor) {
-      horarios = await getHorariosPorDocente(idProfesor, idCiclo);
-      horarios = horarios.filter((h: any) => h.asignacion.estado);
+      horarios = (await getHorariosPorDocente(idProfesor, idCiclo)).map(h => ({
+        ...h,
+        asignacion: {
+          ...h.asignacion,
+          profesor: h.asignacion.profesor || undefined
+        }
+      }));
     }
     idCurso = null;
   } else {
     if (idCurso) {
       const [horariosData, cursoData] = await Promise.all([
-        getHorariosPorCurso(idCurso, idCiclo),
+        getHorariosPorCurso(idCurso, idCiclo).then(data => data.map(h => ({
+          ...h,
+          asignacion: {
+            ...h.asignacion,
+            profesor: h.asignacion.profesor || undefined
+          }
+        }))),
         db.curso.findUnique({ where: { idCurso } })
       ]);
-      horarios = horariosData;
+      horarios = (horariosData as any[]).map((h: any) => ({
+        ...h,
+        asignacion: {
+          ...h.asignacion,
+          profesor: h.asignacion.profesor || undefined,
+          curso: cursoData ? { grado: cursoData.grado, seccion: cursoData.seccion, turno: cursoData.turno } : undefined
+        }
+      }));
       cursoSeleccionado = cursoData;
     } else if (esDocente && idProfesor) {
-      horarios = await getHorariosPorDocente(idProfesor, idCiclo);
-      horarios = horarios.filter((h: any) => h.asignacion.estado);
+      horarios = (await getHorariosPorDocente(idProfesor, idCiclo)).map(h => ({
+        ...h,
+        asignacion: {
+          ...h.asignacion,
+          profesor: h.asignacion.profesor || undefined
+        }
+      }));
     }
   }
 
@@ -67,8 +111,8 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
       }) 
     : [];
 
-  const horariosMañana = esDocente ? horarios.filter(h => h.asignacion.curso.turno === 'Mañana') : [];
-  const horariosTarde = esDocente ? horarios.filter(h => h.asignacion.curso.turno === 'Tarde') : [];
+  const horariosMañana = esDocente ? (horarios as any[]).filter((h: any) => h.asignacion.curso.turno === 'Mañana') : [];
+  const horariosTarde = esDocente ? (horarios as any[]).filter((h: any) => h.asignacion.curso.turno === 'Tarde') : [];
   const bloquesMañana = bloques.filter(b => b.turno === 'Mañana');
   const bloquesTarde = bloques.filter(b => b.turno === 'Tarde');
   
@@ -95,7 +139,7 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
             <select name="curso" defaultValue={curso || ""} className="text-[10px] font-black text-gray-600 uppercase tracking-widest transition-all">
               <option value="" disabled>Elegir curso...</option>
               {cursos.map(c => (
-                <option key={c.idCurso} value={c.idCurso}>{c.grado} "{c.seccion}" - {c.turno}</option>
+                <option key={c.idCurso} value={c.idCurso}>{c.grado} &quot;{c.seccion}&quot; - {c.turno}</option>
               ))}
             </select>
             <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-2 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all">Ver Grilla</button>
@@ -107,11 +151,11 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
         <div className="space-y-12">
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-xl font-bold text-slate-700 mb-4">Turno Mañana</h2>
-            <GrillaSemanal horarios={horariosMañana} bloques={bloquesMañana} dias={dias} />
+            <GrillaSemanal horarios={horariosMañana as any} bloques={bloquesMañana} dias={dias} />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-xl font-bold text-slate-700 mb-4">Turno Tarde</h2>
-            <GrillaSemanal horarios={horariosTarde} bloques={bloquesTarde} dias={dias} />
+            <GrillaSemanal horarios={horariosTarde as any} bloques={bloquesTarde} dias={dias} />
           </div>
           {horarios.length === 0 && (
             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -123,7 +167,7 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
         <>
           {idCurso ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <GrillaSemanal horarios={horarios} bloques={bloquesFiltrados} dias={dias}/>
+            <GrillaSemanal horarios={horarios as any} bloques={bloquesFiltrados} dias={dias}/>
             </div>
           ) : (
             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">

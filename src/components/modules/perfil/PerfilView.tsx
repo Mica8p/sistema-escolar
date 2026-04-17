@@ -2,12 +2,14 @@ import React from "react";
 import Link from "next/link";
 import { KeyRound, Shield, Info, Users, Calendar } from "lucide-react";
 import AvatarEditor from "./AvatarEditor";
+import ChangePasswordSection from "./ChangePasswordSection";
+import EditPersonalDataSection from "./EditPersonalDataSection";
 
 type HijoInfo = {
   relacion: string;
   alumno: {
     idPersona: number;
-    avatarUrl?: string | null;
+    avatarUrl: string | null;
 
     nombre: string;
     apellido: string;
@@ -17,11 +19,11 @@ type HijoInfo = {
       curso: {
         grado: string;
         seccion: string;
-        nivel: "Primario" | "Secundario";
-        turno: "Mañana" | "Tarde";
+        nivel: string;
+        turno: string;
       };
-      estadoAcademico: "Activo" | "Retirado" | "Egresado" | "Suspendido";
-    } | null;
+      estadoAcademico: string | undefined;
+    } | null | undefined;
   };
 };
 
@@ -33,18 +35,11 @@ type DocenteInfo = {
     curso: {
       grado: string;
       seccion: string;
-      nivel: "Primario" | "Secundario";
-      turno: "Mañana" | "Tarde";
+      nivel: string;
+      turno: string;
     };
     horarios?: Array<{
-      diaSemana:
-        | "LUNES"
-        | "MARTES"
-        | "MIERCOLES"
-        | "JUEVES"
-        | "VIERNES"
-        | "SABADO"
-        | "DOMINGO";
+      diaSemana: string;
       horaInicio: string;
       horaFin: string;
       aula?: string | null;
@@ -61,7 +56,7 @@ type AdminStats = {
 
 type PerfilData = {
   idPersona: number;
-  avatarUrl?: string | null;
+  avatarUrl: string | null;
 
   nombre: string;
   apellido: string;
@@ -194,16 +189,6 @@ export default function PerfilView({ perfil }: { perfil: PerfilData }) {
             </div>
           )}
         </div>
-
-        <div className="sm:pt-1">
-          <Link
-            href="/perfil/cambiar-password"
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-          >
-            <KeyRound size={16} />
-            Cambiar contraseña
-          </Link>
-        </div>
       </div>
 
       {/* Card superior (avatar grande + nombre/email) */}
@@ -266,6 +251,26 @@ export default function PerfilView({ perfil }: { perfil: PerfilData }) {
 
         <div className="mt-4 text-xs font-medium text-slate-700">
           Creado: {formatDateTime(perfil.createdAt)}
+        </div>
+
+        {/* Editar datos personales */}
+        <div className="mt-6 pt-6 border-t border-slate-200">
+          <EditPersonalDataSection
+            nombre={perfil.nombre}
+            apellido={perfil.apellido}
+            email={perfil.email}
+            telefono={perfil.telefono}
+            direccion={perfil.direccion}
+          />
+        </div>
+
+        {/* Cambiar contraseña */}
+        <div className="mt-6 pt-6 border-t border-slate-200">
+          <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+            <KeyRound size={16} />
+            Cambiar contraseña
+          </h3>
+          <ChangePasswordSection />
         </div>
       </div>
 

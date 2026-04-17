@@ -40,11 +40,13 @@ export async function asignarDocenteAction(prevState: FormState, formData: FormD
 
     revalidatePath("/dashboard/profesores");
     return { success: true };
-  } catch (error: any) {
-    if (error.code === 'P2002') {
+  } catch (error: unknown) {
+    type PrismaErrorWithCode = Error & { code?: string };
+    const prismaError = error as PrismaErrorWithCode;
+    if (error instanceof Error && prismaError.code === 'P2002') {
       return { error: "Error: Ya hay un profesor asignado a esta materia en este curso." };
     }
-    return { error: error.message || "Ocurrió un error inesperado al guardar." };
+    return { error: error instanceof Error ? error.message : "Ocurrió un error inesperado al guardar." };
   }
 }
 
@@ -82,39 +84,39 @@ export async function editarDocenteAction(prevState: FormState, formData: FormDa
     revalidatePath("/dashboard/profesores");
     redirect("/dashboard/profesores");
 
-  } catch (error: any) {
-    if (error.message === 'NEXT_REDIRECT') throw error;
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') throw error;
     return { error: "Error al actualizar la asignación." };
   }
 }
 
 
 
-    export async function desactivarAsignacionAction(idAsignacion: number) {
-
-      try {
-        await ProfesorService.eliminarAsignacion(idAsignacion);
-        revalidatePath('/dashboard/profesores');
-        return { success: true };
-      } catch (error: any) {
-        console.error(error);
-        if (error.code === 'P2003') {
-            return { success: false, message: 'No se puede eliminar: Esta materia ya tiene asistencias registradas.' };
-        }
-        return {
-            success: false,
-            message: 'Error al eliminar la asignación.'
-        };
-      }
-
+export async function desactivarAsignacionAction(idAsignacion: number) {
+  try {
+    await ProfesorService.eliminarAsignacion(idAsignacion);
+    revalidatePath('/dashboard/profesores');
+    return { success: true };
+  } catch (error: unknown) {
+    console.error(error);
+    type PrismaErrorWithCode = Error & { code?: string };
+    const prismaError = error as PrismaErrorWithCode;
+    if (error instanceof Error && prismaError.code === 'P2003') {
+      return { success: false, message: 'No se puede eliminar: Esta materia ya tiene asistencias registradas.' };
     }
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Error al eliminar la asignación.'
+    };
+  }
+}
 
 export async function borrarErrorAsignacionAction(idAsignacion: number) {
   try {
     await ProfesorService.borrarAsignacionDefinitivamente(idAsignacion);
     revalidatePath("/dashboard/profesores");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, message: "No se puede borrar: Probablemente ya tiene notas cargadas." };
   }
 }
@@ -128,9 +130,9 @@ export async function darDeBajaAction(idAsignacion: number, motivo: string, idSu
     }
     revalidatePath("/dashboard/profesores");
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error en darDeBajaAction:", error);
-    return { success: false, message: error.message || "Error al procesar la baja." };
+    return { success: false, message: error instanceof Error ? error.message : "Error al procesar la baja." };
   }
 }
 
@@ -139,7 +141,7 @@ export async function reincorporarDocenteAction(idAsignacion: number) {
     await ProfesorService.reincorporarDocente(idAsignacion);
     revalidatePath("/dashboard/profesores");
     return { success: true };
-  } catch (error: any) {
-    return { success: false, message: error.message };
+  } catch (error: unknown) {
+    return { success: false, message: error instanceof Error ? error.message : "Error inesperado." };
   }
 }

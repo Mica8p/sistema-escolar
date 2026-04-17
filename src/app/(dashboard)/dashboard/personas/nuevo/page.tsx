@@ -11,11 +11,14 @@ export default async function NuevaPersonaPage() {
     })
   ]);
 
+  // Filtrar solo alumnos con persona definida
+  const alumnosValidos = alumnos.filter(a => a.persona);
+
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-slate-900 mb-6">Registrar Nueva Persona</h1>
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-        <PersonaForm roles={roles} alumnos={alumnos} />
+        <PersonaForm roles={roles} alumnos={alumnosValidos} />
       </div>
     </div>
   );

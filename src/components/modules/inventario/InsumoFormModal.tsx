@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { createInsumo, updateInsumo } from "@/lib/actions/inventario-actions";
 
 type Insumo = {
@@ -33,24 +33,9 @@ export default function InsumoFormModal({
     return { idInsumo: 0, nombre: "", unidadMedida: "", stockActual: 0, stockMinimo: 0 };
   }, [mode, insumo]);
 
-  const [nombre, setNombre] = useState(initial.nombre);
-  const [unidadMedida, setUnidadMedida] = useState(initial.unidadMedida);
-  const [stockActual, setStockActual] = useState(mode === "create" ? "" : String(initial.stockActual));
-  const [stockMinimo, setStockMinimo] = useState(mode === "create" ? "" : String(initial.stockMinimo));
-
-  useEffect(() => {
-    setNombre(initial.nombre);
-    setUnidadMedida(initial.unidadMedida);
-    if (mode === "create") {
-      setStockActual("");
-      setStockMinimo("");
-    } else {
-      setStockActual(String(initial.stockActual));
-      setStockMinimo(String(initial.stockMinimo));
-    }
-    setError(null);
-    setOk(null);
-  }, [initial, open, mode]);
+  const [nombre, setNombre] = useState(() => initial.nombre);
+  const [unidadMedida, setUnidadMedida] = useState(() => initial.unidadMedida);
+  const [stockMinimo, setStockMinimo] = useState(() => String(initial.stockMinimo));
 
   if (!open) return null;
 
@@ -69,8 +54,13 @@ export default function InsumoFormModal({
     fd.set("unidadMedida", unidadMedida.trim());
     fd.set("stockMinimo", stockMinimo || "0");
     
-    // Enviar stockActual tanto en create como en edit
-    fd.set("stockActual", stockActual || "0");
+    // En create, stock inicial siempre es 0
+    // En edit, no se modifica el stock desde aquí
+    if (mode === "create") {
+      fd.set("stockActual", "0");
+    } else {
+      fd.set("stockActual", String(initial.stockActual));
+    }
 
     startTransition(async () => {
       const res = mode === "create" ? await createInsumo(fd) : await updateInsumo(fd);
@@ -85,13 +75,13 @@ export default function InsumoFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
+      <div key={`${mode}-${initial.idInsumo}`} className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
         <div className="border-b px-5 py-4">
           <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
           <p className="text-sm text-gray-600">
             {mode === "create"
-              ? "Cargá el insumo con stock inicial."
-              : "Editá los datos del insumo, incluyendo el stock actual."}
+              ? "Cargá el insumo. El stock se cargará mediante el carrito de compras."
+              : "Editá los datos del insumo. El stock se modifica desde el carrito de compras."}
           </p>
         </div>
 
@@ -122,44 +112,26 @@ export default function InsumoFormModal({
           </div>
 
           {mode === "create" && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Stock inicial</label>
-                <input
-                  value={stockActual}
-                  onChange={(e) => setStockActual(onlyInt(e.target.value))}
-                  inputMode="numeric"
-                  className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  placeholder="0"
-                />
-              </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">Stock mínimo</label>
+              <input
+                value={stockMinimo}
+                onChange={(e) => setStockMinimo(onlyInt(e.target.value))}
+                inputMode="numeric"
+                className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                placeholder="0"
+              />
+            </div>
+          )}
 
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Stock mínimo</label>
-                <input
-                  value={stockMinimo}
-                  onChange={(e) => setStockMinimo(onlyInt(e.target.value))}
-                  inputMode="numeric"
-                  className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  placeholder="0"
-                />
-              </div>
+          {mode === "create" && (
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
+              <p className="text-sm text-blue-700">El stock inicial será 0. Usá el carrito para cargar insumos.</p>
             </div>
           )}
 
           {mode === "edit" && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Stock actual</label>
-                <input
-                  value={stockActual}
-                  onChange={(e) => setStockActual(onlyInt(e.target.value))}
-                  inputMode="numeric"
-                  className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  placeholder="0"
-                />
-              </div>
-
+            <>
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">Stock mínimo</label>
                 <input
@@ -170,7 +142,7 @@ export default function InsumoFormModal({
                   placeholder="0"
                 />
               </div>
-            </div>
+            </>
           )}
 
           <div className="flex items-center justify-end gap-2 pt-2">

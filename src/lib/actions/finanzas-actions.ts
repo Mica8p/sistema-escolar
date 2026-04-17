@@ -57,8 +57,8 @@ export async function createConceptoAction(data: ConceptoDePagoData) {
         revalidatePath('/dashboard/finanzas/conceptos');
         revalidatePath('/dashboard/finanzas', 'layout');
         return { success: true };
-    } catch (error: any) {
-        return { success: false, message: error.message || "Error al crear el concepto" };
+    } catch (error: unknown) {
+        return { success: false, message: error instanceof Error ? error.message : "Error al crear el concepto" };
     }
 }
 
@@ -74,14 +74,14 @@ export async function updateConceptoAction(id: number, data: ConceptoDePagoData)
             where: { conceptoId: id },
             data: {
                 monto: data.montoFijo,
-                fechaVencimiento: data.fechaVencimiento || null
+                ...(data.fechaVencimiento !== undefined && { fechaVencimiento: data.fechaVencimiento })
             }
         });
         revalidatePath('/dashboard/finanzas/conceptos');
         revalidatePath('/dashboard/finanzas', 'layout');
         return { success: true };
-    } catch (error: any) {
-        return { success: false, message: error.message || "Error al actualizar el concepto" };
+    } catch (error: unknown) {
+        return { success: false, message: error instanceof Error ? error.message : "Error al actualizar el concepto" };
     }
 }
 
@@ -90,7 +90,7 @@ export async function deleteConceptoAction(id: number) {
         await deleteConcepto(id);
         revalidatePath('/dashboard/finanzas/conceptos');
         return { success: true };
-    } catch (error: any) {
-        return { success: false, message: error.message || "No se pudo eliminar el concepto" };
+    } catch (error: unknown) {
+        return { success: false, message: error instanceof Error ? error.message : "No se pudo eliminar el concepto" };
     }
 }

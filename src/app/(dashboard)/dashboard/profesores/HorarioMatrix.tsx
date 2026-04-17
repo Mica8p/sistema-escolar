@@ -1,16 +1,48 @@
 "use client";
 
 import React from 'react';
-import { use, useEffect, useState } from 'react';
-import { BloqueHorario, DiaHabil, Turno } from '@prisma/client';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { BloqueHorario, DiaHabil, Turno, DiaSemana } from '@prisma/client';
+
+// Mapeo de enum DiaSemana a nombres legibles
+const diaNombreMap: Record<DiaSemana, string> = {
+  LUNES: 'Lunes',
+  MARTES: 'Martes',
+  MIERCOLES: 'Miércoles',
+  JUEVES: 'Jueves',
+  VIERNES: 'Viernes',
+  SABADO: 'Sábado',
+  DOMINGO: 'Domingo',
+};
+
+interface HorarioOcupado {
+  idAsignacion: number;
+  diaSemana: DiaSemana;  // Volver a enum
+  asignacion: {
+    materia: {
+      nombre: string;
+    };
+    profesor?: {
+      persona: {
+        apellido: string;
+      };
+    };
+    curso?: {
+      grado: string;
+      seccion: string;
+    };
+  };
+  horaInicio: string;
+  horaFin: string;
+}
 
 interface HorarioMatrixProps {
-  horarioProfesor: any[];
-  horarioCurso: any[];
+  horarioProfesor: HorarioOcupado[];
+  horarioCurso: HorarioOcupado[];
   turno: Turno;
   loading: boolean;
-  onSlotSelect: (dia: string, hora: string) => void;
-  selectedSlots: { dia: string, hora: string }[];
+  onSlotSelect: (dia: DiaSemana, hora: string) => void;
+  selectedSlots: { dia: DiaSemana, hora: string }[];
   idAsignacionActual?: number;
   diasHabiles: DiaHabil[];
   bloquesHorario: BloqueHorario[];
@@ -20,21 +52,21 @@ export default function HorarioMatrix({ horarioProfesor, horarioCurso, turno, lo
 
   const dias = diasHabiles.map(d => d.nombre);
 
-  const getHorasBase = () => {
+  const getHorasBase = useCallback(() => {
     const bloquesTurno = bloquesHorario.filter(b => b.turno.toUpperCase() === turno.toUpperCase());
     return bloquesTurno.map(b => `${b.horaInicio} - ${b.horaFin}`);
-  }
+  }, [bloquesHorario, turno]);
 
-  const [horas, setHoras] = useState(getHorasBase());
+  const horasBase = useMemo(() => getHorasBase(), [getHorasBase]);
+
+  const [horas, setHoras] = useState(horasBase);
 
   useEffect(() => {
-    setHoras(getHorasBase());
-  }, [turno, bloquesHorario]);
+    setHoras(horasBase);
+  }, [horasBase]);
 
   useEffect(() => {
     if (selectedSlots.length === 0) return;
-
-    const horasBase = getHorasBase();
 
     setHoras((prevHoras) => {
       const newHoras = [...prevHoras];
@@ -54,7 +86,7 @@ export default function HorarioMatrix({ horarioProfesor, horarioCurso, turno, lo
 
       return changed ? newHoras : prevHoras;
     });
-  }, [selectedSlots, turno, bloquesHorario]);
+  }, [selectedSlots, horasBase]);
 
   if (loading) {
     return (
@@ -92,7 +124,7 @@ export default function HorarioMatrix({ horarioProfesor, horarioCurso, turno, lo
         <div className="font-bold text-center text-gray-700">Hora</div>
         {dias.map((dia) => (
           <div key={dia} className="font-bold text-center text-xs text-gray-700">
-            {dia}
+            {diaNombreMap[dia]}
           </div>
         ))}
 
@@ -143,7 +175,7 @@ export default function HorarioMatrix({ horarioProfesor, horarioCurso, turno, lo
               const isSelected = selectedSlots.some(slot => slot.dia === dia && slot.hora === hora);
               
               // Determinar el estado del bloque
-              let bloqueEstado = 'disponible';
+              let bloqueEstado: 'disponible' | 'ocupadoProfesor' | 'ocupadoCurso' = 'disponible';
               let datosOcupacion = null;
               
               if (ocupadoPorProfesor && ocupadoPorProfesor.idAsignacion !== idAsignacionActual) {
@@ -169,25 +201,25 @@ export default function HorarioMatrix({ horarioProfesor, horarioCurso, turno, lo
                   onClick={() => esClicable && onSlotSelect(dia, hora)}
                   title={
                     bloqueEstado === 'ocupadoProfesor' 
-                      ? `Profesor ocupado: ${datosOcupacion.asignacion.materia.nombre} en ${datosOcupacion.asignacion.curso.grado}°${datosOcupacion.asignacion.curso.seccion}`
+                      ? `Profesor ocupado: ${datosOcupacion!.asignacion.materia.nombre} en ${datosOcupacion!.asignacion.curso?.grado}°${datosOcupacion!.asignacion.curso?.seccion}`
                       : bloqueEstado === 'ocupadoCurso'
-                      ? `Curso ocupado: ${datosOcupacion.asignacion.materia.nombre} con ${datosOcupacion.asignacion.profesor.persona.apellido}`
+                      ? `Curso ocupado: ${datosOcupacion!.asignacion.materia.nombre} con ${datosOcupacion!.asignacion.profesor?.persona.apellido}`
                       : ""
                   }
                 >
                   {bloqueEstado === 'ocupadoProfesor' ? (
                     <div>
                       <p className="font-bold text-xs">PROFESOR OCUPADO</p>
-                      <p className="font-semibold">{datosOcupacion.asignacion.materia.nombre}</p>
-                      <p>{datosOcupacion.asignacion.curso.grado}°{datosOcupacion.asignacion.curso.seccion}</p>
-                      <p className="text-xs mt-1">{datosOcupacion.horaInicio} - {datosOcupacion.horaFin}</p>
+                      <p className="font-semibold">{datosOcupacion!.asignacion.materia.nombre}</p>
+                      <p>{datosOcupacion!.asignacion.curso?.grado}°{datosOcupacion!.asignacion.curso?.seccion}</p>
+                      <p className="text-xs mt-1">{datosOcupacion!.horaInicio} - {datosOcupacion!.horaFin}</p>
                     </div>
                   ) : bloqueEstado === 'ocupadoCurso' ? (
                     <div>
                       <p className="font-bold text-xs">CURSO OCUPADO</p>
-                      <p className="font-semibold">{datosOcupacion.asignacion.materia.nombre}</p>
-                      <p>{datosOcupacion.asignacion.profesor.persona.apellido}</p>
-                      <p className="text-xs mt-1">{datosOcupacion.horaInicio} - {datosOcupacion.horaFin}</p>
+                      <p className="font-semibold">{datosOcupacion!.asignacion.materia.nombre}</p>
+                      <p>{datosOcupacion!.asignacion.profesor?.persona.apellido}</p>
+                      <p className="text-xs mt-1">{datosOcupacion!.horaInicio} - {datosOcupacion!.horaFin}</p>
                     </div>
                   ) : isSelected ? (
                     <div>

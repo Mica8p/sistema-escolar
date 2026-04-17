@@ -27,7 +27,7 @@ interface Curso {
 
 interface HistorialAsignacion {
   idAsignacion: number;
-  profesor: ProfesorHistorial;
+  profesor: ProfesorHistorial | null;
   materia: Materia;
   curso: Curso;
   // Add other properties if needed from the reg object
@@ -65,7 +65,7 @@ export function HistorialAsignacionesTable({ historial }: HistorialAsignacionesT
               paginatedHistorial.map((reg) => (
                 <tr key={reg.idAsignacion} className="bg-slate-50/30 hover:bg-slate-50 transition-colors">
                   <td className="p-4">
-                    <p className="text-slate-700 font-semibold">{reg.profesor.persona.apellido}, {reg.profesor.persona.nombre}</p>
+                    <p className="text-slate-700 font-semibold">{reg.profesor ? `${reg.profesor.persona.apellido}, ${reg.profesor.persona.nombre}` : 'Sin asignar'}</p>
                   </td>
                   <td className="p-4 text-slate-600 text-sm">
                     <span className="flex items-center gap-1.5">
@@ -78,7 +78,7 @@ export function HistorialAsignacionesTable({ historial }: HistorialAsignacionesT
 
                     <ReincorporarButton
                       id={reg.idAsignacion}
-                      profeNombre={`${reg.profesor.persona.apellido}, ${reg.profesor.persona.nombre}`}
+                      profeNombre={reg.profesor ? `${reg.profesor.persona.apellido}, ${reg.profesor.persona.nombre}` : 'Profesor no asignado'}
                     />
 
                     <DeleteErrorButton id={reg.idAsignacion} />

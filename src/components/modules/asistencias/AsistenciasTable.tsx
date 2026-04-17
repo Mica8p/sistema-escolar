@@ -1,15 +1,31 @@
 "use client";
 
+import React from "react";
 import { EstadoAsistencia } from "@prisma/client";
 import { guardarAsistenciaAction } from "@/lib/actions/asistencias-actions";
 import { Check, X, Clock, AlertCircle, User } from "lucide-react";
 import { useTransition } from "react";
 
+interface Matricula {
+  idMatricula: number;
+  alumno: {
+    persona: {
+      nombre: string;
+      apellido: string;
+    };
+    legajo: string;
+  };
+}
+
+interface Asistencia {
+  estado: EstadoAsistencia;
+}
+
 interface Props {
   idHorario: number;
   fecha: string;
-  matriculas: any[];
-  asistenciaByMatricula: [number, any][];
+  matriculas: Matricula[];
+  asistenciaByMatricula: [number, Asistencia][];
   estadisticasAsistencia?: Map<number, { presentes: number; ausentes: number; totalClases: number }>;
   readOnly?: boolean;
   idAsignacion: number;
@@ -26,7 +42,7 @@ export default function AsistenciasTable({
   onAsistenciaChange
 }: Props) {
   const [isPending, startTransition] = useTransition();
-  const asistenciaMap = new Map<number, any>(asistenciaByMatricula);
+  const asistenciaMap = new Map<number, Asistencia>(asistenciaByMatricula);
 
   const handleToggleAsistencia = (idMatricula: number, estado: EstadoAsistencia) => {
     if (readOnly) return;
@@ -151,7 +167,12 @@ export default function AsistenciasTable({
   );
 }
 
-function AsistBtn({ active, color, onClick, icon }: any) {
+function AsistBtn({ active, color, onClick, icon }: {
+  active: boolean;
+  color: string;
+  onClick: () => void;
+  icon: React.JSX.Element;
+}) {
   return (
     <button
       onClick={onClick}

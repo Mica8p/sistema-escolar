@@ -7,7 +7,7 @@ import {
   deleteHorario as deleteHorarioService,
   getHorariosByAsignacionId,
 } from '@/service/horario.service';
-import { Turno, DiaSemana } from '@prisma/client';
+import { DiaSemana } from '@prisma/client';
 
 export async function getHorarios(asignacionId: number) {
   return await getHorariosByAsignacionId(asignacionId);

@@ -5,7 +5,14 @@ import { Send, Users, GraduationCap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function FormComunicado({ cursos }: { cursos: any[] }) {
+interface Curso {
+  idCurso: number;
+  grado: string;
+  seccion: string;
+  nivel: string;
+}
+
+export default function FormComunicado({ cursos }: { cursos: Curso[] }) {
   const [target, setTarget] = useState("TODOS");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -74,7 +81,7 @@ export default function FormComunicado({ cursos }: { cursos: any[] }) {
               <option value="">Seleccione un curso...</option>
               {cursos.map(c => (
                 <option key={c.idCurso} value={c.idCurso}>
-                  {c.grado}° "{c.seccion}" - {c.nivel}
+                  {c.grado}° &quot;{c.seccion}&quot; - {c.nivel}
                 </option>
               ))}
             </select>

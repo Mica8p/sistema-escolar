@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, ArrowRight, Clock, ShieldCheck } from "lucide-react";
+import { Activity, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 interface Props {

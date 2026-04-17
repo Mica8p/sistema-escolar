@@ -16,7 +16,7 @@ export async function enviarComunicado(formData: FormData) {
   const target = formData.get("target") as string;
   const idTargetRaw = formData.get("idTarget") as string;
 
-  const idUsuario = (session?.user as any)?.idUsuario;
+  const idUsuario = session.user.idUsuario;
   const idTarget = idTargetRaw ? parseInt(idTargetRaw) : null;
 
   try {
@@ -71,7 +71,8 @@ export async function marcarComoLeido(idComunicado: number) {
 
 export async function eliminarComunicado(idComunicado: number) {
   const session = await auth();
-  const idUsuario = (session?.user as any)?.idUsuario;
+  if (!session || !session.user) return { error: "No autorizado" };
+  const idUsuario = session.user.idUsuario;
 
   if (!idUsuario) return { error: "No autorizado" };
 
@@ -81,7 +82,7 @@ export async function eliminarComunicado(idComunicado: number) {
       select: { idUsuario: true }
     });
 
-    const roles = (session?.user as any)?.roles || [];
+    const roles = session?.user?.roles ?? [];
     const esAdmin = roles.includes("ADMIN");
 
     if (comunicado?.idUsuario !== idUsuario && !esAdmin) {

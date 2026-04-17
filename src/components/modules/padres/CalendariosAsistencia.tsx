@@ -1,8 +1,22 @@
 "use client";
 
 import { Calendar, CheckCircle2, XCircle, Clock, ShieldCheck } from "lucide-react";
+import { LucideIcon } from "lucide-react";
 
-const CONFIG_ESTADO: Record<string, { label: string; color: string; bg: string; icon: any }> = {
+interface Asistencia {
+  idAsistencia: number;
+  fecha: Date;
+  estado?: string;
+  horario: {
+    horaInicio: string;
+    horaFin?: string;
+    asignacion: {
+      materia: { nombre: string };
+    };
+  };
+}
+
+const CONFIG_ESTADO: Record<string, { label: string; color: string; bg: string; icon: LucideIcon }> = {
   PRESENTE: {
     label: "PRESENTE",
     color: "text-emerald-600",
@@ -29,8 +43,8 @@ const CONFIG_ESTADO: Record<string, { label: string; color: string; bg: string; 
   },
 };
 
-export default function CalendarioAsistencia({ asistencias }: { asistencias: any[] }) {
-  const porFecha = asistencias.reduce((acc: any, curr) => {
+export default function CalendarioAsistencia({ asistencias }: { asistencias: Asistencia[] }) {
+  const porFecha = asistencias.reduce((acc: Record<string, Asistencia[]>, curr) => {
     const fechaLabel = new Date(curr.fecha).toLocaleDateString('es-AR', {
       weekday: 'long', day: '2-digit', month: 'long'
     });
@@ -49,7 +63,7 @@ export default function CalendarioAsistencia({ asistencias }: { asistencias: any
           </div>
 
           <div className="divide-y divide-slate-100">
-            {porFecha[fecha].map((reg: any) => {
+            {porFecha[fecha].map((reg: Asistencia) => {
               const estadoKey = reg.estado?.toUpperCase() || "PRESENTE";
 
               const config = CONFIG_ESTADO[estadoKey] || CONFIG_ESTADO.PRESENTE;

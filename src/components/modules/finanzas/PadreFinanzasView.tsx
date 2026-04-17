@@ -5,10 +5,16 @@ import { ChevronDown, Wallet, DollarSign } from "lucide-react";
 import EstadoCuentaSummary from "@/components/modules/finanzas/EstadoCuentaSummary";
 import CargosList from "@/components/modules/finanzas/CargosList";
 import PagosList from "@/components/modules/finanzas/PagosList";
+import { getDetalleCuenta } from "@/service/finanzas.service";
+import { Prisma } from "@prisma/client";
+
+type Hijo = Prisma.AlumnoGetPayload<{
+  include: { persona: true };
+}>;
 
 interface PadreFinanzasViewProps {
-  hijos: any[];
-  estadosDeCuenta: any[];
+  hijos: Hijo[];
+  estadosDeCuenta: Awaited<ReturnType<typeof getDetalleCuenta>>[];
 }
 
 export default function PadreFinanzasView({ hijos, estadosDeCuenta }: PadreFinanzasViewProps) {
@@ -25,7 +31,7 @@ export default function PadreFinanzasView({ hijos, estadosDeCuenta }: PadreFinan
       </h1>
 
       {/* SELECTOR DE HIJO */}
-      <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
+      <div className="bg-white p-6 rounded-4xl border border-slate-200 shadow-sm">
         <label className="text-sm font-semibold text-slate-700 block mb-3">
           Seleccionar Hijo
         </label>

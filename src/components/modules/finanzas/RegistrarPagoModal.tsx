@@ -15,6 +15,7 @@ type ModalProps = {
 
 export default function RegistrarPagoModal({ alumno, isOpen, onClose }: ModalProps) {
   const [isPending, startTransition] = useTransition();
+  const [selectedCargoId, setSelectedCargoId] = useState<number | null>(null);
   const [montoAPagar, setMontoAPagar] = useState<string | number>("");
   const [metodoPago, setMetodoPago] = useState<MetodoPago>('EFECTIVO');
   const [referencia, setReferencia] = useState('');
@@ -24,13 +25,22 @@ export default function RegistrarPagoModal({ alumno, isOpen, onClose }: ModalPro
 
   // 1. Validación previa antes de mostrar el segundo modal
   const handlePreSubmit = () => {
+    if (!selectedCargoId) {
+      toast.error("Debe seleccionar un concepto de deuda para pagar.");
+      return;
+    }
     const montoFinal = Number(montoAPagar);
     if (montoFinal <= 0) {
       toast.error("El monto a pagar debe ser mayor a cero.");
       return;
     }
-    if (cargosPendientes.length === 0) {
-      toast.error("No hay cargos pendientes para aplicar el pago.");
+    const cargoPendiente = cargosPendientes.find(c => c.id === selectedCargoId);
+    if (!cargoPendiente) {
+      toast.error("El cargo seleccionado no existe.");
+      return;
+    }
+    if (montoFinal > cargoPendiente.saldo) {
+      toast.error(`El monto no puede ser mayor al saldo pendiente de $${cargoPendiente.saldo}`);
       return;
     }
     // Abrimos el modal de confirmación
@@ -40,16 +50,9 @@ export default function RegistrarPagoModal({ alumno, isOpen, onClose }: ModalPro
   // 2. Ejecución real de la transacción
   const handleRegisterPayment = () => {
     const montoFinal = Number(montoAPagar);
-    let montoRestante = montoFinal;
-    const cargosAPagar: { cargoId: number; monto: number }[] = [];
-
-    // Lógica de distribución de saldos
-    for (const cargo of cargosPendientes) {
-      if (montoRestante <= 0) break;
-      const montoAplicado = Math.min(montoRestante, cargo.saldo);
-      cargosAPagar.push({ cargoId: cargo.id, monto: montoAplicado });
-      montoRestante -= montoAplicado;
-    }
+    const cargosAPagar: { cargoId: number; monto: number }[] = [
+      { cargoId: selectedCargoId!, monto: montoFinal }
+    ];
 
     const pagoData: Omit<RegistrarPagoData, 'usuarioId'> = {
       alumnoId: alumno.idAlumno,
@@ -65,14 +68,18 @@ export default function RegistrarPagoModal({ alumno, isOpen, onClose }: ModalPro
         await registrarPagoAction(pagoData);
         toast.success("¡Pago registrado con éxito!");
         setIsConfirmOpen(false);
+        setSelectedCargoId(null);
+        setMontoAPagar("");
         onClose();
         // El sistema revalida la ruta automáticamente desde la acción del servidor
-      } catch (e: any) {
-        toast.error(e.message || "Error al registrar el pago");
+      } catch (e) {
+        toast.error((e as Error).message || "Error al registrar el pago");
         setIsConfirmOpen(false);
       }
     });
   };
+
+  const selectedCargo = cargosPendientes.find(c => c.id === selectedCargoId);
 
   if (!isOpen) return null;
 
@@ -85,6 +92,37 @@ export default function RegistrarPagoModal({ alumno, isOpen, onClose }: ModalPro
 
           <div className="space-y-4">
             <div>
+              <label htmlFor="concepto" className="block text-sm font-medium text-gray-900">Concepto de Deuda</label>
+              <select
+                id="concepto"
+                value={selectedCargoId || ""}
+                onChange={(e) => {
+                  setSelectedCargoId(e.target.value ? Number(e.target.value) : null);
+                  setMontoAPagar("");
+                }}
+                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none sm:text-sm"
+              >
+                <option value="">-- Seleccione un concepto --</option>
+                {cargosPendientes.map(cargo => (
+                  <option key={cargo.id} value={cargo.id}>
+                    {typeof cargo.concepto === 'string' ? cargo.concepto : cargo.concepto?.nombre} - Saldo: ${cargo.saldo}
+                  </option>
+                ))}
+              </select>
+              {cargosPendientes.length === 0 && (
+                <p className="text-xs text-green-600 mt-2">No hay deudas pendientes</p>
+              )}
+            </div>
+
+            {selectedCargo && (
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <p className="text-sm text-gray-700"><strong>Concepto:</strong> {typeof selectedCargo.concepto === 'string' ? selectedCargo.concepto : selectedCargo.concepto?.nombre}</p>
+                <p className="text-sm text-gray-700"><strong>Saldo pendiente:</strong> ${selectedCargo.saldo}</p>
+                <p className="text-sm text-gray-700"><strong>Fecha vencimiento:</strong> {new Date(selectedCargo.fechaVencimiento).toLocaleDateString()}</p>
+              </div>
+            )}
+
+            <div>
               <label htmlFor="monto" className="block text-sm font-medium text-gray-900">Monto a Pagar</label>
               <input
                 type="number"
@@ -92,7 +130,9 @@ export default function RegistrarPagoModal({ alumno, isOpen, onClose }: ModalPro
                 value={montoAPagar}
                 onChange={(e) => setMontoAPagar(e.target.value)}
                 placeholder="Ej: 3000"
-                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none sm:text-sm"
+                max={selectedCargo?.saldo}
+                disabled={!selectedCargo}
+                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -133,8 +173,8 @@ export default function RegistrarPagoModal({ alumno, isOpen, onClose }: ModalPro
             </button>
             <button
               onClick={handlePreSubmit}
-              disabled={isPending}
-              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors shadow-sm disabled:opacity-50"
+              disabled={isPending || !selectedCargo}
+              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isPending ? 'Procesando...' : 'Confirmar Pago'}
             </button>
@@ -143,13 +183,13 @@ export default function RegistrarPagoModal({ alumno, isOpen, onClose }: ModalPro
       </div>
 
       {/* MODAL DE CONFIRMACIÓN (z-index superior para que sea visible) */}
-      <div className="relative z-[60]">
+      <div className="relative z-60">
         <ConfirmModal
           isOpen={isConfirmOpen}
           onClose={() => setIsConfirmOpen(false)}
           onConfirm={handleRegisterPayment}
           title="Validar Transacción"
-          message={`¿Confirmas el ingreso de $${montoAPagar} vía ${metodoPago}? El monto se aplicará automáticamente a los cargos pendientes.`}
+          message={`¿Confirmas el pago de $${montoAPagar} para "${typeof selectedCargo?.concepto === 'string' ? selectedCargo?.concepto : selectedCargo?.concepto?.nombre}" vía ${metodoPago}?`}
           loading={isPending}
           variant="info"
         />

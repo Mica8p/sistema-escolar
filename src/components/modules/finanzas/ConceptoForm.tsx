@@ -6,6 +6,7 @@ import { createConceptoAction, updateConceptoAction } from "@/lib/actions/finanz
 import { ConceptoDePagoData } from "@/service/finanzas.service";
 import { toast } from "sonner";
 import { Tag, FileText, DollarSign, Loader2, Save } from "lucide-react";
+import { ConceptoDePago } from "@prisma/client";
 
 type FormValues = {
   nombre: string;
@@ -14,7 +15,7 @@ type FormValues = {
   fechaVencimiento: string;
 };
 
-export function ConceptoForm({ conceptoAEditar, onCancel }: { conceptoAEditar?: any, onCancel?: () => void }) {
+export function ConceptoForm({ conceptoAEditar, onCancel }: { conceptoAEditar?: ConceptoDePago, onCancel?: () => void }) {
   const [isPending, startTransition] = useTransition();
   const isEditing = !!conceptoAEditar;
 
@@ -59,7 +60,7 @@ export function ConceptoForm({ conceptoAEditar, onCancel }: { conceptoAEditar?: 
       } else {
         toast.error(res.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("Ocurrió un error inesperado");
     }
   });

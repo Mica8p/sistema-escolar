@@ -8,7 +8,7 @@ export default async function EnviadosPage() {
 
   if (!session?.user) redirect("/login");
 
-  const idUsuario = (session.user as any).idUsuario;
+  const idUsuario = session.user.idUsuario;
   const enviados = await getComunicadosEnviados(idUsuario);
 
   return (

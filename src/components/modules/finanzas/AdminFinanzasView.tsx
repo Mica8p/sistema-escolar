@@ -5,14 +5,16 @@ import { ConceptoForm } from "@/components/modules/finanzas/ConceptoForm";
 import ConceptosList from "@/components/modules/finanzas/ConceptosList";
 import AlumnosDeudoresList from "@/components/modules/finanzas/AlumnosDeudoresList";
 import { Settings, Users, DollarSign } from "lucide-react";
+import { ConceptoDePago } from "@prisma/client";
+import { AlumnoConDeuda } from "@/service/finanzas.service";
 
 interface Props {
-  conceptos: any[];
-  alumnosDeudores: any[];
+  conceptos: ConceptoDePago[];
+  alumnosDeudores: AlumnoConDeuda[];
 }
 
 export default function AdminFinanzasView({ conceptos, alumnosDeudores }: Props) {
-  const [conceptoAEditar, setConceptoAEditar] = useState<any | null>(null);
+  const [conceptoAEditar, setConceptoAEditar] = useState<ConceptoDePago | undefined>(undefined);
 
   return (
     <div className="space-y-8">
@@ -26,7 +28,7 @@ export default function AdminFinanzasView({ conceptos, alumnosDeudores }: Props)
         <div className="md:col-span-1">
           <ConceptoForm
             conceptoAEditar={conceptoAEditar}
-            onCancel={() => setConceptoAEditar(null)}
+            onCancel={() => setConceptoAEditar(undefined)}
           />
         </div>
         <div className="md:col-span-2 bg-white p-6 rounded-lg shadow border border-gray-100">

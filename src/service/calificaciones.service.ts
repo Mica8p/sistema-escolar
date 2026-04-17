@@ -257,7 +257,7 @@ export async function validarNotasFaltantesPeriodo(idPeriodo: number) {
     });
 
     // Por cada combinación de matrícula x asignación, verificar si hay nota
-    const notasFaltantes: any[] = [];
+    const notasFaltantes: Array<{ alumno: string; materia: string; profesor: string }> = [];
 
     for (const matricula of matriculas) {
       // Solo revisar asignaciones del curso del alumno
@@ -288,24 +288,16 @@ export async function validarNotasFaltantesPeriodo(idPeriodo: number) {
     }
 
     if (notasFaltantes.length > 0) {
-      // Agrupar por profesor
-      const porProfesor = new Map<string, any[]>();
+      // Obtener profesores únicos que faltan cargar notas
+      const profesoresUnicos = new Set<string>();
       for (const faltante of notasFaltantes) {
-        const key = faltante.profesor;
-        if (!porProfesor.has(key)) {
-          porProfesor.set(key, []);
-        }
-        porProfesor.get(key)!.push(`${faltante.alumno} - ${faltante.materia}`);
+        profesoresUnicos.add(faltante.profesor);
       }
 
-      let mensaje = "Faltan notas para los siguientes alumnos:\n\n";
-      for (const [profesor, notas] of porProfesor) {
-        mensaje += `\n📌 ${profesor}:\n`;
-        notas.slice(0, 3).forEach(nota => mensaje += `  • ${nota}\n`);
-        if (notas.length > 3) {
-          mensaje += `  ... y ${notas.length - 3} más\n`;
-        }
-      }
+      let mensaje = "Los siguientes docentes deben cargar las notas para este período:\n\n";
+      Array.from(profesoresUnicos).forEach((profesor, index) => {
+        mensaje += `${index + 1}. ${profesor}\n`;
+      });
 
       return {
         ok: false,

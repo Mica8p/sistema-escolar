@@ -42,7 +42,7 @@ export function ImportarAsignaciones({ cicloActualId, cicloAnteriorId, anioAnter
         </div>
         <button 
           onClick={() => setShowError(null)}
-          className="p-3 text-slate-400 hover:text-rose-600 transition-colors flex-shrink-0"
+          className="p-3 text-slate-400 hover:text-rose-600 transition-colors shrink-0"
           title="Cerrar"
         >
           <X size={20} />

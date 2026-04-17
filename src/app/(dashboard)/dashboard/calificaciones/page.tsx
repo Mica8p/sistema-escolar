@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import { Curso, TipoEvaluacion, Turno } from "@prisma/client";
+import { TipoEvaluacion, Turno } from "@prisma/client";
 import { BookOpen, Calendar, GraduationCap, ClipboardCheck } from "lucide-react";
 import {
   getAsignacionesParaUsuario,
@@ -281,16 +281,16 @@ export default async function CalificacionesPage({
           )}
         </div>
 
-        <div className="min-h-[450px] relative p-4">
+        <div className="min-h-112.5 relative p-4">
           {planilla ? (
             <>
               <CalificacionesTable
-                idAsignacion={idAsignacion}
-                idPeriodo={idPeriodo}
-                periodoActual={periodoElegido}
+                idAsignacion={idAsignacion || 0}
+                idPeriodo={idPeriodo || 0}
+                periodoActual={periodoElegido!}
                 tipo={tipoValido}
                 matriculas={planilla.matriculas}
-                notaByMatricula={Array.from(planilla.notaByMatricula.entries())}
+                notaByMatricula={new Map(Array.from(planilla.notaByMatricula.entries()))}
                 readOnly={isAdmin}
                 historialNotas={planilla.historialNotas}
               />

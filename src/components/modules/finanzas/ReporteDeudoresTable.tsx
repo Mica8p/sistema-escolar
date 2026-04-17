@@ -5,18 +5,33 @@ import BotonImprimir from "@/components/BotonDescarga";
 import { GraduationCap, AlertCircle, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
+type Deudor = {
+  id: number;
+  nombre: string;
+  apellido: string;
+  dni: string;
+  legajo: string;
+  curso: string;
+  deudaTotal: number;
+  estado: "Al día" | "Con Deuda";
+  telefono?: string | null;
+  telefonoPadre: string;
+  nombrePadre: string;
+  deudaFormateada: string;
+};
+
 export default function ReporteDeudoresTable({
   deudores,
   totalDeudores,
   montoGlobal,
 }: {
-  deudores: any[];
+  deudores: Deudor[];
   totalDeudores: number;
   montoGlobal: number;
 }) {
   const tableRef = useRef<HTMLDivElement>(null);
 
-  const enviarRecordatorio = (alumno: any) => {
+  const enviarRecordatorio = (alumno: Deudor) => {
     let telefono: string | undefined;
     let mensaje: string;
 

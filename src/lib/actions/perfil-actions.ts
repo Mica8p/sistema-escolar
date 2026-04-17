@@ -56,11 +56,64 @@ export async function cambiarPasswordAction(
 
   return { ok: true, message: "Contraseña modificada exitosamente." };
 }
+
+export async function updatePersonalDataAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, message: "No autorizado." };
+
+  const idPersona = session.user.idPersona;
+  
+  const nombre = String(formData.get("nombre") ?? "").trim();
+  const apellido = String(formData.get("apellido") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const telefono = String(formData.get("telefono") ?? "").trim();
+  const direccion = String(formData.get("direccion") ?? "").trim();
+
+  if (!nombre || !apellido) {
+    return { ok: false, message: "Nombre y apellido son obligatorios." };
+  }
+
+  if (email && !/^\S+@\S+\.\S+$/.test(email)) {
+    return { ok: false, message: "Email inválido." };
+  }
+
+  try {
+    await db.persona.update({
+      where: { idPersona },
+      data: {
+        nombre,
+        apellido,
+        email: email || null,
+        telefono: telefono || null,
+        direccion: direccion || null,
+      },
+    });
+
+    revalidatePath("/perfil");
+    revalidatePath("/");
+
+    return { ok: true, message: "Datos personales actualizados exitosamente." };
+  } catch (error) {
+    console.error(error);
+    return { ok: false, message: "No se pudieron actualizar los datos. Intentá de nuevo." };
+  }
+}
+
 // HELPERS PERMISOS
 
-async function canEditPersonaAvatar(session: any, targetIdPersona: number) {
-  const myIdPersona = session.user.idPersona as number;
-  const roles: string[] = session.user.roles ?? [];
+interface AuthSessionWithPersona {
+  user?: {
+    idPersona?: number;
+    roles?: string[];
+  };
+}
+
+async function canEditPersonaAvatar(session: AuthSessionWithPersona, targetIdPersona: number) {
+  const myIdPersona = session.user?.idPersona;
+  const roles: string[] = session.user?.roles ?? [];
 
   if (myIdPersona === targetIdPersona) return true;
 

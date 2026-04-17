@@ -3,21 +3,77 @@
 import { useState, useTransition, useMemo } from "react";
 import { EstadoAcademico } from "@prisma/client";
 import { cambiarEstadoMatriculaAction, vincularPadre, desvincularPadre, updateMatriculaCursoAction, updateDatosPersonalesAction } from "@/lib/actions/alumno-actions";
-import { getTutoresDisponiblesAction, updatePersonaAction } from "@/lib/actions/persona-actions";
+import { getTutoresDisponiblesAction } from "@/lib/actions/persona-actions";
 import { getAllCursos } from "@/lib/actions/curso-actions";
 import {
   User, Calendar, MapPin, Phone, Mail,
-  GraduationCap, AlertTriangle, CheckCircle2,
+  GraduationCap, AlertTriangle,
   FileText, ArrowLeft, Ban, RotateCcw,
-  Users, Plus, Trash2, Pencil,
+  Users, Plus, Pencil,
   Download
 } from "lucide-react";
 import Link from "next/link";
 import GenericDeleteButton from "@/components/shared/GenericDeletButton";
 import ConfirmModal from "@/components/shared/ConfirmModal";
 
+interface Persona {
+  idPersona: number;
+  nombre: string;
+  apellido: string;
+  dni: string;
+  email?: string | null;
+  telefono?: string | null;
+  direccion?: string | null;
+}
+
+interface Curso {
+  idCurso: number;
+  grado: string;
+  seccion: string;
+  turno: string;
+  nivel?: string;
+}
+
+interface Matricula {
+  idMatricula: number;
+  idCiclo: number;
+  estadoAcademico: EstadoAcademico;
+  curso: Curso;
+}
+
+interface Padre {
+  idPadre: number;
+  persona: Persona;
+}
+
+interface RelacionPadre {
+  padre: Padre;
+  relacion: string;
+}
+
+interface Alumno {
+  idAlumno: number;
+  legajo: string;
+  persona: Persona;
+  fechaNacimiento?: Date;
+  matriculas: Matricula[];
+  padres: RelacionPadre[];
+}
+
+interface Tutor {
+  idPersona: number;
+  nombre: string;
+  apellido: string;
+  dni: string;
+  email?: string | null;
+  telefono?: string | null;
+  direccion?: string | null;
+  avatarUrl?: string | null;
+  avatarPublicId?: string | null;
+}
+
 interface AlumnoDetalleProps {
-  alumno: any;
+  alumno: Alumno;
   cicloId: number;
   isReadOnly?: boolean;
 }
@@ -32,13 +88,13 @@ export default function AlumnoDetalle({ alumno, cicloId, isReadOnly = false }: A
 
   const matriculaActual = useMemo(() => {
     if (!Array.isArray(alumno.matriculas)) return null;
-    return alumno.matriculas.find((m: any) => m.idCiclo === cicloId) || alumno.matriculas[0] || null;
+    return alumno.matriculas.find((m: Matricula) => m.idCiclo === cicloId) || alumno.matriculas[0] || null;
   }, [alumno.matriculas, cicloId]);
 
   const estadoActual = matriculaActual?.estadoAcademico;
 
   const [isEditingCurso, setIsEditingCurso] = useState(false);
-  const [cursos, setCursos] = useState<any[]>([]);
+  const [cursos, setCursos] = useState<Curso[]>([]);
   const [selectedCurso, setSelectedCurso] = useState<string>("");
 
   const [isEditingDatosPersonales, setIsEditingDatosPersonales] = useState(false);
@@ -104,7 +160,7 @@ export default function AlumnoDetalle({ alumno, cicloId, isReadOnly = false }: A
 
   // Lógica de tutores
   const [showVincular, setShowVincular] = useState(false);
-  const [tutoresDisponibles, setTutoresDisponibles] = useState<any[]>([]);
+  const [tutoresDisponibles, setTutoresDisponibles] = useState<Tutor[]>([]);
   const [selectedTutor, setSelectedTutor] = useState("");
   const [relacion, setRelacion] = useState("Padre/Madre");
 
@@ -195,7 +251,7 @@ export default function AlumnoDetalle({ alumno, cicloId, isReadOnly = false }: A
                   <Calendar size={16} className="text-slate-400 mt-0.5" />
                   <div>
                     <p className="text-slate-500 text-xs">Fecha de Nacimiento</p>
-                    <p className="font-medium text-slate-900">{new Date(alumno.fechaNacimiento).toLocaleDateString()}</p>
+                    <p className="font-medium text-slate-900">{alumno.fechaNacimiento ? new Date(alumno.fechaNacimiento).toLocaleDateString() : 'No especificada'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -310,7 +366,7 @@ export default function AlumnoDetalle({ alumno, cicloId, isReadOnly = false }: A
                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 mb-6">
                   <p className="text-sm text-slate-600 mb-1">Curso Actual:</p>
                   <p className="text-lg font-bold text-slate-900">
-                    {matriculaActual.curso.grado}° "{matriculaActual.curso.seccion}" - {matriculaActual.curso.turno}
+                    {matriculaActual.curso.grado}° &quot;{matriculaActual.curso.seccion}&quot; - {matriculaActual.curso.turno}
                   </p>
                 </div>
               ) : !isReadOnly ? (
@@ -323,7 +379,7 @@ export default function AlumnoDetalle({ alumno, cicloId, isReadOnly = false }: A
                   >
                     {cursos.map((c) => (
                       <option key={c.idCurso} value={c.idCurso} className="text-slate-900">
-                        {c.grado}° "{c.seccion}" - {c.turno}
+                        {c.grado}° &quot;{c.seccion}&quot; - {c.turno}
                       </option>
                     ))}
                   </select>
@@ -380,7 +436,7 @@ export default function AlumnoDetalle({ alumno, cicloId, isReadOnly = false }: A
             </div>
 
             <div className="space-y-3">
-              {alumno.padres.map((rel: any) => (
+              {alumno.padres.map((rel: RelacionPadre) => (
                 <div key={rel.padre.idPadre} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
                   <div>
                     <p className="font-medium text-slate-900">{rel.padre.persona.apellido}, {rel.padre.persona.nombre}</p>
@@ -389,7 +445,7 @@ export default function AlumnoDetalle({ alumno, cicloId, isReadOnly = false }: A
                   {!isReadOnly && (
                     <GenericDeleteButton
                       id={rel.padre.idPadre}
-                      action={(idPadre) => desvincularPadre(alumno.idAlumno, idPadre)}
+                      action={(idPadre) => desvincularPadre(alumno.idAlumno, Number(idPadre))}
                       title="Desvincular Tutor"
                       message={`¿Desvincular a ${rel.padre.persona.apellido} ${rel.padre.persona.nombre} de este alumno?`}
                     />
@@ -435,7 +491,7 @@ export default function AlumnoDetalle({ alumno, cicloId, isReadOnly = false }: A
 }
 
 function EstadoBadge({ estado }: { estado?: string }) {
-  const styles: any = {
+  const styles: Record<string, string> = {
     Activo: "bg-emerald-100 text-emerald-700",
     Suspendido: "bg-yellow-100 text-yellow-700",
     Retirado: "bg-red-100 text-red-700",

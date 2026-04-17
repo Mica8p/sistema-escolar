@@ -17,7 +17,7 @@ export async function createMateria(data: Omit<Materia, 'idMateria'>) {
     const nuevaMateria = await materiaService.create(data);
     revalidatePath('/dashboard/materias');
     return { success: true, data: nuevaMateria };
-  } catch (error) {
+  } catch {
     return { success: false, message: 'Error al crear la materia.' };
   }
 }
@@ -28,7 +28,7 @@ export async function updateMateria(id: number, data: Omit<Materia, 'idMateria'>
     revalidatePath('/dashboard/materias');
     revalidatePath(`/dashboard/materias/${id}`);
     return { success: true, data: materiaActualizada };
-  } catch (error) {
+  } catch {
     return { success: false, message: 'Error al actualizar la materia.' };
   }
 }
@@ -38,7 +38,7 @@ export async function deleteMateria(id: number) {
     await materiaService.delete(id);
     revalidatePath('/dashboard/materias');
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, message: 'Error al eliminar la materia.' };
   }
 }

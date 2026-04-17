@@ -1,11 +1,20 @@
 import { useState } from "react";
 import { Award, ChevronDown, Calendar } from "lucide-react";
 
-export default function SeccionCalificaciones({ notas }: { notas: any[] }) {
+interface Nota {
+  idNota: number;
+  nota: number;
+  asignacion: {
+    materia: { nombre: string };
+  };
+  periodo: { nombre: string };
+}
+
+export default function SeccionCalificaciones({ notas }: { notas: Nota[] }) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5; // Mostrar 5 materias por página
 
-  const materiasAgrupadas = notas.reduce((acc: any, curr) => {
+  const materiasAgrupadas = notas.reduce((acc: Record<string, Nota[]>, curr) => {
     const nombre = curr.asignacion.materia.nombre;
     if (!acc[nombre]) acc[nombre] = [];
     acc[nombre].push(curr);
@@ -26,7 +35,7 @@ export default function SeccionCalificaciones({ notas }: { notas: any[] }) {
       <div className="space-y-4">
         {paginatedMaterias.map((materia) => {
           const notasMateria = materiasAgrupadas[materia];
-          const promedio = (notasMateria.reduce((s: any, n: any) => s + n.nota, 0) / notasMateria.length).toFixed(1);
+          const promedio = (notasMateria.reduce((s: number, n: Nota) => s + n.nota, 0) / notasMateria.length).toFixed(1);
 
           return (
             <details key={materia} className="group bg-white border border-slate-200 rounded-3xl overflow-hidden transition-all shadow-sm">
@@ -44,7 +53,7 @@ export default function SeccionCalificaciones({ notas }: { notas: any[] }) {
               </summary>
 
               <div className="p-5 pt-0 bg-slate-50/30 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {notasMateria.map((n: any) => (
+                {notasMateria.map((n: Nota) => (
                   <div key={n.idNota} className="bg-white p-3 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
                     <div className="flex items-center gap-3">
                       <Calendar size={14} className="text-slate-400" />

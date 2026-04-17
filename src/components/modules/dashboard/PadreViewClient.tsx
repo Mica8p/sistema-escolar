@@ -7,9 +7,46 @@ import CardAsistenciaHijo from "@/components/modules/padres/CardAsistenciaHijo";
 import SeccionCalificaciones from "@/components/modules/padres/SeccionCalificaciones";
 import HorarioImprimible from "@/components/HorarioImprimible";
 import { useRouter } from "next/navigation";
+import type { BloqueHorario, DiaHabil } from "@prisma/client";
+import type { getHorariosPorCurso } from "@/service/horario.service";
+
+type HorarioPorCurso = Awaited<ReturnType<typeof getHorariosPorCurso>>[number];
+
+interface Nota {
+  idNota: number;
+  nota: number;
+  asignacion: {
+    materia: { nombre: string };
+  };
+  periodo: { nombre: string };
+}
+
+interface CuentaDetalle {
+  cargos: Array<{ saldo?: number }>;
+}
+
+interface HijoData {
+  idAlumno: number;
+  nombreCompleto: string;
+  curso: string;
+  cursoObj?: { grado: string | number; seccion: string; turno: string; idCurso: number; nivel: string } | null;
+  idMatricula?: number;
+  notas: Nota[];
+  horarios: HorarioPorCurso[];
+  deudaHijo: number;
+  cuenta: CuentaDetalle;
+  bloques: BloqueHorario[];
+  dias: DiaHabil[];
+  stats: {
+    presentismo: number;
+    ausencias: number;
+    llegadasTarde: number;
+    faltasJustificadas: number;
+  };
+}
 
 interface PadreViewClientProps {
-  hijosData: any[];
+  hijosData: HijoData[];
 }
 
 export default function PadreViewClient({ hijosData }: PadreViewClientProps) {
@@ -21,7 +58,7 @@ export default function PadreViewClient({ hijosData }: PadreViewClientProps) {
   return (
     <div className="space-y-6">
       {/* SELECTOR DE HIJO */}
-      <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
+      <div className="bg-white p-6 rounded-4xl border border-slate-200 shadow-sm">
         <label className="text-sm font-semibold text-slate-700 block mb-3">
           Seleccionar Hijo
         </label>
@@ -36,7 +73,7 @@ export default function PadreViewClient({ hijosData }: PadreViewClientProps) {
             </option>
             {hijosData.map((hijo) => (
               <option key={hijo.idAlumno} value={hijo.idAlumno}>
-                {hijo.nombreCompleto} - {hijo.curso.grado}° "{hijo.curso.seccion}"
+                {hijo.nombreCompleto} - {hijo.cursoObj ? `${hijo.cursoObj.grado}° "${hijo.cursoObj.seccion}"` : hijo.curso}
               </option>
             ))}
           </select>
@@ -61,8 +98,7 @@ export default function PadreViewClient({ hijosData }: PadreViewClientProps) {
                   {hijoSeleccionado.nombreCompleto}
                 </h2>
                 <p className="text-[10px] uppercase tracking-widest text-slate-300">
-                  {hijoSeleccionado.curso} -{" "}
-                  {hijoSeleccionado.cursoObj?.turno || 'Sin turno'}
+                  {hijoSeleccionado.cursoObj ? `${hijoSeleccionado.cursoObj.grado}° "${hijoSeleccionado.cursoObj.seccion}"` : hijoSeleccionado.curso} - {hijoSeleccionado.cursoObj?.turno || 'Sin turno'}
                 </p>
               </div>
             </div>

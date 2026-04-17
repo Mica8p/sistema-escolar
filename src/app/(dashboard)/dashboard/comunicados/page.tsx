@@ -5,16 +5,26 @@ import Link from "next/link";
 import db from "@/lib/db";
 import FiltroComunicados from "@/components/modules/comunicados/FiltroComunicados";
 import { redirect } from "next/navigation";
+import { Comunicado, Usuario, ComunicadoVisto } from "@prisma/client";
+
+type ComunicadoWithIncludes = Comunicado & {
+  usuario: Usuario & {
+    persona: {
+      nombre: string;
+      apellido: string;
+    };
+  };
+  vistos: ComunicadoVisto[];
+};
 
 export default async function ComunicadosPage() {
   const session = await auth();
 
   if (!session?.user) redirect("/login");
 
-  const user = session.user as any;
-  const idUsuario = user.idUsuario as number;
-  const idPadre = user.idPadre as number | null;
-  const roles = user.roles || [];
+  const idUsuario = session.user.idUsuario;
+  const idPadre = session.user.idPadre;
+  const roles = session.user.roles || [];
   const rolPrincipal = roles[0] || "USUARIO";
   const puedeCrear = roles.includes("ADMIN") || roles.includes("DOCENTE");
 
@@ -59,7 +69,7 @@ export default async function ComunicadosPage() {
   );
 }
 
-function ComunicadosContent({ comunicados, puedeCrear }: { comunicados: any; puedeCrear: boolean }) {
+function ComunicadosContent({ comunicados, puedeCrear }: { comunicados: ComunicadoWithIncludes[]; puedeCrear: boolean }) {
   return (
     <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">
       <header className="flex justify-between items-center max-w-6xl mx-auto w-full">

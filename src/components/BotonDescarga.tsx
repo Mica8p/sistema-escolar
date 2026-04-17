@@ -1,6 +1,6 @@
 "use client";
 
-import { Printer, Download } from "lucide-react";
+import { Printer } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 
 interface Props {

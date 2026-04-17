@@ -1,4 +1,5 @@
 import db from "@/lib/db";
+import { Nivel } from "@prisma/client";
 
 export async function getDashboardAdminData(idCiclo: number) {
   const hoy = new Date();
@@ -25,12 +26,12 @@ export async function getDashboardAdminData(idCiclo: number) {
     })
   ]);
 
-  const niveles = ["Primario", "Secundario"];
-  const asistenciaGlobal = await Promise.all(niveles.map(async (nivel: any) => {
-    const total = await db.asistencia.count({ where: { matricula: { idCiclo, curso: { nivel } } } });
-    const presentes = await db.asistencia.count({ where: { estado: "Presente", matricula: { idCiclo, curso: { nivel } } } });
+  const niveles: Nivel[] = ["Primario", "Secundario"];
+  const asistenciaGlobal = await Promise.all(niveles.map(async (nivel) => {
+    const total = await db.asistencia.count({ where: { matricula: { idCiclo, curso: { nivel: { equals: nivel } } } } });
+    const presentes = await db.asistencia.count({ where: { estado: "Presente", matricula: { idCiclo, curso: { nivel: { equals: nivel } } } } });
     const porcentaje = total > 0 ? Math.round((presentes / total) * 100) : 0;
-    const colores: any = { Primario: '#10b981', Secundario: '#3b82f6' };
+    const colores: Record<Nivel, string> = { Primario: '#10b981', Secundario: '#3b82f6' };
     return { nivel, porcentaje, color: colores[nivel] || '#cbd5e1' };
   }));
 

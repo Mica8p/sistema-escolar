@@ -1,5 +1,5 @@
 import db from "@/lib/db";
-import { EstadoAsistencia } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 
 export async function getHorariosByAsignacion(idAsignacion: number) {

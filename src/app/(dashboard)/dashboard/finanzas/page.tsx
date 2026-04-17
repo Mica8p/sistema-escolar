@@ -3,12 +3,8 @@ import { redirect } from "next/navigation";
 import { AlumnoService } from "@/service/alumno.service";
 import { getDetalleCuenta, getAlumnosConEstadoDeCuenta, getConceptosDePago } from "@/service/finanzas.service";
 import { getCicloActual } from "@/lib/ciclo-session";
-import EstadoCuentaSummary from "@/components/modules/finanzas/EstadoCuentaSummary";
-import CargosList from "@/components/modules/finanzas/CargosList";
-import PagosList from "@/components/modules/finanzas/PagosList";
 import AdminFinanzasView from "@/components/modules/finanzas/AdminFinanzasView";
 import PadreFinanzasView from "@/components/modules/finanzas/PadreFinanzasView";
-import { Wallet, DollarSign } from "lucide-react";
 
 export default async function FinanzasPage() {
   const session = await auth();
@@ -33,7 +29,6 @@ export default async function FinanzasPage() {
   }
 
   // === VISTA PARA ADMIN (Gestión global) ===
-  const cicloId = await getCicloActual();
   const [alumnosDeudores, conceptos] = await Promise.all([
     getAlumnosConEstadoDeCuenta(),
     getConceptosDePago()

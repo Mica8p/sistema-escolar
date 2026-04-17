@@ -6,8 +6,33 @@ import Link from "next/link";
 import BotonLeido from "@/components/modules/comunicados/BotonLeido";
 import EnviadoCard from "@/components/modules/comunicados/EnviadosCard";
 
+interface Comunicado {
+  idComunicado: number;
+  titulo: string;
+  target: string;
+  fecha: Date;
+  contenido: string;
+  idTarget: number | null;
+  usuario?: {
+    persona: {
+      nombre: string;
+    };
+  };
+  idUsuario: number;
+  curso?: {
+    grado: string;
+    seccion: string;
+  } | null;
+  vistos: {
+    idUsuario: number;
+    id: number;
+    idComunicado: number;
+    fechaLectura: Date;
+  }[];
+}
+
 interface FiltroProps {
-  data: any[];
+  data: Comunicado[];
   isEnviados?: boolean;
 }
 
@@ -78,7 +103,7 @@ export default function FiltroComunicados({ data, isEnviados }: FiltroProps) {
         {(search || targetFilter !== "TODOS_FILTRO" || dateFilter) && (
           <button
             onClick={() => {setSearch(""); setTargetFilter("TODOS_FILTRO"); setDateFilter("");}}
-            className="p-4 bg-rose-50 text-rose-500 rounded-[1.5rem] hover:bg-rose-100 hover:scale-110 active:scale-95 transition-all shadow-lg shadow-rose-100/50 flex items-center justify-center"
+            className="p-4 bg-rose-50 text-rose-500 rounded-3xl hover:bg-rose-100 hover:scale-110 active:scale-95 transition-all shadow-lg shadow-rose-100/50 flex items-center justify-center"
             title="Limpiar filtros"
           >
             <X size={22} strokeWidth={3} />
@@ -110,7 +135,7 @@ export default function FiltroComunicados({ data, isEnviados }: FiltroProps) {
 }
 
 // Sub-componente de tarjeta
-function ComunicadoRecibidoCard({ msg }: { msg: any }) {
+function ComunicadoRecibidoCard({ msg }: { msg: Comunicado }) {
   const isRead = msg.vistos.length > 0;
   return (
     <div className={`
@@ -131,7 +156,7 @@ function ComunicadoRecibidoCard({ msg }: { msg: any }) {
             </h3>
             <div className="flex items-center gap-3 mt-1">
                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-1">
-                 <User size={12} className="text-indigo-400" /> {msg.usuario.persona.nombre}
+                 <User size={12} className="text-indigo-400" /> {msg.usuario?.persona?.nombre || 'Usuario desconocido'}
                </p>
                <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase ${isRead ? 'bg-slate-50 text-slate-700' : 'bg-indigo-50 text-indigo-600'}`}>
                   {msg.target}

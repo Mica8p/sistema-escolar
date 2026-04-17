@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, useMemo } from "react";
 import { useFormStatus } from "react-dom";
 import { generarDeudaMasiva, type State } from "@/app/(dashboard)/dashboard/finanzas/finanzas-actions";
 import { toast } from "sonner";
@@ -30,26 +30,19 @@ function SubmitButton() {
 }
 
 export function GenerarCuotaMasivaDialog({ conceptos }: Props) {
-  const initialState: State = { message: null, errors: {} };
+  const initialState: State = { message: "" };
   const [state, dispatch] = useActionState(generarDeudaMasiva, initialState);
   const [open, setOpen] = useState(false);
   const [selectedConceptoId, setSelectedConceptoId] = useState<string>("");
-  const [monto, setMonto] = useState<string>("");
-
-  // Actualizar monto automáticamente al seleccionar concepto
-  useEffect(() => {
+  const monto = useMemo(() => {
     const selectedConcepto = conceptos.find(c => c.id === Number(selectedConceptoId));
-    if (selectedConcepto && selectedConcepto.montoFijo) {
-      setMonto(String(selectedConcepto.montoFijo));
-    } else {
-      setMonto("");
-    }
+    return selectedConcepto && selectedConcepto.montoFijo ? String(selectedConcepto.montoFijo) : "";
   }, [selectedConceptoId, conceptos]);
 
   useEffect(() => {
     if (state.message && !state.errors) {
-      setOpen(false);
       toast.success(state.message);
+      setTimeout(() => setOpen(false), 0);
     } else if (state.message && state.errors) {
       toast.error(state.message);
     }
@@ -107,9 +100,9 @@ export function GenerarCuotaMasivaDialog({ conceptos }: Props) {
                       type="number"
                       step="0.01"
                       value={monto}
-                      onChange={(e) => setMonto(e.target.value)}
+                      readOnly
                       placeholder="Ej: 1500.00"
-                      className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-10 w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                     {state.errors?.monto && <p className="text-sm text-red-500 mt-1">{state.errors.monto[0]}</p>}
                   </div>

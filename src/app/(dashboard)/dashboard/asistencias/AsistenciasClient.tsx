@@ -1,11 +1,10 @@
 'use client'
 
-import { Users, Clock, CheckCircle, CalendarDays, GraduationCap, Search } from "lucide-react";
+import { Users, Clock, CheckCircle, CalendarDays, GraduationCap, Search, ChevronDown } from "lucide-react";
 import AsistenciasHeader from "./AsistenciasHeader";
 import { Materia, EstadoAsistencia, AsignacionAcademica, Alumno, Persona, Turno } from "@prisma/client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import AsistenciasTable from "@/components/modules/asistencias/AsistenciasTable";
-import PaginationControls from "@/components/shared/PaginationControls";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type AsistenciaMap = Map<number, {
@@ -50,10 +49,7 @@ interface Props {
   planilla: Planilla | null;
   estadisticasAsistencia: Map<number, { presentes: number; ausentes: number; totalClases: number }>;
   isAdmin: boolean;
-  currentPage: number;
-  totalPages: number;
-  search?: string;
-}
+};
 
 export default function AsistenciasClient({
   asig,
@@ -70,12 +66,11 @@ export default function AsistenciasClient({
   planilla,
   estadisticasAsistencia,
   isAdmin,
-  currentPage,
-  totalPages,
-  search,
 }: Props) {
   const [asistenciaMap, setAsistenciaMap] = useState<AsistenciaMap>(new Map());
-  const [searchTerm, setSearchTerm] = useState(search || '');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [itemsPorMostrar, setItemsPorMostrar] = useState(10);
+  const observerTarget = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -116,6 +111,29 @@ export default function AsistenciasClient({
     const term = searchTerm.toLowerCase();
     return nombre.includes(term) || apellido.includes(term) || dni.includes(term);
   }) || [];
+
+  // Infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && itemsPorMostrar < filteredMatriculas.length) {
+          setItemsPorMostrar((prev) => prev + 10);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [itemsPorMostrar, filteredMatriculas.length]);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -283,21 +301,27 @@ export default function AsistenciasClient({
           )}
         </div>
         {planilla ? (
-          <div className="p-6">
+          <div className="p-6 space-y-4">
             <AsistenciasTable
               idAsignacion={idAsignacion}
               idHorario={idHorario}
               fecha={fechaISO}
-              matriculas={filteredMatriculas}
+              matriculas={filteredMatriculas.slice(0, itemsPorMostrar)}
               asistenciaByMatricula={Array.from(asistenciaMap.entries())}
               estadisticasAsistencia={estadisticasAsistencia}
               readOnly={isAdmin}
               onAsistenciaChange={handleAsistenciaChange}
             />
-            <PaginationControls
-              currentPage={currentPage}
-              totalPages={totalPages}
-            />
+            
+            {/* INFINITE SCROLL TRIGGER */}
+            <div ref={observerTarget} className="flex justify-center py-4">
+              {itemsPorMostrar < filteredMatriculas.length && (
+                <div className="flex items-center gap-2 text-slate-500 text-sm">
+                  <ChevronDown size={16} className="animate-bounce" />
+                  Cargando más...
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-125 text-slate-300 gap-4 uppercase font-black text-[10px] tracking-widest">

@@ -1,12 +1,12 @@
 import db from "@/lib/db";
-import bcrypt from "bcryptjs";
+import { Prisma } from "@prisma/client";
 import type { PersonaWithRelations } from "@/types/persona";
 
 export type { PersonaWithRelations };
 
 export const PersonaService = {
   async getAll(rol?: string, idCiclo?: number) {
-    const conditions: any[] = [];
+    const conditions: Prisma.PersonaWhereInput[] = [];
 
     if (rol) {
       if (rol === "ALUMNO") {
@@ -130,7 +130,14 @@ export const PersonaService = {
     });
   },
 
-  async update(id: number, data: any) {
+  async update(id: number, data: {
+    nombre: string;
+    apellido: string;
+    dni: string;
+    email: string;
+    telefono?: string | null;
+    direccion?: string | null;
+  }) {
     return await db.persona.update({
       where: { idPersona: id },
       data: {

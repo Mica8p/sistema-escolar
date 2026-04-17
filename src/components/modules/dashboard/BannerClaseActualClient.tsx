@@ -4,8 +4,19 @@ import { useState, useEffect } from "react";
 import { Zap, ClipboardCheck } from "lucide-react";
 import Link from "next/link";
 
-export default function BannerClaseActualClient({ clasesHoy }: { clasesHoy: any[] }) {
-  const [claseActual, setClaseActual] = useState<any>(null);
+interface ClaseHoy {
+  horaInicio: string;
+  horaFin: string;
+  asignacion: {
+    materia: { nombre: string };
+    curso: { grado: string | number; seccion: string };
+    idMateria: number;
+  };
+  idHorario: number;
+}
+
+export default function BannerClaseActualClient({ clasesHoy }: { clasesHoy: ClaseHoy[] }) {
+  const [claseActual, setClaseActual] = useState<ClaseHoy | undefined>(undefined);
 
   useEffect(() => {
     const chequearClase = () => {
@@ -26,7 +37,7 @@ export default function BannerClaseActualClient({ clasesHoy }: { clasesHoy: any[
   if (!claseActual) return null;
 
   return (
-    <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-[2px] rounded-[2.5rem] shadow-2xl shadow-indigo-200/50 mb-8 animate-in slide-in-from-top duration-500">
+    <div className="bg-linear-to-r from-indigo-600 to-blue-600 p-0.5 rounded-[2.5rem] shadow-2xl shadow-indigo-200/50 mb-8 animate-in slide-in-from-top duration-500">
       <div className="bg-white/95 backdrop-blur-sm p-6 rounded-[2.4rem] flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-5">
           <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shadow-inner">
@@ -35,7 +46,7 @@ export default function BannerClaseActualClient({ clasesHoy }: { clasesHoy: any[
           <div>
             <span className="bg-indigo-600 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest mb-2 inline-block">Clase en curso</span>
             <h2 className="text-2xl font-black text-slate-800 tracking-tighter uppercase italic">
-              {claseActual.asignacion.materia.nombre} <span className="text-indigo-600">{claseActual.asignacion.curso.grado}° "{claseActual.asignacion.curso.seccion}"</span>
+              {claseActual.asignacion.materia.nombre} <span className="text-indigo-600">{claseActual.asignacion.curso.grado}° &quot;{claseActual.asignacion.curso.seccion}&quot;</span>
             </h2>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Finaliza {claseActual.horaFin} hs</p>
           </div>

@@ -2,8 +2,8 @@
 
 import { Nota } from "@prisma/client";
 import { guardarNotaAction } from "@/lib/actions/calificaciones-actions";
-import { Save, User, Edit2, Lock, CheckCircle2, Search } from "lucide-react";
-import { useState } from "react";
+import { Save, User, Edit2, Lock, CheckCircle2, Search, SaveAll, ChevronDown } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -34,11 +34,16 @@ interface CalificacionesTableProps {
   idAsignacion: number;
   idPeriodo: number;
   periodoActual: PeriodoActual;
-  tipo: string; // Asumiendo que 'tipo' es un string como "Parcial", "Recuperatorio"
+  tipo: string;
   matriculas: MatriculaConAlumno[];
   notaByMatricula: Map<number, Nota>;
   readOnly?: boolean;
   historialNotas: NotaWithPeriodo[];
+}
+
+interface CambioNota {
+  nota: number;
+  observacion: string;
 }
 
 export default function CalificacionesTable({
@@ -54,6 +59,10 @@ export default function CalificacionesTable({
   const router = useRouter();
   const [editando, setEditando] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [cambios, setCambios] = useState<Map<number, CambioNota>>(new Map());
+  const [guardando, setGuardando] = useState(false);
+  const [itemsPorMostrar, setItemsPorMostrar] = useState(10);
+  const observerTarget = useRef<HTMLDivElement>(null);
   const notaMap = new Map<number, Nota>(notaByMatricula);
 
   // Filtrar matriculas basado en searchTerm
@@ -61,9 +70,8 @@ export default function CalificacionesTable({
     if (!searchTerm) return true;
     const nombre = m.alumno.persona.nombre.toLowerCase();
     const apellido = m.alumno.persona.apellido.toLowerCase();
-    const dni = m.alumno.persona.dni;
     const term = searchTerm.toLowerCase();
-    return nombre.includes(term) || apellido.includes(term) || dni.includes(term);
+    return nombre.includes(term) || apellido.includes(term);
   });
 
   // 1. LÓGICA GLOBAL DE PERIODO
@@ -71,17 +79,89 @@ export default function CalificacionesTable({
   const nombrePeriodo = periodoActual?.nombre;
   const esInstanciaDeCierre = ["DICIEMBRE", "FEBRERO", "JULIO_PREVIAS"].includes(nombrePeriodo);
 
-  const handleAction = async (formData: FormData) => {
-    const res = await guardarNotaAction(formData);
-    if (res.ok) {
-      toast.success("Calificación guardada");
-      setEditando(null);
-      // router.refresh();
-      window.location.reload();
+  const guardarCambioLocal = (idMatricula: number, formData: FormData) => {
+    const nota = Number(formData.get("nota"));
+    const observacion = (formData.get("observacion") as string) || "";
+    
+    if (!Number.isFinite(nota) || nota < 0 || nota > 10) {
+      toast.error("La nota debe estar entre 0 y 10");
+      return;
+    }
+
+    const nuevosCambios = new Map(cambios);
+    nuevosCambios.set(idMatricula, { nota, observacion });
+    setCambios(nuevosCambios);
+    setEditando(null);
+    toast.success("Cambio registrado (sin guardar aún)");
+  };
+
+  const guardarTodo = async () => {
+    if (cambios.size === 0) {
+      toast.info("No hay cambios pendientes para guardar");
+      return;
+    }
+
+    setGuardando(true);
+    let exitosos = 0;
+    let errores = 0;
+
+    for (const [idMatricula, { nota, observacion }] of cambios.entries()) {
+      const formData = new FormData();
+      formData.set("idMatricula", String(idMatricula));
+      formData.set("idAsignacion", String(idAsignacion));
+      formData.set("idPeriodo", String(idPeriodo));
+      formData.set("tipo", tipo);
+      formData.set("nota", String(nota));
+      formData.set("observacion", observacion);
+
+      try {
+        const res = await guardarNotaAction(formData);
+        if (res.ok) {
+          exitosos++;
+        } else {
+          errores++;
+          toast.error(`Error al guardar nota de alumno ${idMatricula}: ${res.message}`);
+        }
+      } catch {
+        errores++;
+        toast.error(`Error inesperado al guardar`);
+      }
+    }
+
+    setGuardando(false);
+
+    if (errores === 0) {
+      toast.success(`✅ ${exitosos} calificaciones guardadas exitosamente`);
+      setCambios(new Map());
+      // Usar router.refresh() para refrescar los datos del servidor
+      router.refresh();
     } else {
-      toast.error(res.message || "Error al guardar");
+      toast.error(`${exitosos} guardadas, ${errores} fallidas`);
     }
   };
+
+  // Infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && itemsPorMostrar < filteredMatriculas.length) {
+          setItemsPorMostrar((prev) => prev + 10);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [itemsPorMostrar, filteredMatriculas.length]);
 
   const getNotaTrimestre = (alumnoId: number, nombreTrimestre: string) => {
     const notasTrim = historialNotas.filter((n: NotaWithPeriodo) =>
@@ -94,6 +174,24 @@ export default function CalificacionesTable({
 
   return (
     <div className="w-full">
+      {/* CARTEL DE CAMBIOS SIN GUARDAR */}
+      {cambios.size > 0 && (
+        <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-800 px-4 py-3 rounded-2xl text-sm font-bold mb-6 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">📝</span>
+            <span>{cambios.size} cambio(s) sin guardar</span>
+          </div>
+          <button
+            onClick={guardarTodo}
+            disabled={guardando}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95"
+          >
+            <SaveAll size={16} />
+            {guardando ? "Guardando..." : "Guardar Todo"}
+          </button>
+        </div>
+      )}
+
       {/* CARTEL DE CIERRE (ADMIN) */}
       {periodoCerrado && (
         <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-4 py-2 rounded-2xl text-[10px] font-black uppercase mb-6 w-fit mx-auto border border-amber-100 shadow-sm">
@@ -105,7 +203,7 @@ export default function CalificacionesTable({
       {/* BARRA DE BÚSQUEDA */}
       <div className="mb-4 flex justify-center">
         <div className="relative max-w-sm w-full">
-          <Search className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Buscar por Apellido, Nombre o DNI..."
@@ -128,11 +226,14 @@ export default function CalificacionesTable({
             </tr>
           </thead>
           <tbody>
-            {filteredMatriculas.map((m: MatriculaConAlumno) => {
+            {filteredMatriculas.slice(0, itemsPorMostrar).map((m: MatriculaConAlumno) => {
               const notaObj = notaMap.get(m.idMatricula);
-              const valorNota = notaObj?.nota;
+              const cambioLocal = cambios.get(m.idMatricula);
+              const valorNota = cambioLocal?.nota ?? notaObj?.nota;
+              const observacionActual = cambioLocal?.observacion ?? notaObj?.observacion;
               const tieneNota = valorNota !== undefined && valorNota !== null;
               const aprobado = tieneNota && (valorNota ?? 0) >= 6;
+              const tieneCambioLocal = cambios.has(m.idMatricula);
 
               // Lógica de Promedio
               const n1 = getNotaTrimestre(m.idMatricula, "TRIMESTRE_1");
@@ -190,13 +291,13 @@ export default function CalificacionesTable({
                           name="nota"
                           type="number"
                           min={1} max={10} step={0.5}
-                          defaultValue={valorNota ?? ""}
+                          defaultValue={cambioLocal?.nota ?? valorNota ?? ""}
                           className="w-20 text-center text-xl font-black bg-slate-100 border-2 border-indigo-100 rounded-xl py-2 focus:border-indigo-500 outline-none text-slate-900 placeholder-slate-700"
                         />
                       ) : (
                         <div className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl text-xl font-black shadow-sm ${
                           !tieneNota ? 'bg-slate-50 text-slate-300' : aprobado ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'
-                        }`}>
+                        } ${tieneCambioLocal ? 'ring-2 ring-blue-400' : ''}`}>
                           {valorNota ?? "-"}
                         </div>
                       )}
@@ -220,13 +321,13 @@ export default function CalificacionesTable({
                       <input
                         form={`f-${m.idMatricula}`}
                         name="observacion"
-                        defaultValue={notaObj?.observacion ?? ""}
+                        defaultValue={cambioLocal?.observacion ?? notaObj?.observacion ?? ""}
                         placeholder="Comentarios..."
                         className="w-full bg-slate-100 border-2 border-slate-100 rounded-xl py-2 px-4 text-xs outline-none focus:border-indigo-500 text-slate-900 placeholder-slate-700"
                       />
                     ) : (
                         <div className="text-xs text-slate-500 italic max-w-50 truncate">
-                        {estaBloqueado ? (bloquearRecuperatorio ? "Aprobó instancia parcial." : "Periodo cerrado.") : (notaObj?.observacion || "Sin observaciones")}
+                        {estaBloqueado ? (bloquearRecuperatorio ? "Aprobó instancia parcial." : "Periodo cerrado.") : (observacionActual || "Sin observaciones")}
                       </div>
                     )}
                   </td>
@@ -262,7 +363,7 @@ export default function CalificacionesTable({
                             <button type="button" onClick={() => {
                               const form = document.getElementById(`f-${m.idMatricula}`) as HTMLFormElement;
                               const formData = new FormData(form);
-                              handleAction(formData);
+                              guardarCambioLocal(m.idMatricula, formData);
                             }} className="bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-700 shadow-lg active:scale-95">
                               <Save size={18} />
                             </button>
@@ -280,6 +381,16 @@ export default function CalificacionesTable({
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* INFINITE SCROLL TRIGGER */}
+      <div ref={observerTarget} className="flex justify-center py-4">
+        {itemsPorMostrar < filteredMatriculas.length && (
+          <div className="flex items-center gap-2 text-slate-500 text-sm">
+            <ChevronDown size={16} className="animate-bounce" />
+            Cargando más...
+          </div>
+        )}
       </div>
     </div>
   );

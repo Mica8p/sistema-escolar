@@ -5,8 +5,6 @@ import Link from "next/link";
 import { EstadoAcademico, Curso, Persona } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { Fingerprint, Settings2, FileText, ChevronLeft, ChevronRight } from "lucide-react";
-import GenericDeleteButton from "@/components/shared/GenericDeletButton";
-import { deleteMatriculaAction } from "@/lib/actions/alumno-actions";
 
 // Definimos la estructura de la matrícula con el curso asociado
 interface MatriculaWithCurso {
@@ -101,7 +99,7 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
               <option value="">-- Seleccione el curso --</option>
               {cursosDisponibles.map((curso) => (
                 <option key={curso.idCurso} value={curso.idCurso}>
-                  {curso.grado}° "{curso.seccion}" - {curso.turno}
+                  {curso.grado}° &quot;{curso.seccion}&quot; - {curso.turno}
                 </option>
               ))}
             </select>

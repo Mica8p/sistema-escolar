@@ -5,12 +5,12 @@ import Link from "next/link";
 import WelcomeHeader from "./WelcomeHeader";
 import ChartAsistenciaGlobal from "@/components/modules/dashboard/ChartAsistenciaGlobal";
 
-export default async function AdminView({ idCiclo, userName, userRoles }: { idCiclo: number, userName: string, userRoles: string[] }) {
+export default async function AdminView({ idCiclo, userName }: { idCiclo: number, userName: string }) {
   const adminData = await getDashboardAdminData(idCiclo);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      <WelcomeHeader name={userName} roles={userRoles} />
+      <WelcomeHeader name={userName} />
 
       {/* 1. ESTADÍSTICAS GLOBALES DINÁMICAS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

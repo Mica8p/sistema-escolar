@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 interface GenericDeleteProps {
   id: number | string;
-  action: (id: any) => Promise<{ success: boolean; message?: string }>;
+  action: (id: number | string) => Promise<{ success: boolean; message?: string }>;
   title: string;
   message: string;
   icon?: LucideIcon;

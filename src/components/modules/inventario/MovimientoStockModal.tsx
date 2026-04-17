@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { createMovimientoStock } from "@/lib/actions/movimiento-stock-actions";
 
 type Insumo = {
@@ -22,22 +22,12 @@ export default function MovimientoStockModal({
   tipoInicial?: "Entrada" | "Salida" | "Ajuste";
 }) {
   const [pending, startTransition] = useTransition();
-  const [tipo, setTipo] = useState<"Entrada" | "Salida" | "Ajuste">(tipoInicial);
-  const [cantidad, setCantidad] = useState("1");
-  const [ajusteSign, setAjusteSign] = useState<"sumar" | "restar">("sumar");
+  const [cantidad, setCantidad] = useState(() => "1");
+  const [ajusteSign, setAjusteSign] = useState<"sumar" | "restar">(() => "sumar");
 
-  const [monto, setMonto] = useState("");
-  const [concepto, setConcepto] = useState("");
-  const [categoria, setCategoria] = useState<"Insumos" | "Servicios" | "Mantenimiento" | "Sueldos">("Insumos");
-
-  useEffect(() => {
-    setTipo(tipoInicial);
-    setCantidad("1");
-    setAjusteSign("sumar");
-    setMonto("");
-    setConcepto("");
-    setCategoria("Insumos");
-  }, [tipoInicial, open]);
+  const [monto, setMonto] = useState(() => "");
+  const [concepto, setConcepto] = useState(() => "");
+  const [categoria, setCategoria] = useState<"Insumos" | "Servicios" | "Mantenimiento" | "Sueldos">(() => "Insumos");
 
   if (!open || !insumo) return null;
 
@@ -48,12 +38,12 @@ export default function MovimientoStockModal({
 
     const fd = new FormData();
     fd.set("idInsumo", String(insumo.idInsumo));
-    fd.set("tipo", tipo);
+    fd.set("tipo", tipoInicial);
     fd.set("cantidad", cantidad || "0");
 
-    if (tipo === "Ajuste") fd.set("ajusteSign", ajusteSign);
+    if (tipoInicial === "Ajuste") fd.set("ajusteSign", ajusteSign);
 
-    if (tipo === "Entrada") {
+    if (tipoInicial === "Entrada") {
       fd.set("crearGasto", "1");
       fd.set("monto", monto || "0");
       fd.set("concepto", concepto);
@@ -72,7 +62,7 @@ export default function MovimientoStockModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
+      <div key={`${tipoInicial}-${insumo?.idInsumo}`} className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
         <div className="border-b px-5 py-4">
           <h2 className="text-lg font-semibold text-gray-900">Movimiento de stock</h2>
           <p className="text-sm text-gray-600">
@@ -83,7 +73,7 @@ export default function MovimientoStockModal({
         <form onSubmit={onSubmit} className="space-y-4 px-5 py-4">
 
 
-          {tipo === "Ajuste" && (
+          {tipoInicial === "Ajuste" && (
             <div className="flex gap-2">
               <button
                 type="button"
@@ -117,7 +107,7 @@ export default function MovimientoStockModal({
             />
           </div>
 
-          {tipo === "Entrada" && (
+          {tipoInicial === "Entrada" && (
             <div className="space-y-3 rounded-xl border bg-slate-50 p-3">
               <p className="font-bold text-sm text-gray-700">Registrar gasto por esta compra</p>
 
@@ -139,7 +129,7 @@ export default function MovimientoStockModal({
                     <label className="text-sm font-medium text-gray-700">Categoría</label>
                     <select
                       value={categoria}
-                      onChange={(e) => setCategoria(e.target.value as any)}
+                      onChange={(e) => setCategoria(e.target.value as "Insumos" | "Servicios" | "Mantenimiento" | "Sueldos")}
                       className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     >
                       <option value="Insumos">Insumos</option>

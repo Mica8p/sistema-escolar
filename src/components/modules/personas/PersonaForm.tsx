@@ -20,9 +20,20 @@ import {
 import { toast } from "sonner";
 
 interface PersonaFormProps {
-    roles: any[];
-    initialData?: any;
-    alumnos?: any[];
+    roles: Array<{ idRol: number; nombre: string }>;
+    initialData?: {
+        idPersona: number;
+        nombre?: string;
+        apellido?: string;
+        dni?: string;
+        telefono?: string | null;
+        email?: string | null;
+        direccion?: string | null;
+    };
+    alumnos?: Array<{
+        idAlumno: number;
+        persona: { apellido: string; nombre: string };
+    }>;
 }
 
 export default function PersonaForm({ roles, initialData, alumnos = [] }: PersonaFormProps) {
@@ -34,11 +45,11 @@ export default function PersonaForm({ roles, initialData, alumnos = [] }: Person
     const [selectedHijos, setSelectedHijos] = useState<number[]>([]);
     const [searchHijos, setSearchHijos] = useState("");
 
-    const updateActionWithId = updatePersonaAction.bind(
-        null,
-        initialData?.idPersona
-    );
-    const formHandler = initialData ? updateActionWithId : createPersonaAction;
+    const updateActionWithId = initialData 
+        ? updatePersonaAction.bind(null, initialData.idPersona)
+        : null;
+    
+    const formHandler = initialData ? updateActionWithId! : createPersonaAction;
 
     const [state, formAction, isPending] = useActionState(
         formHandler,
@@ -165,7 +176,7 @@ useEffect(() => {
                         name="email"
                         type="email"
                         required
-                        defaultValue={initialData?.email}
+                        defaultValue={initialData?.email ?? ""}
                         className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-black focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                         placeholder="correo@ejemplo.com"
                     />
@@ -180,7 +191,7 @@ useEffect(() => {
                     <input
                         name="telefono"
                         type="text"
-                        defaultValue={initialData?.telefono}
+                        defaultValue={initialData?.telefono ?? ""}
                         className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-black focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                         placeholder="Ej: 1122334455"
                     />
@@ -193,7 +204,7 @@ useEffect(() => {
                     <input
                         name="direccion"
                         type="text"
-                        defaultValue={initialData?.direccion}
+                        defaultValue={initialData?.direccion ?? ""}
                         className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-black focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                         placeholder="Ej: Av. Corrientes 1234"
                     />

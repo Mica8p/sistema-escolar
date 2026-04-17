@@ -25,15 +25,9 @@ const CreateDeudaMasivaSchema = z.object({
   ),
 });
 
-export type State = {
-  errors?: {
-    alumnoId?: string[];
-    conceptoId?: string[];
-    monto?: string[];
-    fechaVencimiento?: string[];
-  };
-  message?: string;
-};
+export type State = 
+  | { errors: { alumnoId?: string[]; conceptoId?: string[]; monto?: string[]; fechaVencimiento?: string[]; }; message: string; }
+  | { message: string; errors?: undefined; };
 
 
 export async function createDeuda(prevState: State, formData: FormData): Promise<State> {

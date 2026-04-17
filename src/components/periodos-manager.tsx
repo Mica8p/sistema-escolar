@@ -1,12 +1,12 @@
 'use client';
 
 import { useFormStatus } from 'react-dom';
-import { createPeriodoAction, getPeriodosByCiclo, deletePeriodoAction, togglePeriodoCerradoAction } from '@/lib/actions/periodo-actions';
+import { createPeriodoAction, getPeriodosByCiclo, updatePeriodoAction, togglePeriodoCerradoAction } from '@/lib/actions/periodo-actions';
 import { getAllCiclos } from '@/lib/actions/ciclo-actions';
 import { PeriodoNombre } from '@prisma/client';
 import { useActionState, useEffect, useState } from 'react';
-import { PeriodoAcademico, CicloLectivo } from '@prisma/client';
-import { Lock, Unlock, Trash2 } from 'lucide-react';
+import { CicloLectivo } from '@prisma/client';
+import { Lock, Unlock, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 import ConfirmModal from '@/components/shared/ConfirmModal';
 
@@ -76,41 +76,109 @@ function ToggleStatusButton({ idPeriodo, cerrado }: { idPeriodo: number, cerrado
     );
 }
 
-function DeletePeriodoButton({ idPeriodo }: { idPeriodo: number }) {
+function EditPeriodoButton({ periodo }: { periodo: { idPeriodo: number; nombre: string; fechaInicio: Date; fechaFin: Date } }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        nombre: periodo.nombre,
+        fechaInicio: new Date(periodo.fechaInicio).toISOString().split('T')[0],
+        fechaFin: new Date(periodo.fechaFin).toISOString().split('T')[0]
+    });
 
-    const handleDelete = () => {
+    const handleEdit = () => {
         setIsModalOpen(true);
     };
 
     const onConfirm = async () => {
         setLoading(true);
-        const result = await deletePeriodoAction(idPeriodo);
-        setLoading(false);
-        setIsModalOpen(false);
-        if (result.success) {
-            toast.success('Periodo eliminado correctamente');
-            window.location.reload();
-        } else {
-            toast.error(`Error: ${result.message}`);
+        try {
+            const result = await updatePeriodoAction(periodo.idPeriodo, formData.nombre, formData.fechaInicio, formData.fechaFin);
+            setLoading(false);
+            setIsModalOpen(false);
+            
+            if (result.success) {
+                toast.success('Periodo actualizado correctamente');
+                window.location.reload();
+            } else {
+                toast.error(`Error: ${result.message}`);
+            }
+        } catch {
+            setLoading(false);
+            toast.error('Error al actualizar el periodo');
         }
     };
 
     return (
         <>
-            <button onClick={handleDelete} className="px-3 py-1.5 bg-rose-50 text-rose-600 border border-rose-100 rounded-lg text-[10px] font-black uppercase hover:bg-rose-100 transition-all flex items-center gap-1">
-                <Trash2 size={14} /> Eliminar
+            <button 
+                onClick={handleEdit} 
+                className="px-3 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg text-[10px] font-black uppercase hover:bg-blue-100 transition-all flex items-center gap-1"
+            >
+                <Edit2 size={14} /> Editar
             </button>
-            <ConfirmModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onConfirm={onConfirm}
-                title="Eliminar Periodo"
-                message="¿Estás seguro de que quieres eliminar este periodo? Esta acción no se puede deshacer."
-                loading={loading}
-                variant="danger"
-            />
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+                        <h3 className="text-lg font-black text-slate-800 mb-4 uppercase">Editar Periodo</h3>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase block mb-2">Nombre</label>
+                                <select
+                                    value={formData.nombre}
+                                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl p-2 text-sm font-bold text-slate-700 focus:border-blue-500 outline-none"
+                                >
+                                    <option value="TRIMESTRE_1">Trimestre 1</option>
+                                    <option value="TRIMESTRE_2">Trimestre 2</option>
+                                    <option value="TRIMESTRE_3">Trimestre 3</option>
+                                    <option value="DICIEMBRE">Diciembre</option>
+                                    <option value="FEBRERO">Febrero</option>
+                                    <option value="JULIO_PREVIAS">Julio Previas</option>
+                                    <option value="ANUAL">Anual</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase block mb-2">Fecha Inicio</label>
+                                <input
+                                    type="date"
+                                    value={formData.fechaInicio}
+                                    onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
+                                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl p-2 text-sm font-bold text-slate-700 focus:border-blue-500 outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase block mb-2">Fecha Fin</label>
+                                <input
+                                    type="date"
+                                    value={formData.fechaFin}
+                                    onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
+                                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl p-2 text-sm font-bold text-slate-700 focus:border-blue-500 outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-bold text-sm hover:bg-slate-200 transition-all"
+                                disabled={loading}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={onConfirm}
+                                disabled={loading}
+                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 disabled:bg-blue-300 transition-all"
+                            >
+                                {loading ? 'Guardando...' : 'Guardar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
@@ -123,7 +191,7 @@ export default function PeriodosManager() {
 
   const [ciclos, setCiclos] = useState<CicloLectivo[]>([]);
   const [selectedCiclo, setSelectedCiclo] = useState<number | undefined>(undefined);
-  const [periodos, setPeriodos] = useState<any[]>([]); // Cambiado a any para evitar líos con tipos nuevos
+  const [periodos, setPeriodos] = useState<{ idPeriodo: number; nombre: string; fechaInicio: Date; fechaFin: Date; periodoCerrado: boolean }[]>([]);
 
   useEffect(() => {
     async function fetchCiclos() {
@@ -142,7 +210,7 @@ export default function PeriodosManager() {
     async function fetchPeriodos() {
       if (selectedCiclo) {
         const fetchedPeriodos = await getPeriodosByCiclo(selectedCiclo);
-        setPeriodos(fetchedPeriodos);
+        setPeriodos(fetchedPeriodos.map(p => ({ ...p, periodoCerrado: p.cerrado })));
       } else {
         setPeriodos([]);
       }
@@ -160,7 +228,7 @@ export default function PeriodosManager() {
       <h1 className="text-3xl font-black mb-8 text-slate-800 tracking-tight uppercase">Gestión de Periodos</h1>
 
       {/* FORMULARIO DE CREACIÓN */}
-      <div className="mb-10 p-8 bg-white border border-slate-200 rounded-[2rem] shadow-sm">
+      <div className="mb-10 p-8 bg-white border border-slate-200 rounded-4xl shadow-sm">
         <h2 className="text-lg font-black mb-6 text-slate-600 uppercase tracking-widest">Nuevo Periodo Académico</h2>
         <form action={formAction} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="space-y-2">
@@ -210,7 +278,7 @@ export default function PeriodosManager() {
       </div>
 
       {/* LISTADO DE PERIODOS */}
-      <div className="p-8 bg-white border border-slate-200 rounded-[2rem] shadow-sm">
+      <div className="p-8 bg-white border border-slate-200 rounded-4xl shadow-sm">
         <h2 className="text-lg font-black mb-6 text-slate-600 uppercase tracking-widest">
           Periodos del Ciclo: {selectedCiclo ? ciclos.find(c => c.idCiclo === selectedCiclo)?.anio : '-'}
         </h2>
@@ -237,15 +305,15 @@ export default function PeriodosManager() {
                     </td>
                     <td className="px-6 py-5 text-center">
                       <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${
-                        periodo.cerrado ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-emerald-100 text-emerald-600 border border-emerald-200'
+                        periodo.periodoCerrado ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-emerald-100 text-emerald-600 border border-emerald-200'
                       }`}>
-                        {periodo.cerrado ? '🚫 Carga Bloqueada' : '✅ Carga Habilitada'}
+                        {periodo.periodoCerrado ? '🚫 Carga Bloqueada' : '✅ Carga Habilitada'}
                       </span>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex justify-end gap-3">
-                        <ToggleStatusButton idPeriodo={periodo.idPeriodo} cerrado={periodo.cerrado} />
-                        <DeletePeriodoButton idPeriodo={periodo.idPeriodo} />
+                        <ToggleStatusButton idPeriodo={periodo.idPeriodo} cerrado={periodo.periodoCerrado} />
+                        <EditPeriodoButton periodo={periodo} />
                       </div>
                     </td>
                   </tr>

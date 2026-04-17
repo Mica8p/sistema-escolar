@@ -58,9 +58,9 @@ export async function guardarAsistenciaAction(formData: FormData) {
     revalidatePath("/dashboard/asistencias");
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error en guardarAsistenciaAction:", error);
-    return { success: false, message: error.message };
+    return { success: false, message: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -110,8 +110,116 @@ export async function getEstadisticasAsistenciaAction(idAsignacion: number) {
 
     // Convertir Map a array para serializar
     return Array.from(estadisticasMap.entries());
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error en getEstadisticasAsistenciaAction:", error);
+    return [];
+  }
+}
+
+export async function getEstadisticasAsistenciasPorMateriaAction(
+  idCurso: number,
+  idMateria: number,
+  idCiclo: number
+) {
+  try {
+    // Primero obtener las asignaciones académicas que correspondan
+    const asignaciones = await db.asignacionAcademica.findMany({
+      where: {
+        idCurso,
+        idCiclo,
+        materia: {
+          idMateria
+        }
+      },
+      select: { idAsignacion: true }
+    });
+
+    const idsAsignaciones = asignaciones.map(a => a.idAsignacion);
+
+    if (idsAsignaciones.length === 0) {
+      return [];
+    }
+
+    // Obtener todas las asistencias de esas asignaciones
+    const asistencias = await db.asistencia.findMany({
+      where: {
+        matricula: {
+          idCurso,
+          idCiclo,
+          estadoAcademico: "Activo"
+        },
+        horario: {
+          idAsignacion: {
+            in: idsAsignaciones
+          }
+        }
+      },
+      include: {
+        matricula: {
+          include: {
+            alumno: {
+              include: {
+                persona: {
+                  select: {
+                    nombre: true,
+                    apellido: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Calcular estadísticas por estudiante
+    const estadisticasMap = new Map<number, {
+      idMatricula: number;
+      nombreAlumno: string;
+      presentes: number;
+      ausentes: number;
+      tardios: number;
+      justificados: number;
+      totalClases: number;
+    }>();
+
+    for (const asistencia of asistencias) {
+      const idMatricula = asistencia.idMatricula;
+      const estado = asistencia.estado;
+      const nombreAlumno = `${asistencia.matricula.alumno.persona.apellido}, ${asistencia.matricula.alumno.persona.nombre}`;
+
+      if (!estadisticasMap.has(idMatricula)) {
+        estadisticasMap.set(idMatricula, {
+          idMatricula,
+          nombreAlumno,
+          presentes: 0,
+          ausentes: 0,
+          tardios: 0,
+          justificados: 0,
+          totalClases: 0
+        });
+      }
+
+      const stats = estadisticasMap.get(idMatricula)!;
+      stats.totalClases += 1;
+
+      if (estado === "Presente") {
+        stats.presentes += 1;
+      } else if (estado === "Ausente") {
+        stats.ausentes += 1;
+      } else if (estado === "Tarde") {
+        stats.tardios += 1;
+      } else if (estado === "Justificado") {
+        stats.justificados += 1;
+      }
+    }
+
+    // Convertir Map a array y ordenar por nombre
+    return Array.from(estadisticasMap.values()).sort((a, b) => 
+      a.nombreAlumno.localeCompare(b.nombreAlumno)
+    );
+  } catch (error: unknown) {
+    console.error("Error en getEstadisticasAsistenciasPorMateriaAction:", error);
     return [];
   }
 }

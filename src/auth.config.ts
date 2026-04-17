@@ -18,14 +18,17 @@ export const authConfig = {
       return true;
     },
     async jwt({ token, user }) {
-      if (user) {
-        token.roles = (user as any).roles;
+      const userRoles = (user as { roles?: string[] } | undefined)?.roles;
+      if (userRoles) {
+        token.roles = userRoles;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token.roles) {
-        (session.user as any).roles = token.roles as string[];
+      const sessionUser = session.user as unknown as { roles?: string[]; [key: string]: unknown };
+      const tokenRoles = (token as { roles?: string[] }).roles;
+      if (tokenRoles) {
+        sessionUser.roles = tokenRoles;
       }
       return session;
     },

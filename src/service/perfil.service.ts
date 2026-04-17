@@ -1,6 +1,6 @@
 import db from "@/lib/db";
 
-function pickMatriculaActual(matriculas: any[]) {
+function pickMatriculaActual(matriculas: Array<{ ciclo?: { estado: boolean; anio: number }; curso?: { grado: string; seccion: string; nivel: string; turno: string }; estadoAcademico?: string }>) {
   if (!matriculas?.length) return null;
 
   // Matrícula del ciclo activo
@@ -110,7 +110,7 @@ export async function getPerfilByIdPersona(idPersona: number) {
 
   const padre = usuario.persona.padre
     ? {
-        hijos: usuario.persona.padre.alumnos.map((ap: any) => ({
+        hijos: usuario.persona.padre.alumnos.map((ap) => ({
           relacion: ap.relacion,
           alumno: {
             // AvatarEditor en hijos
@@ -129,7 +129,7 @@ export async function getPerfilByIdPersona(idPersona: number) {
   const docente = usuario.persona.profesor
     ? {
         fechaIngreso: usuario.persona.profesor.fechaIngreso,
-        asignacionesActivas: usuario.persona.profesor.asignaciones.map((a: any) => ({
+        asignacionesActivas: usuario.persona.profesor.asignaciones.map((a) => ({
           materia: a.materia.nombre,
           cargaHoraria: a.cargaHoraria,
           curso: a.curso,

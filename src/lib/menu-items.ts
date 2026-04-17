@@ -42,7 +42,13 @@ export const menuItems = [
         title: "Asistencias",
         href: "/dashboard/asistencias",
         icon: UserCheck,
-        roles: ["ADMIN", "DOCENTE"]
+        roles: ["DOCENTE"]
+      },
+      {
+        title: "Reporte de Asistencias",
+        href: "/dashboard/asistencias-reporte",
+        icon: UserCheck,
+        roles: ["ADMIN"]
       },
       {
         title: "Horarios",

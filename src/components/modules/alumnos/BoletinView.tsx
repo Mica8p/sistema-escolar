@@ -1,13 +1,31 @@
 "use client";
 
-import { ArrowLeft, Printer, School, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, Printer, School } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function BoletinView({ matricula }: { matricula: any }) {
+interface Nota {
+  nota: number | string;
+  periodo: { nombre: string };
+  asignacion: { materia: { nombre: string } };
+}
+
+interface Asistencia {
+  estado: string;
+}
+
+interface Matricula {
+  notas: Nota[];
+  alumno: { persona: { nombre: string; apellido: string; dni: string }; legajo: string };
+  curso: { grado: string; seccion: string; turno: string; nivel: string };
+  ciclo: { anio: number };
+  asistencias: Asistencia[];
+}
+
+export default function BoletinView({ matricula }: { matricula: Matricula }) {
     const router = useRouter();
     const materiasMap = new Map();
 
-  matricula.notas.forEach((n: any) => {
+  matricula.notas.forEach((n: Nota) => {
     const materiaNombre = n.asignacion.materia.nombre;
     if (!materiasMap.has(materiaNombre)) {
       materiasMap.set(materiaNombre, { t1: 0, t2: 0, t3: 0, dic: 0, notas:[] });
@@ -16,9 +34,9 @@ export default function BoletinView({ matricula }: { matricula: any }) {
     const scores = materiasMap.get(materiaNombre);
     const periodo = n.periodo.nombre;
 
-    if (periodo === "TRIMESTRE_1") scores.t1 = Math.max(scores.t1, n.nota);
-    if (periodo === "TRIMESTRE_2") scores.t2 = Math.max(scores.t2, n.nota);
-    if (periodo === "TRIMESTRE_3") scores.t3 = Math.max(scores.t3, n.nota);
+    if (periodo === "TRIMESTRE_1") scores.t1 = Math.max(scores.t1, Number(n.nota));
+    if (periodo === "TRIMESTRE_2") scores.t2 = Math.max(scores.t2, Number(n.nota));
+    if (periodo === "TRIMESTRE_3") scores.t3 = Math.max(scores.t3, Number(n.nota));
     if (periodo === "DICIEMBRE") scores.dic = n.nota;
     
     scores.notas.push(n.nota);
@@ -101,15 +119,13 @@ export default function BoletinView({ matricula }: { matricula: any }) {
     };
   });
 
-  const handlePrint = () => window.print();
-
   // Cálculo de asistencias para el boletín
   // Reglas especiales: faltas justificadas cuentan como presente, 2 tardanzas cuentan como 1 presente
   const asistencias = matricula.asistencias || [];
-  const presentes = asistencias.filter((a: any) => a.estado === 'Presente').length;
-  const faltasJustificadas = asistencias.filter((a: any) => a.estado === 'Justificado').length;
-  const faltasInjustificadas = asistencias.filter((a: any) => a.estado === 'Ausente').length;
-  const tardanzas = asistencias.filter((a: any) => a.estado === 'Tarde').length;
+  const presentes = asistencias.filter((a: Asistencia) => a.estado === 'Presente').length;
+  const faltasJustificadas = asistencias.filter((a: Asistencia) => a.estado === 'Justificado').length;
+  const faltasInjustificadas = asistencias.filter((a: Asistencia) => a.estado === 'Ausente').length;
+  const tardanzas = asistencias.filter((a: Asistencia) => a.estado === 'Tarde').length;
   
   // Para el boletín
   const presentesBoletin = presentes + faltasJustificadas + (tardanzas / 2); // Justificadas cuentan como presente, 2 tardanzas = 1 presente
@@ -153,21 +169,21 @@ export default function BoletinView({ matricula }: { matricula: any }) {
             </div>
           </div>
           <div className="text-right hidden md:block">
-            <p className="font-black text-slate-800 text-sm print:text-xs">{matricula.curso.grado}° "{matricula.curso.seccion}"</p>
+            <p className="font-black text-slate-800 text-sm print:text-xs">{matricula.curso.grado}° &quot;{matricula.curso.seccion}&quot;</p>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter print:text-[9px]">{matricula.curso.nivel} • TURNO {matricula.curso.turno}</p>
           </div>
         </div>
 
         {/* DATOS ALUMNO */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 print:gap-2 print:mb-2">
-          <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 print:p-2 print:rounded-lg">
+          <div className="bg-slate-50 p-6 rounded-4xl border border-slate-100 print:p-2 print:rounded-lg">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1 print:text-[7px] print:mb-0.5">Estudiante</span>
             <div className="text-2xl font-black text-slate-800 uppercase print:text-sm">
               {matricula.alumno.persona.apellido}, {matricula.alumno.persona.nombre}
             </div>
             <div className="text-sm font-bold text-indigo-500 mt-1 print:text-[10px] print:mt-0.5">Legajo: {matricula.alumno.legajo}</div>
           </div>
-          <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex flex-col justify-center items-end print:p-2 print:rounded-lg print:items-start">
+          <div className="bg-slate-50 p-6 rounded-4xl border border-slate-100 flex flex-col justify-center items-end print:p-2 print:rounded-lg print:items-start">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1 print:text-[7px] print:mb-0.5">DNI</span>
             <div className="text-xl font-bold text-slate-600 print:text-sm">{matricula.alumno.persona.dni}</div>
           </div>
@@ -189,15 +205,12 @@ export default function BoletinView({ matricula }: { matricula: any }) {
             </thead>
             <tbody className="divide-y divide-slate-100 print:divide-gray-200">
               {materiasConEstado.map((m) => {
-                const color = m.estado === 'APROBADA' ? 'emerald' : m.estado === 'A_DICIEMBRE' ? 'amber' : 'rose';
-                const icon = m.estado === 'APROBADA' ? '✓' : m.estado === 'A_DICIEMBRE' ? '→' : '✗';
-                
                 return (
                   <tr key={m.materia} className="hover:bg-slate-50/20 print:hover:bg-transparent">
                     <td className="py-1.5 px-2 font-black text-slate-700 uppercase print:py-1 print:px-1.5">{m.materia}</td>
-                    <td className={`py-1.5 text-center font-bold print:py-1 ${m.t1 >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.t1 || '-'}</td>
-                    <td className={`py-1.5 text-center font-bold print:py-1 ${m.t2 >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.t2 || '-'}</td>
-                    <td className={`py-1.5 text-center font-bold print:py-1 ${m.t3 >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.t3 || '-'}</td>
+                    <td className={`py-1.5 text-center font-bold print:py-1 ${Number(m.t1) >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.t1 || '-'}</td>
+                    <td className={`py-1.5 text-center font-bold print:py-1 ${Number(m.t2) >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.t2 || '-'}</td>
+                    <td className={`py-1.5 text-center font-bold print:py-1 ${Number(m.t3) >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.t3 || '-'}</td>
                     <td className="py-1.5 text-center font-black text-indigo-600 bg-indigo-50/30 print:bg-indigo-50 print:py-1">{m.promedio > 0 ? m.promedio : '-'}</td>
                     {materiasConEstado.some(mat => mat.dic > 0) && (
                       <td className="py-1.5 text-center font-bold text-slate-500 print:py-1">{m.dic || '-'}</td>
@@ -232,9 +245,9 @@ export default function BoletinView({ matricula }: { matricula: any }) {
             <span className="text-[7px] font-black text-rose-600 uppercase tracking-tight">Desaprobadas</span>
             <span className="text-lg font-black text-rose-700 print:text-base">{materiasDesaprobadas}</span>
           </div>
-          <div className={`border p-2 rounded-lg flex flex-col items-center ${porcentajeAsistencia >= 80 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'} print:p-1.5`}>
-            <span className={`text-[7px] font-black uppercase tracking-tight ${porcentajeAsistencia >= 80 ? 'text-blue-600' : 'text-orange-600'}`}>Asistencia</span>
-            <span className={`text-lg font-black print:text-base ${porcentajeAsistencia >= 80 ? 'text-blue-700' : 'text-orange-700'}`}>{porcentajeAsistencia}%</span>
+          <div className={`border p-2 rounded-lg flex flex-col items-center ${Number(porcentajeAsistencia) >= 80 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'} print:p-1.5`}>
+            <span className={`text-[7px] font-black uppercase tracking-tight ${Number(porcentajeAsistencia) >= 80 ? 'text-blue-600' : 'text-orange-600'}`}>Asistencia</span>
+            <span className={`text-lg font-black print:text-base ${Number(porcentajeAsistencia) >= 80 ? 'text-blue-700' : 'text-orange-700'}`}>{porcentajeAsistencia}%</span>
           </div>
         </div>
 
