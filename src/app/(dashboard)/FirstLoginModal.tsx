@@ -2,11 +2,15 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { changePasswordAction } from "@/lib/actions/auth-actions";
-import { LockKeyhole, Save } from "lucide-react";
+import { LockKeyhole, Save, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 export default function FirstLoginModal({ shouldForceChange }: { shouldForceChange?: boolean }) {
   const [isOpen, setIsOpen] = useState(shouldForceChange || false);
+  const [showPasswords, setShowPasswords] = useState({
+    newPassword: false,
+    confirmPassword: false,
+  });
 
   const [state, formAction, isPending] = useActionState(changePasswordAction, null);
 
@@ -55,28 +59,46 @@ export default function FirstLoginModal({ shouldForceChange }: { shouldForceChan
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
               Nueva Contraseña
             </label>
-            <input
-              type="password"
-              name="newPassword"
-              required
-              minLength={6}
-              className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-slate-900 placeholder:text-slate-300 font-medium"
-              placeholder="Mínimo 6 caracteres"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                name="newPassword"
+                required
+                minLength={6}
+                className={`password-input w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 pr-12 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-slate-900 placeholder:text-slate-300 font-medium ${!showPasswords.newPassword ? 'password-hidden' : ''}`}
+                placeholder="Mínimo 6 caracteres"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPasswords((p) => ({ ...p, newPassword: !p.newPassword }))}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                {showPasswords.newPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
               Repetir Contraseña
             </label>
-            <input
-              type="password"
-              name="confirmPassword"
-              required
-              minLength={6}
-              className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-slate-900 placeholder:text-slate-300 font-medium"
-              placeholder="Repetí la contraseña"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                name="confirmPassword"
+                required
+                minLength={6}
+                className={`password-input w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 pr-12 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-slate-900 placeholder:text-slate-300 font-medium ${!showPasswords.confirmPassword ? 'password-hidden' : ''}`}
+                placeholder="Repetí la contraseña"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPasswords((p) => ({ ...p, confirmPassword: !p.confirmPassword }))}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                {showPasswords.confirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button

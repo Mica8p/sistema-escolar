@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cambiarPasswordAction } from "@/lib/actions/perfil-actions";
-import { KeyRound, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { KeyRound, AlertTriangle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 
 type ActionState = {
   ok: boolean;
@@ -26,6 +26,11 @@ export default function CambiarPasswordForm() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const confirmingRef = useRef(false);
+  const [showPasswords, setShowPasswords] = useState({
+    actual: false,
+    nueva: false,
+    confirmar: false,
+  });
 
   const successOpen = state.ok;
 
@@ -93,16 +98,25 @@ export default function CambiarPasswordForm() {
             {/* Contraseña actual */}
             <div className="space-y-1">
               <label className="text-sm font-semibold text-slate-700">Contraseña actual</label>
-              <input
-                name="actual"
-                type="password"
-                required
-                value={actual}
-                onChange={(e) => setActual(e.target.value)}
-                onBlur={() => setTouched((t) => ({ ...t, actual: true }))}
-                placeholder="Tu contraseña actual"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
-              />
+              <div className="relative">
+                <input
+                  name="actual"
+                  type="text"
+                  required
+                  value={actual}
+                  onChange={(e) => setActual(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, actual: true }))}
+                  placeholder="Tu contraseña actual"
+                  className={`password-input w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-10 text-slate-900 outline-none focus:ring-2 focus:ring-slate-300 ${!showPasswords.actual ? 'password-hidden' : ''}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords((p) => ({ ...p, actual: !p.actual }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showPasswords.actual ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               {/* Error: obligatorio */}
               <ErrorText
                 text={
@@ -120,16 +134,25 @@ export default function CambiarPasswordForm() {
             {/* Nueva contraseña */}
             <div className="space-y-1">
               <label className="text-sm font-semibold text-slate-700">Nueva contraseña</label>
-              <input
-                name="nueva"
-                type="password"
-                required
-                value={nueva}
-                onChange={(e) => setNueva(e.target.value)}
-                onBlur={() => setTouched((t) => ({ ...t, nueva: true }))}
-                placeholder="Nueva contraseña"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
-              />
+              <div className="relative">
+                <input
+                  name="nueva"
+                  type="text"
+                  required
+                  value={nueva}
+                  onChange={(e) => setNueva(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, nueva: true }))}
+                  placeholder="Nueva contraseña"
+                  className={`password-input w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-10 text-slate-900 outline-none focus:ring-2 focus:ring-slate-300 ${!showPasswords.nueva ? 'password-hidden' : ''}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords((p) => ({ ...p, nueva: !p.nueva }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showPasswords.nueva ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               <ErrorText text={touched.nueva ? minLenError : null} />
             </div>
 
@@ -138,16 +161,25 @@ export default function CambiarPasswordForm() {
               <label className="text-sm font-semibold text-slate-700">
                 Confirmar nueva contraseña
               </label>
-              <input
-                name="confirmar"
-                type="password"
-                required
-                value={confirmar}
-                onChange={(e) => setConfirmar(e.target.value)}
-                onBlur={() => setTouched((t) => ({ ...t, confirmar: true }))}
-                placeholder="Repetí la nueva contraseña"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
-              />
+              <div className="relative">
+                <input
+                  name="confirmar"
+                  type="text"
+                  required
+                  value={confirmar}
+                  onChange={(e) => setConfirmar(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, confirmar: true }))}
+                  placeholder="Repetí la nueva contraseña"
+                  className={`password-input w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-10 text-slate-900 outline-none focus:ring-2 focus:ring-slate-300 ${!showPasswords.confirmar ? 'password-hidden' : ''}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords((p) => ({ ...p, confirmar: !p.confirmar }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showPasswords.confirmar ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               <ErrorText
                 text={
                   (touched.confirmar || touched.nueva) && mismatch

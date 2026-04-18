@@ -44,10 +44,10 @@ export default function LoginForm() {
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
             <input
               name="password"
-              type={showPassword ? "text" : "password"}
+              type="text"
               required
               placeholder="••••••••"
-              className="w-full pl-11 pr-11 py-3 bg-slate-50 border-2 border-slate-50 rounded-xl text-sm text-slate-700 font-bold outline-none focus:bg-white focus:border-indigo-500 transition-all shadow-inner"
+              className={`password-input w-full pl-11 pr-11 py-3 bg-slate-50 border-2 border-slate-50 rounded-xl text-sm text-slate-700 font-bold outline-none focus:bg-white focus:border-indigo-500 transition-all shadow-inner ${!showPassword ? 'password-hidden' : ''}`}
             />
             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300">
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}

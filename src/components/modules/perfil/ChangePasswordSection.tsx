@@ -92,13 +92,13 @@ export default function ChangePasswordSection() {
         <div className="relative">
           <input
             name="actual"
-            type={showPasswords.actual ? "text" : "password"}
+            type="text"
             required
             value={actual}
             onChange={(e) => setActual(e.target.value)}
             onBlur={() => setTouched((t) => ({ ...t, actual: true }))}
             placeholder="Tu contraseña actual"
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-slate-300 pr-10"
+            className={`password-input w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-slate-300 pr-10 ${!showPasswords.actual ? 'password-hidden' : ''}`}
           />
           <button
             type="button"
@@ -122,13 +122,13 @@ export default function ChangePasswordSection() {
         <div className="relative">
           <input
             name="nueva"
-            type={showPasswords.nueva ? "text" : "password"}
+            type="text"
             required
             value={nueva}
             onChange={(e) => setNueva(e.target.value)}
             onBlur={() => setTouched((t) => ({ ...t, nueva: true }))}
             placeholder="Nueva contraseña"
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-slate-300 pr-10"
+            className={`password-input w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-slate-300 pr-10 ${!showPasswords.nueva ? 'password-hidden' : ''}`}
           />
           <button
             type="button"
@@ -149,13 +149,13 @@ export default function ChangePasswordSection() {
         <div className="relative">
           <input
             name="confirmar"
-            type={showPasswords.confirmar ? "text" : "password"}
+            type="text"
             required
             value={confirmar}
             onChange={(e) => setConfirmar(e.target.value)}
             onBlur={() => setTouched((t) => ({ ...t, confirmar: true }))}
             placeholder="Repetí la nueva contraseña"
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-slate-300 pr-10"
+            className={`password-input w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-slate-300 pr-10 ${!showPasswords.confirmar ? 'password-hidden' : ''}`}
           />
           <button
             type="button"
