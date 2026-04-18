@@ -23,7 +23,7 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
     const adminRole = personas
       .flatMap((p) => p.usuario?.roles ?? [])
       .find((r) => r.rol.nombre.toLowerCase() === "admin");
-    return adminRole ? "activo" : "todos";
+    return adminRole ? "activo" : "activo";
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -59,10 +59,6 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
 
       if (!matchesSearch || !matchesRole) {
         return false;
-      }
-      
-      if (selectedStatus === 'todos') {
-        return true;
       }
 
       // --- STATUS LOGIC ---
@@ -163,7 +159,6 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
         >
           <option value="activo">{isAlumnoRoleSelected ? "Inscriptos" : "Activos"}</option>
           <option value="inactivo">{isAlumnoRoleSelected ? "No Inscriptos" : "Inactivos"}</option>
-          <option value="todos">Todos</option>
         </select>
       </div>
 
