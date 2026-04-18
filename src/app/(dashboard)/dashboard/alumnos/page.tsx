@@ -36,7 +36,7 @@ export default async function AlumnosPage({
   ]);
 
   const puedeInscribir = cicloActivo?.idCiclo === cicloId;
-  const activeFilter = statusToFilter || 'Todos';
+  const activeFilter = statusToFilter || EstadoAcademico.Activo;
 
 
   return (

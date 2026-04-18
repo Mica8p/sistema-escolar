@@ -3,15 +3,14 @@ import { EstadoAcademico } from '@prisma/client';
 import { cn } from '@/lib/utils';
 
 interface StatusFilterProps {
-  currentStatus: EstadoAcademico | 'Todos';
+  currentStatus: EstadoAcademico;
 }
 
-const filterOptions: { label: string; value: EstadoAcademico | 'Todos' }[] = [
+const filterOptions: { label: string; value: EstadoAcademico }[] = [
   { label: 'Activos', value: 'Activo' },
   { label: 'Baja', value: 'Retirado' },
   { label: 'Egresados', value: 'Egresado' },
   { label: 'Suspendidos', value: 'Suspendido' },
-  { label: 'Todos', value: 'Todos' },
 ];
 
 export function StatusFilter({ currentStatus }: StatusFilterProps) {
