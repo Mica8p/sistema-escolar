@@ -203,7 +203,10 @@ export async function getCalificacionesHijo(idAlumno: number, idCiclo: number) {
         idCiclo: idCiclo
       }
     },
-    include: {
+    select: {
+      idNota: true,
+      nota: true,
+      observacion: true,
       asignacion: {
         include: {
           materia: true
@@ -345,8 +348,9 @@ export async function getDocenteDashboardPendingNotifications(idProfesor: number
         (periodo.fechaFin.getTime() - ahora.getTime()) / (1000 * 60 * 60 * 24)
       );
 
-      // Solo considerar períodos que cierran en 1 o 2 días
-      if (diasFaltantes < 1 || diasFaltantes > 2) {
+      // Mostrar notificaciones para períodos que cierran en los próximos 10 días
+      // diasFaltantes puede ser 0 (hoy), 1 (mañana), hasta 10 días
+      if (diasFaltantes < 0 || diasFaltantes > 10) {
         continue;
       }
 

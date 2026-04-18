@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Award, ChevronDown, Calendar } from "lucide-react";
+import { Award, ChevronDown, Calendar, FileText } from "lucide-react";
 
 interface Nota {
   idNota: number;
   nota: number;
+  observacion?: string | null;
   asignacion: {
     materia: { nombre: string };
   };
@@ -54,12 +55,22 @@ export default function SeccionCalificaciones({ notas }: { notas: Nota[] }) {
 
               <div className="p-5 pt-0 bg-slate-50/30 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {notasMateria.map((n: Nota) => (
-                  <div key={n.idNota} className="bg-white p-3 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <Calendar size={14} className="text-slate-400" />
-                      <span className="text-[10px] font-bold text-slate-500 uppercase">{n.periodo.nombre}</span>
+                  <div key={n.idNota} className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex items-center gap-3">
+                        <Calendar size={14} className="text-slate-400" />
+                        <span className="text-[10px] font-bold text-slate-500 uppercase">{n.periodo.nombre}</span>
+                      </div>
+                      <span className="text-lg font-black text-slate-800">{n.nota}</span>
                     </div>
-                    <span className="text-lg font-black text-slate-800">{n.nota}</span>
+                    {n.observacion && (
+                      <div className="mt-2 pt-2 border-t border-slate-100">
+                        <div className="flex items-start gap-2">
+                          <FileText size={12} className="text-slate-400 mt-0.5 shrink-0" />
+                          <p className="text-[11px] text-slate-600 leading-snug">{n.observacion}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

@@ -240,8 +240,8 @@ useEffect(() => {
                     </label>
                     <p className="text-xs text-slate-600 italic">Seleccioná los alumnos que son hijos de este padre</p>
                     
-                    {/* Buscador */}
-                    <div className="relative">
+                    {/* Buscador (Sticky) */}
+                    <div className="sticky top-0 z-10 bg-blue-50 -mx-4 px-4 py-2 mb-2 border-b border-blue-200">
                         <input
                             type="text"
                             placeholder="Buscar alumno por nombre o apellido..."
@@ -251,8 +251,8 @@ useEffect(() => {
                         />
                     </div>
 
-                    {/* Lista de alumnos */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+                    {/* Lista de alumnos con scroll */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-2">
                         {filteredAlumnos.length > 0 ? (
                             filteredAlumnos.map((alumno) => (
                                 <label key={alumno.idAlumno} className="flex items-center gap-2 p-2 hover:bg-blue-100 rounded cursor-pointer">

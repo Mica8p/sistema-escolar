@@ -27,7 +27,7 @@ export default function EditarMovimientoModal({
   const [cantidad, setCantidad] = useState(() => String(movimiento?.cantidad ?? 0));
   const [monto, setMonto] = useState(() => String(movimiento?.gastos?.[0]?.monto ?? ""));
   const [concepto, setConcepto] = useState(() => movimiento?.gastos?.[0]?.concepto ?? "");
-  const [categoria, setCategoria] = useState<"Insumos" | "Servicios" | "Mantenimiento" | "Sueldos">(() => (movimiento?.gastos?.[0]?.categoria as any) ?? "Insumos");
+  const [categoria, setCategoria] = useState<"Insumos" | "Servicios" | "Mantenimiento" | "Sueldos">(() => (movimiento?.gastos?.[0]?.categoria as "Insumos" | "Servicios" | "Mantenimiento" | "Sueldos") ?? "Insumos");
 
   if (!open || !movimiento) return null;
 
@@ -141,7 +141,7 @@ export default function EditarMovimientoModal({
                     <label className="text-sm font-medium text-gray-700">Categoría</label>
                     <select
                       value={categoria}
-                      onChange={(e) => setCategoria(e.target.value as any)}
+                      onChange={(e) => setCategoria(e.target.value as "Insumos" | "Servicios" | "Mantenimiento" | "Sueldos")}
                       className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     >
                       <option value="Insumos">Insumos</option>

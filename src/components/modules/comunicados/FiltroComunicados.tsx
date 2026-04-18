@@ -34,9 +34,11 @@ interface Comunicado {
 interface FiltroProps {
   data: Comunicado[];
   isEnviados?: boolean;
+  rolPrincipal?: string;
+  idsProfesoresHijos?: number[];
 }
 
-export default function FiltroComunicados({ data, isEnviados }: FiltroProps) {
+export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsProfesoresHijos = [] }: FiltroProps) {
   const [search, setSearch] = useState("");
   const [targetFilter, setTargetFilter] = useState("TODOS_FILTRO");
   const [dateFilter, setDateFilter] = useState("");
@@ -47,15 +49,37 @@ export default function FiltroComunicados({ data, isEnviados }: FiltroProps) {
         item.titulo.toLowerCase().includes(search.toLowerCase()) ||
         item.contenido.toLowerCase().includes(search.toLowerCase());
 
-      const matchesTarget =
-        targetFilter === "TODOS_FILTRO" || item.target === targetFilter;
+      let matchesTarget = true;
+
+      // Filtrado diferente para PADRES
+      if (rolPrincipal === "PADRE") {
+        if (targetFilter === "TODOS_FILTRO") {
+          // Mostrar todos válidos para padres
+          matchesTarget = item.target === "TODOS" || item.target === "PADRES" || item.target === "CURSO" || idsProfesoresHijos.includes(item.idUsuario);
+        } else if (targetFilter === "TODOS") {
+          // Públicos
+          matchesTarget = item.target === "TODOS";
+        } else if (targetFilter === "PADRES") {
+          // Para padres
+          matchesTarget = item.target === "PADRES";
+        } else if (targetFilter === "PROFESORES") {
+          // De profesores
+          matchesTarget = idsProfesoresHijos.includes(item.idUsuario);
+        } else if (targetFilter === "ADMIN") {
+          // Del admin: públicos o para padres que NO sean de profesores
+          matchesTarget = (item.target === "TODOS" || item.target === "PADRES") && !idsProfesoresHijos.includes(item.idUsuario);
+        }
+      } else {
+        // Filtrado original para otros roles
+        matchesTarget = targetFilter === "TODOS_FILTRO" || item.target === targetFilter;
+      }
 
       const matchesDate =
         !dateFilter || new Date(item.fecha).toLocaleDateString() === new Date(dateFilter + "T12:00:00").toLocaleDateString();
 
       return matchesSearch && matchesTarget && matchesDate;
     });
-  }, [data, search, targetFilter, dateFilter]);
+  }, [data, search, targetFilter, dateFilter, rolPrincipal, idsProfesoresHijos]);
 
   return (
     <div className="space-y-8">
@@ -80,11 +104,23 @@ export default function FiltroComunicados({ data, isEnviados }: FiltroProps) {
             onChange={(e) => setTargetFilter(e.target.value)}
             className="w-full pl-12 pr-8 py-4 bg-indigo-50/30 border border-transparent rounded-[1.8rem] text-[11px] font-black uppercase tracking-widest focus:bg-white focus:border-indigo-200 focus:ring-4 focus:ring-indigo-50/50 appearance-none cursor-pointer transition-all text-indigo-700"
           >
-            <option value="TODOS_FILTRO">Destinatarios</option>
-            <option value="TODOS">Público: Todos</option>
-            <option value="PADRES">Sólo Padres</option>
-            <option value="DOCENTES">Sólo Docentes</option>
-            <option value="CURSO">Cursos Específicos</option>
+            {rolPrincipal === "PADRE" ? (
+              <>
+                <option value="TODOS_FILTRO">Todos los comunicados</option>
+                <option value="TODOS">📢 Públicos</option>
+                <option value="PADRES">👨‍👩‍👧 Para padres</option>
+                <option value="PROFESORES">👨‍🏫 Mis profesores</option>
+                <option value="ADMIN">🏛️ Administración</option>
+              </>
+            ) : (
+              <>
+                <option value="TODOS_FILTRO">Destinatarios</option>
+                <option value="TODOS">Público: Todos</option>
+                <option value="PADRES">Sólo Padres</option>
+                <option value="DOCENTES">Sólo Docentes</option>
+                <option value="CURSO">Cursos Específicos</option>
+              </>
+            )}
           </select>
         </div>
 

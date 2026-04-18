@@ -45,17 +45,57 @@ export default async function ComunicadosPage() {
     getComunicadosRecibidos(idUsuario, rolPrincipal, []) // Inicializar con array vacío
   ]);
 
-  // Obtener IDs de cursos después si es necesario
+  // Obtener IDs de cursos y profesores después si es necesario
   let idsCursosHijos: number[] = [];
+  let idsProfesoresHijos: number[] = [];
+  
   if (rolPrincipal === "PADRE" && hijos.length > 0) {
     idsCursosHijos = hijos.flatMap(h => h.alumno.matriculas.map(m => m.idCurso));
-    // Si hay cursos, obtener comunicados nuevamente con los IDs correctos
+    
+    // Obtener IDs de usuarios de profesores que enseñan en los cursos de los hijos
     if (idsCursosHijos.length > 0) {
+      const profesoresEnCursos = await db.asignacionAcademica.findMany({
+        where: {
+          idCurso: { in: idsCursosHijos },
+          estado: true,
+          idProfesor: { not: null }
+        },
+        distinct: ['idProfesor'],
+        select: {
+          profesor: {
+            select: {
+              persona: {
+                select: {
+                  idPersona: true
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Obtener IDs de usuarios de esos profesores
+      if (profesoresEnCursos.length > 0) {
+        const idspersonasProfs = profesoresEnCursos
+          .map(p => p.profesor?.persona?.idPersona)
+          .filter((id): id is number => id !== undefined);
+
+        if (idspersonasProfs.length > 0) {
+          const usuariosProfs = await db.usuario.findMany({
+            where: { idPersona: { in: idspersonasProfs } },
+            select: { idUsuario: true }
+          });
+          idsProfesoresHijos = usuariosProfs.map(u => u.idUsuario);
+        }
+      }
+      
       const comunicadosActualizados = await getComunicadosRecibidos(idUsuario, rolPrincipal, idsCursosHijos);
       return (
         <ComunicadosContent 
           comunicados={comunicadosActualizados}
           puedeCrear={puedeCrear}
+          rolPrincipal={rolPrincipal}
+          idsProfesoresHijos={idsProfesoresHijos}
         />
       );
     }
@@ -65,11 +105,13 @@ export default async function ComunicadosPage() {
     <ComunicadosContent 
       comunicados={comunicados}
       puedeCrear={puedeCrear}
+      rolPrincipal={rolPrincipal}
+      idsProfesoresHijos={idsProfesoresHijos}
     />
   );
 }
 
-function ComunicadosContent({ comunicados, puedeCrear }: { comunicados: ComunicadoWithIncludes[]; puedeCrear: boolean }) {
+function ComunicadosContent({ comunicados, puedeCrear, rolPrincipal, idsProfesoresHijos }: { comunicados: ComunicadoWithIncludes[]; puedeCrear: boolean; rolPrincipal: string; idsProfesoresHijos: number[] }) {
   return (
     <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">
       <header className="flex justify-between items-center max-w-6xl mx-auto w-full">
@@ -90,7 +132,7 @@ function ComunicadosContent({ comunicados, puedeCrear }: { comunicados: Comunica
       </header>
 
       <main className="max-w-6xl mx-auto w-full">
-        <FiltroComunicados data={comunicados} isEnviados={false} />
+        <FiltroComunicados data={comunicados} isEnviados={false} rolPrincipal={rolPrincipal} idsProfesoresHijos={idsProfesoresHijos} />
       </main>
     </div>
   );
