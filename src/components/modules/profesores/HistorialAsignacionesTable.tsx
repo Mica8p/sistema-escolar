@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { History, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { History, Clock, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import ReincorporarButton from '@/components/modules/profesores/ReincorporarButton';
 import DeleteErrorButton from '@/components/modules/profesores/DeleteErrorButton';
 
@@ -30,20 +30,41 @@ interface HistorialAsignacion {
   profesor: ProfesorHistorial | null;
   materia: Materia;
   curso: Curso;
-  // Add other properties if needed from the reg object
+  fechaBaja: Date | null;
 }
 
 interface HistorialAsignacionesTableProps {
   historial: HistorialAsignacion[];
 }
 
+// Nombres de meses en español
+const MESES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
 export function HistorialAsignacionesTable({ historial }: HistorialAsignacionesTableProps) {
+  const today = new Date();
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth()); // Default to current month
   const itemsPerPage = 5; // Mostrar 5 elementos por página
 
-  const totalPages = Math.ceil(historial.length / itemsPerPage);
+  // Filtrar historial por mes seleccionado
+  const filteredHistorial = historial.filter(reg => {
+    if (!reg.fechaBaja) return false;
+    const fecha = new Date(reg.fechaBaja);
+    return fecha.getMonth() === selectedMonth;
+  });
+
+  const totalPages = Math.ceil(filteredHistorial.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedHistorial = historial.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedHistorial = filteredHistorial.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset to page 1 when filter changes
+  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedMonth(Number(e.target.value));
+    setCurrentPage(1);
+  };
 
   return (
     <div className="mt-12 space-y-4">
@@ -51,6 +72,35 @@ export function HistorialAsignacionesTable({ historial }: HistorialAsignacionesT
         <History className="h-6 w-6 text-slate-400" />
         Memoria Académica (Bajas y Reemplazos)
       </h2>
+
+      {/* Filter Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Calendar size={18} className="text-slate-500" />
+            <label htmlFor="month-filter" className="text-sm font-semibold text-slate-600">
+              Mes:
+            </label>
+            <select
+              id="month-filter"
+              value={selectedMonth}
+              onChange={handleMonthChange}
+              className="px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 bg-white hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              {MESES.map((mes, index) => (
+                <option key={index} value={index}>
+                  {mes}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="text-sm text-slate-500">
+            {filteredHistorial.length} registro{filteredHistorial.length !== 1 ? 's' : ''} en {MESES[selectedMonth]}
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-slate-50 border-b border-slate-200">
@@ -88,7 +138,7 @@ export function HistorialAsignacionesTable({ historial }: HistorialAsignacionesT
             ) : (
               <tr>
                 <td colSpan={3} className="p-10 text-center text-gray-400 italic">
-                  No hay registros en la memoria académica.
+                  No hay bajas registradas en {MESES[selectedMonth]}.
                 </td>
               </tr>
             )}
@@ -99,7 +149,7 @@ export function HistorialAsignacionesTable({ historial }: HistorialAsignacionesT
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-slate-200 pt-4 mt-4 px-4 pb-4">
             <div className="text-sm text-slate-500">
-              Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, historial.length)} de {historial.length} resultados
+              Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, filteredHistorial.length)} de {filteredHistorial.length} resultados
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600">

@@ -145,3 +145,12 @@ export async function reincorporarDocenteAction(idAsignacion: number) {
     return { success: false, message: error instanceof Error ? error.message : "Error inesperado." };
   }
 }
+
+export async function getHistorialAsignacionesByCicloAction(idCiclo: number) {
+  try {
+    return await ProfesorService.getHistorialAsignaciones(idCiclo);
+  } catch (error: unknown) {
+    console.error("Error al obtener historial:", error);
+    throw error;
+  }
+}
