@@ -226,10 +226,11 @@ model CicloLectivo {
   anio    Int     @unique
   estado  Boolean
 
-  periodos     PeriodoAcademico[]
-  asignaciones AsignacionAcademica[]
-  matriculas   Matricula[]
-  cargos       Cargo[]
+  periodos         PeriodoAcademico[]
+  asignaciones     AsignacionAcademica[]
+  matriculas       Matricula[]
+  cargos           Cargo[]
+  conceptosDePago  ConceptoDePago[]
 
   @@map("CICLO_LECTIVO")
 }
@@ -383,14 +384,17 @@ model Asistencia {
  */
 model ConceptoDePago {
   id               Int      @id @default(autoincrement())
-  nombre           String   @unique
+  idCiclo          Int
+  nombre           String
   descripcion      String?
   montoFijo        Float?
   fechaVencimiento DateTime?
   cargos           Cargo[]
+  ciclo            CicloLectivo @relation(fields: [idCiclo], references: [idCiclo])
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
+  @@unique([idCiclo, nombre])
   @@map("CONCEPTO_PAGO")
 }
 

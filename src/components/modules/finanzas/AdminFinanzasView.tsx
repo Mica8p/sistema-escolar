@@ -11,9 +11,10 @@ import { AlumnoConDeuda } from "@/service/finanzas.service";
 interface Props {
   conceptos: ConceptoDePago[];
   alumnosDeudores: AlumnoConDeuda[];
+  esElCicloActivo: boolean;
 }
 
-export default function AdminFinanzasView({ conceptos, alumnosDeudores }: Props) {
+export default function AdminFinanzasView({ conceptos, alumnosDeudores, esElCicloActivo }: Props) {
   const [conceptoAEditar, setConceptoAEditar] = useState<ConceptoDePago | undefined>(undefined);
 
   return (
@@ -23,12 +24,20 @@ export default function AdminFinanzasView({ conceptos, alumnosDeudores }: Props)
         Administración Financiera
       </h1>
 
+      {!esElCicloActivo && (
+        <div className="p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg flex items-center gap-2">
+          <span className="text-lg">⚠️</span>
+          <span>Solo puedes crear pagos y cuotas en el ciclo lectivo activo. Este es un ciclo archivado para consulta.</span>
+        </div>
+      )}
+
       {/* Panel de Control de Conceptos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">
           <ConceptoForm
             conceptoAEditar={conceptoAEditar}
             onCancel={() => setConceptoAEditar(undefined)}
+            esElCicloActivo={esElCicloActivo}
           />
         </div>
         <div className="md:col-span-2 bg-white p-6 rounded-lg shadow border border-gray-100">

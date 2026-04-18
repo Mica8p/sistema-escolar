@@ -18,7 +18,14 @@ export async function cambiarCiclo(idCiclo: number) {
     path: "/",
   });
 
-  revalidatePath("/");
+  revalidatePath("/dashboard/finanzas");
+  revalidatePath("/dashboard/finanzas/reporte-deudores");
+  revalidatePath("/dashboard/finanzas/[id]");
+  revalidatePath("/dashboard/profesores");
+  revalidatePath("/dashboard/asistencias");
+  revalidatePath("/dashboard/calificaciones");
+  revalidatePath("/dashboard/alumnos");
+  revalidatePath("/dashboard");
 }
 
 export async function createCiclo(data: { anio: number, estado: boolean }) {

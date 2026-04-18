@@ -41,15 +41,16 @@ export async function registrarPagoAction(data: Omit<RegistrarPagoData, 'usuario
 
 export async function createConceptoAction(data: ConceptoDePagoData) {
     try {
+        const cicloId = await getCicloActual();
         const concepto = await createConcepto({
             nombre: data.nombre,
             descripcion: data.descripcion,
             montoFijo: data.montoFijo,
-            fechaVencimiento: data.fechaVencimiento
+            fechaVencimiento: data.fechaVencimiento,
+            idCiclo: cicloId
         });
 
         // Generar deudas para todos los alumnos
-        const cicloId = await getCicloActual();
         if (cicloId && concepto.montoFijo) {
             await crearCargoMasivo(cicloId, concepto.id, concepto.montoFijo, concepto.fechaVencimiento);
         }
@@ -64,11 +65,13 @@ export async function createConceptoAction(data: ConceptoDePagoData) {
 
 export async function updateConceptoAction(id: number, data: ConceptoDePagoData) {
     try {
+        const cicloId = await getCicloActual();
         await updateConcepto(id, {
             nombre: data.nombre,
             descripcion: data.descripcion,
             montoFijo: data.montoFijo,
-            fechaVencimiento: data.fechaVencimiento
+            fechaVencimiento: data.fechaVencimiento,
+            idCiclo: cicloId
         });
         await db.cargo.updateMany({
             where: { conceptoId: id },

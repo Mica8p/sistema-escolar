@@ -3,6 +3,7 @@
 import { ProfesorService } from "@/service/profesor.service";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getCicloActivoDelSistema } from "@/lib/ciclo-session";
 
 export type FormState = {
   error?: string;
@@ -14,6 +15,12 @@ export async function asignarDocenteAction(prevState: FormState, formData: FormD
   const idPersona = Number(formData.get("idPersona"));
   const idMateria = Number(formData.get("idMateria"));
   const idCurso = Number(formData.get("idCurso"));
+
+  // Validar que sea el ciclo activo
+  const cicloActivoDelSistema = await getCicloActivoDelSistema();
+  if (idCiclo !== cicloActivoDelSistema?.idCiclo) {
+    return { error: "Solo puedes crear asignaciones en el ciclo lectivo activo." };
+  }
 
   const slots: { dia: string, hora: string }[] = [];
   for (const [key, value] of formData.entries()) {
@@ -54,6 +61,13 @@ export async function editarDocenteAction(prevState: FormState, formData: FormDa
   const idAsignacion = Number(formData.get("idAsignacion"));
   const idMateria = Number(formData.get("idMateria"));
   const idCurso = Number(formData.get("idCurso"));
+  const idCiclo = Number(formData.get("idCiclo"));
+
+  // Validar que sea el ciclo activo
+  const cicloActivoDelSistema = await getCicloActivoDelSistema();
+  if (idCiclo !== cicloActivoDelSistema?.idCiclo) {
+    return { error: "Solo puedes editar asignaciones en el ciclo lectivo activo." };
+  }
 
   const slots: { dia: string, hora: string }[] = [];
   for (const [key, value] of formData.entries()) {

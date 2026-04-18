@@ -27,3 +27,9 @@ export async function getCicloActual() {
 
   return cicloActivo.idCiclo;
 }
+
+export async function getCicloActivoDelSistema() {
+  return await db.cicloLectivo.findFirst({
+    where: { estado: true }
+  });
+}

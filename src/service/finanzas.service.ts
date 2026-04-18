@@ -19,7 +19,7 @@ export type AlumnoConDeuda = {
   nombrePadre: string;
 };
 
-export async function getAlumnosConEstadoDeCuenta(): Promise<AlumnoConDeuda[]> {
+export async function getAlumnosConEstadoDeCuenta(cicloId?: number): Promise<AlumnoConDeuda[]> {
   const alumnos = await db.alumno.findMany({
     include: {
       persona: true,
@@ -35,6 +35,7 @@ export async function getAlumnosConEstadoDeCuenta(): Promise<AlumnoConDeuda[]> {
           estado: {
             in: ["Pendiente", "Parcial", "Vencido"],
           },
+          ...(cicloId && { cicloId }),
         },
         include: {
           pagoDetalles: true,
@@ -42,9 +43,7 @@ export async function getAlumnosConEstadoDeCuenta(): Promise<AlumnoConDeuda[]> {
       },
       matriculas: {
         where: {
-          ciclo: {
-            estado: true,
-          },
+          ...(cicloId ? { idCiclo: cicloId } : { ciclo: { estado: true } }),
         },
         include: {
           curso: true,
@@ -94,18 +93,23 @@ export async function getAlumnosConEstadoDeCuenta(): Promise<AlumnoConDeuda[]> {
  * Obtiene el detalle completo de la cuenta de un alumno, incluyendo todos sus cargos y pagos.
  * @param alumnoId - El ID del alumno
  */
-export async function getDetalleCuenta(alumnoId: number) {
+export async function getDetalleCuenta(alumnoId: number, cicloId?: number) {
   const alumno = await db.alumno.findUnique({
     where: { idAlumno: alumnoId },
     include: {
       persona: true,
       matriculas: {
-        where: { ciclo: { estado: true } },
+        where: {
+          ...(cicloId ? { idCiclo: cicloId } : { ciclo: { estado: true } }),
+        },
         include: {
           curso: true,
         },
       },
       cargos: {
+        where: {
+          ...(cicloId && { cicloId }),
+        },
         include: {
           concepto: true,
           pagoDetalles: {
@@ -119,6 +123,15 @@ export async function getDetalleCuenta(alumnoId: number) {
         },
       },
       pagos: {
+        where: cicloId ? {
+          detalles: {
+            some: {
+              cargo: {
+                cicloId: cicloId
+              }
+            }
+          }
+        } : undefined,
         include: {
           detalles: {
             include: {
@@ -333,8 +346,11 @@ export async function crearCargoManual(data: {
  * =======================
  */
 
-export async function getConceptosDePago() {
+export async function getConceptosDePago(cicloId?: number) {
   return db.conceptoDePago.findMany({
+    where: {
+      ...(cicloId && { idCiclo: cicloId }),
+    },
     orderBy: {
       nombre: 'asc'
     }
@@ -346,15 +362,23 @@ export type ConceptoDePagoData = {
   descripcion?: string;
   montoFijo?: number;
   fechaVencimiento?: Date;
+  idCiclo?: number;
 }
 
 export async function createConceptoDePago(data: ConceptoDePagoData) {
+  if (!data.idCiclo) {
+    throw new Error("El ciclo es obligatorio para crear un concepto.");
+  }
+
   const existing = await db.conceptoDePago.findFirst({
-    where: { nombre: data.nombre },
+    where: {
+      idCiclo: data.idCiclo,
+      nombre: data.nombre
+    },
   });
 
   if (existing) {
-    throw new Error(`El concepto "${data.nombre}" ya existe.`);
+    throw new Error(`El concepto "${data.nombre}" ya existe en este ciclo.`);
   }
 
   const concepto = await db.conceptoDePago.create({
@@ -362,7 +386,8 @@ export async function createConceptoDePago(data: ConceptoDePagoData) {
       nombre: data.nombre,
       descripcion: data.descripcion,
       montoFijo: data.montoFijo ?? 0,
-      fechaVencimiento: data.fechaVencimiento || null
+      fechaVencimiento: data.fechaVencimiento || null,
+      idCiclo: data.idCiclo
     }
   });
   revalidatePath("/dashboard/finanzas/conceptos");
@@ -370,13 +395,18 @@ export async function createConceptoDePago(data: ConceptoDePagoData) {
 }
 
 export async function updateConceptoDePago(id: number, data: ConceptoDePagoData) {
+  if (!data.idCiclo) {
+    throw new Error("El ciclo es obligatorio para actualizar un concepto.");
+  }
+
   const concepto = await db.conceptoDePago.update({
     where: { id },
     data: {
       nombre: data.nombre,
       descripcion: data.descripcion,
       montoFijo: data.montoFijo ?? 0,
-      fechaVencimiento: data.fechaVencimiento || null
+      fechaVencimiento: data.fechaVencimiento || null,
+      idCiclo: data.idCiclo
     }
   });
   revalidatePath("/dashboard/finanzas/conceptos");

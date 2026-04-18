@@ -87,6 +87,7 @@ interface Props {
   idCiclo: number;
   diasHabiles: DiaHabil[];
   bloquesHorario: BloqueHorario[];
+  esElCicloActivo: boolean;
 }
 
 const initialState: FormState = {};
@@ -99,6 +100,7 @@ export default function FormAsignacion({
   idCiclo,
   diasHabiles,
   bloquesHorario,
+  esElCicloActivo,
 }: Props) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -245,6 +247,13 @@ export default function FormAsignacion({
         </div>
       )}
 
+      {!esElCicloActivo && (
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md flex items-center gap-2 text-sm">
+          <AlertCircle size={18} /> 
+          <span>Solo puedes crear asignaciones en el ciclo lectivo activo. Este es un ciclo archivado para consulta.</span>
+        </div>
+      )}
+
       <form
         ref={formRef}
         action={formAction}
@@ -343,11 +352,11 @@ export default function FormAsignacion({
         <div className="flex gap-2">
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || !esElCicloActivo}
             className={`flex-1 font-bold py-2 rounded-md transition-colors ${
               editData
-                ? "bg-blue-600 hover:bg-blue-700 text-white"
-                : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                ? "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-blue-300"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white disabled:bg-indigo-300"
             }`}
           >
             {isPending ? "Guardando..." : editData ? "Actualizar" : "Asignar"}

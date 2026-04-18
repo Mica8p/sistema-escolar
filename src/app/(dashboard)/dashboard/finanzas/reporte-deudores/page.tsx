@@ -1,4 +1,5 @@
 import { getAlumnosConEstadoDeCuenta } from "@/service/finanzas.service";
+import { getCicloActual } from "@/lib/ciclo-session";
 import ReporteDeudoresTable from "@/components/modules/finanzas/ReporteDeudoresTable";
 import PaginationControls from "@/components/shared/PaginationControls";
 
@@ -8,7 +9,8 @@ export default async function ReporteDeudoresPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await searchParams;
-  const todosLosAlumnos = await getAlumnosConEstadoDeCuenta();
+  const idCicloActual = await getCicloActual();
+  const todosLosAlumnos = await getAlumnosConEstadoDeCuenta(idCicloActual);
 
   const deudores = todosLosAlumnos
     .filter((a) => a.deudaTotal > 0)

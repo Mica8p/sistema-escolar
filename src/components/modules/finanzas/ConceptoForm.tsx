@@ -15,7 +15,7 @@ type FormValues = {
   fechaVencimiento: string;
 };
 
-export function ConceptoForm({ conceptoAEditar, onCancel }: { conceptoAEditar?: ConceptoDePago, onCancel?: () => void }) {
+export function ConceptoForm({ conceptoAEditar, onCancel, esElCicloActivo = true }: { conceptoAEditar?: ConceptoDePago, onCancel?: () => void, esElCicloActivo?: boolean }) {
   const [isPending, startTransition] = useTransition();
   const isEditing = !!conceptoAEditar;
 
@@ -153,7 +153,7 @@ export function ConceptoForm({ conceptoAEditar, onCancel }: { conceptoAEditar?: 
         {/* BOTÓN DE ACCIÓN */}
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || !esElCicloActivo}
           className="relative w-full flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-slate-200 hover:bg-indigo-600 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:bg-slate-300 disabled:scale-100 overflow-hidden mt-4"
         >
           {isPending ? (
@@ -161,7 +161,7 @@ export function ConceptoForm({ conceptoAEditar, onCancel }: { conceptoAEditar?: 
           ) : (
             <>
               <Save size={14} />
-              Guardar Concepto
+              {esElCicloActivo ? "Guardar Concepto" : "Solo disponible en ciclo activo"}
             </>
           )}
         </button>

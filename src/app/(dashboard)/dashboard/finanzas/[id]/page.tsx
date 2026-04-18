@@ -1,4 +1,5 @@
 import { getDetalleCuenta } from "@/service/finanzas.service";
+import { getCicloActual } from "@/lib/ciclo-session";
 import EstadoCuentaSummary from "@/components/modules/finanzas/EstadoCuentaSummary";
 import CargosList from "@/components/modules/finanzas/CargosList";
 import PagosList from "@/components/modules/finanzas/PagosList";
@@ -7,7 +8,8 @@ import { DollarSign, ReceiptText } from "lucide-react";
 
 export default async function DetalleFinancieroPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const alumno = await getDetalleCuenta(Number(id));
+  const idCicloActual = await getCicloActual();
+  const alumno = await getDetalleCuenta(Number(id), idCicloActual);
 
   return (
     <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">

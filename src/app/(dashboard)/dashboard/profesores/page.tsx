@@ -2,7 +2,7 @@ import { ProfesorService } from "@/service/profesor.service";
 import { AlumnoService } from "@/service/alumno.service";
 import { Briefcase } from "lucide-react"; // Remove unused imports
 import FormAsignacion from "./FormAsignacion";
-import { getCicloActual } from "@/lib/ciclo-session";
+import { getCicloActual, getCicloActivoDelSistema } from "@/lib/ciclo-session";
 import db from "@/lib/db";
 import { ImportarAsignaciones } from "@/components/modules/profesores/ImportarAsignaciones";
 import { AsignacionesList } from "./AsignacionesList";
@@ -32,26 +32,26 @@ export default async function DocentesPage({ searchParams }: PageProps) {
 
   let idCicloActual = await getCicloActual();
 
-  // Obtener ciclo actual y ciclo fallback en paralelo (sin depender uno del otro)
-  const [cicloActualInfo, cicloFallback, todosLosCiclos] = await Promise.all([
+  // Obtener ciclo activo y ciclo fallback en paralelo (sin depender uno del otro)
+  const [cicloActualInfo, cicloActivoDelSistema, todosLosCiclos] = await Promise.all([
     db.cicloLectivo.findUnique({ where: { idCiclo: idCicloActual } }),
-    db.cicloLectivo.findFirst({
-      where: { estado: true },
-      orderBy: { anio: 'desc' }
-    }),
+    getCicloActivoDelSistema(),
     db.cicloLectivo.findMany({
       orderBy: { anio: 'desc' }
     })
   ]);
 
-  // Si no existe el ciclo actual pero hay uno en fallback, usar ese
-  if (!cicloActualInfo && cicloFallback) {
-    idCicloActual = cicloFallback.idCiclo;
+  // Si no existe el ciclo actual pero hay uno activo, usar ese
+  if (!cicloActualInfo && cicloActivoDelSistema) {
+    idCicloActual = cicloActivoDelSistema.idCiclo;
   }
 
   // Obtener ciclo anterior usando el array de todos los ciclos (sin query adicional)
-  const cicloActualAnio = cicloActualInfo?.anio ?? cicloFallback?.anio ?? 0;
+  const cicloActualAnio = cicloActualInfo?.anio ?? cicloActivoDelSistema?.anio ?? 0;
   const cicloAnterior = todosLosCiclos.find(c => c.anio === cicloActualAnio - 1) || null;
+
+  // Verificar si el ciclo actual es el activo del sistema
+  const esElCicloActivo = idCicloActual === cicloActivoDelSistema?.idCiclo;
 
   // Ejecutar todas las queries restantes en paralelo
   const [
@@ -111,6 +111,7 @@ export default async function DocentesPage({ searchParams }: PageProps) {
         idCiclo={idCicloActual}
         diasHabiles={diasHabiles}
         bloquesHorario={bloquesHorario}
+        esElCicloActivo={esElCicloActivo}
       />
 
       <AsignacionesList 

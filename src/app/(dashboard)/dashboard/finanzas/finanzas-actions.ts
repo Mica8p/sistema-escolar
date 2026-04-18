@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import db from "@/lib/db";
-import { getCicloActual } from "@/lib/ciclo-session";
+import { getCicloActual, getCicloActivoDelSistema } from "@/lib/ciclo-session";
 import { crearCargoMasivo } from "@/service/finanzas.service";
 
 const CreateDeudaSchema = z.object({
@@ -31,6 +31,26 @@ export type State =
 
 
 export async function createDeuda(prevState: State, formData: FormData): Promise<State> {
+  try {
+    // Validar que sea el ciclo activo
+    const [cicloActual, cicloActivoDelSistema] = await Promise.all([
+      getCicloActual(),
+      getCicloActivoDelSistema()
+    ]);
+
+    if (cicloActual !== cicloActivoDelSistema?.idCiclo) {
+      return {
+        errors: {},
+        message: "Solo puedes crear deudas en el ciclo lectivo activo."
+      };
+    }
+  } catch {
+    return {
+      errors: {},
+      message: "Error al validar el ciclo lectivo."
+    };
+  }
+
   const validatedFields = CreateDeudaSchema.safeParse({
     alumnoId: formData.get("alumnoId"),
     conceptoId: formData.get("conceptoId"),
@@ -97,6 +117,26 @@ export async function createDeuda(prevState: State, formData: FormData): Promise
 }
 
 export async function generarDeudaMasiva(prevState: State, formData: FormData) {
+  try {
+    // Validar que sea el ciclo activo
+    const [cicloActual, cicloActivoDelSistema] = await Promise.all([
+      getCicloActual(),
+      getCicloActivoDelSistema()
+    ]);
+
+    if (cicloActual !== cicloActivoDelSistema?.idCiclo) {
+      return {
+        errors: {},
+        message: "Solo puedes generar deudas masivas en el ciclo lectivo activo."
+      };
+    }
+  } catch {
+    return {
+      errors: {},
+      message: "Error al validar el ciclo lectivo."
+    };
+  }
+
   const validatedFields = CreateDeudaMasivaSchema.safeParse({
     conceptoId: formData.get("conceptoId"),
     monto: formData.get("monto"),

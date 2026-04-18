@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { AlumnoService } from "@/service/alumno.service";
 import { getDetalleCuenta, getAlumnosConEstadoDeCuenta, getConceptosDePago } from "@/service/finanzas.service";
-import { getCicloActual } from "@/lib/ciclo-session";
+import { getCicloActual, getCicloActivoDelSistema } from "@/lib/ciclo-session";
 import AdminFinanzasView from "@/components/modules/finanzas/AdminFinanzasView";
 import PadreFinanzasView from "@/components/modules/finanzas/PadreFinanzasView";
 
@@ -14,6 +14,14 @@ export default async function FinanzasPage() {
   const isAdmin = userRoles.includes("ADMIN");
   const isPadre = userRoles.includes("PADRE");
 
+  // Obtener información del ciclo
+  const [idCicloActual, cicloActivoDelSistema] = await Promise.all([
+    getCicloActual(),
+    getCicloActivoDelSistema()
+  ]);
+
+  const esElCicloActivo = idCicloActual === cicloActivoDelSistema?.idCiclo;
+
   // === VISTA PARA PADRES (Solo ven a sus hijos) ===
   if (isPadre && !isAdmin) {
     const idPadre = session.user.idPadre;
@@ -22,16 +30,16 @@ export default async function FinanzasPage() {
     const hijos = await AlumnoService.getAlumnosDePadre(Number(idPadre));
 
     const estadosDeCuenta = await Promise.all(
-        hijos.map(h => getDetalleCuenta(h.idAlumno))
+        hijos.map(h => getDetalleCuenta(h.idAlumno, idCicloActual))
     );
 
-    return <PadreFinanzasView hijos={hijos} estadosDeCuenta={estadosDeCuenta} />;
+    return <PadreFinanzasView hijos={hijos} estadosDeCuenta={estadosDeCuenta} esElCicloActivo={esElCicloActivo} />;
   }
 
   // === VISTA PARA ADMIN (Gestión global) ===
   const [alumnosDeudores, conceptos] = await Promise.all([
-    getAlumnosConEstadoDeCuenta(),
-    getConceptosDePago()
+    getAlumnosConEstadoDeCuenta(idCicloActual),
+    getConceptosDePago(idCicloActual)
   ]);
 
   return (
@@ -39,6 +47,7 @@ export default async function FinanzasPage() {
       <AdminFinanzasView
         conceptos={conceptos}
         alumnosDeudores={alumnosDeudores}
+        esElCicloActivo={esElCicloActivo}
       />
     </div>
   );

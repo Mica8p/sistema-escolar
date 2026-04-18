@@ -1,9 +1,11 @@
 import { getConceptosDePago } from "@/service/finanzas.service";
+import { getCicloActual } from "@/lib/ciclo-session";
 import { ConceptoForm } from "@/components/modules/finanzas/ConceptoForm";
 import { Receipt, ListOrdered } from "lucide-react";
 
 export default async function ConceptosPage() {
-  const conceptos = await getConceptosDePago();
+  const idCicloActual = await getCicloActual();
+  const conceptos = await getConceptosDePago(idCicloActual);
 
   return (
     <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">

@@ -61,7 +61,7 @@ export default async function PadreView({ idPersona, idUsuario, idCiclo, idPadre
     const [notas, horarios, cuenta, curso] = await Promise.all([
       getCalificacionesHijo(hijo.idAlumno, idCiclo),
       matricula?.idCurso ? getHorariosPorCurso(matricula.idCurso, idCiclo) : [],
-      getDetalleCuenta(hijo.idAlumno),
+      getDetalleCuenta(hijo.idAlumno, idCiclo),
       matricula?.idCurso ? db.curso.findUnique({ where: { idCurso: matricula.idCurso } }) : null
     ]);
 

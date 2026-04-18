@@ -15,9 +15,10 @@ type Hijo = Prisma.AlumnoGetPayload<{
 interface PadreFinanzasViewProps {
   hijos: Hijo[];
   estadosDeCuenta: Awaited<ReturnType<typeof getDetalleCuenta>>[];
+  esElCicloActivo: boolean;
 }
 
-export default function PadreFinanzasView({ hijos, estadosDeCuenta }: PadreFinanzasViewProps) {
+export default function PadreFinanzasView({ hijos, estadosDeCuenta, esElCicloActivo }: PadreFinanzasViewProps) {
   const [hijoSeleccionadoId, setHijoSeleccionadoId] = useState<number>(0);
 
   const hijoSeleccionado = hijos.find(h => h.idAlumno === hijoSeleccionadoId);
@@ -29,6 +30,13 @@ export default function PadreFinanzasView({ hijos, estadosDeCuenta }: PadreFinan
         <Wallet className="h-8 w-8 text-blue-600" />
         Mis Pagos y Cuotas
       </h1>
+
+      {!esElCicloActivo && (
+        <div className="p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg flex items-center gap-2">
+          <span className="text-lg">⚠️</span>
+          <span>Este es un ciclo archivado. Solo puedes ver tu información en el ciclo lectivo activo.</span>
+        </div>
+      )}
 
       {/* SELECTOR DE HIJO */}
       <div className="bg-white p-6 rounded-4xl border border-slate-200 shadow-sm">

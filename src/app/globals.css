@@ -21,7 +21,6 @@ body {
 /* Clase para ocultar password visualmente como puntos */
 .password-hidden {
   -webkit-text-security: disc;
-  text-security: disc;
 }
 
 /* Inputs password no llevarán type="password", solo serán type="text" */
