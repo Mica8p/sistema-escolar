@@ -1,5 +1,4 @@
 import React from "react";
-import Link from "next/link";
 import { KeyRound, Shield, Info, Users, Calendar } from "lucide-react";
 import AvatarEditor from "./AvatarEditor";
 import ChangePasswordSection from "./ChangePasswordSection";
@@ -183,8 +182,7 @@ export default function PerfilView({ perfil }: { perfil: PerfilData }) {
             <div className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm">
               <Info size={16} className="mt-0.5 text-slate-600" />
               <span>
-                <b>Importante:</b> Para modificar datos personales, comunicate
-                con un administrador.
+                <b>Importante:</b> Si detectas algún error en tus datos personales, por favor comunícate con administración para que realicen los cambios necesarios.
               </span>
             </div>
           )}
