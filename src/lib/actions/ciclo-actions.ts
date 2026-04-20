@@ -172,3 +172,17 @@ export async function getAllCiclos() {
     return [];
   }
 }
+
+export async function desactivarImportacionCiclo(idCiclo: number) {
+  try {
+    await db.cicloLectivo.update({
+      where: { idCiclo },
+      data: { mostrarImportacion: false }
+    });
+    revalidatePath("/dashboard/profesores");
+    return { success: true };
+  } catch (error) {
+    console.error("Error al desactivar importación:", error);
+    return { success: false, message: "Error al desactivar importación" };
+  }
+}

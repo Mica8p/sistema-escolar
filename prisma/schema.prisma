@@ -225,6 +225,7 @@ model CicloLectivo {
   idCiclo Int     @id @default(autoincrement())
   anio    Int     @unique
   estado  Boolean
+  mostrarImportacion Boolean @default(true)
 
   periodos         PeriodoAcademico[]
   asignaciones     AsignacionAcademica[]

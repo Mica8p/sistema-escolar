@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Copy, Loader2, CheckCircle2, AlertTriangle, X, Sparkles, CalendarDays } from "lucide-react";
 import { clonarAsignacionesYHorarios } from "@/lib/actions/asignacion-actions";
+import { desactivarImportacionCiclo } from "@/lib/actions/ciclo-actions";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -10,15 +11,16 @@ interface Props {
   cicloAnteriorId: number | null;
   anioAnterior: number | null;
   yaTieneDatos: boolean;
+  mostrarImportacion: boolean;
 }
 
-export function ImportarAsignaciones({ cicloActualId, cicloAnteriorId, anioAnterior, yaTieneDatos }: Props) {
+export function ImportarAsignaciones({ cicloActualId, cicloAnteriorId, anioAnterior, yaTieneDatos, mostrarImportacion }: Props) {
   const [loading, setLoading] = useState(false);
   const [confirmMode, setConfirmMode] = useState(false);
   const [lastResult, setLastResult] = useState<{count: number; horariosCount?: number} | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState<string | null>(null);
-  const [isHidden, setIsHidden] = useState(false);
+  const [isHidden, setIsHidden] = useState(!mostrarImportacion);
   const router = useRouter();
 
   if (!cicloAnteriorId || isHidden) return null;
@@ -62,8 +64,9 @@ export function ImportarAsignaciones({ cicloActualId, cicloAnteriorId, anioAnter
       setShowSuccess(true);
       setShowError(null);
       
-      // Desaparecer después de 2 segundos
-      setTimeout(() => {
+      // Desactivar importación en la BD y desaparecer después de 2 segundos
+      setTimeout(async () => {
+        await desactivarImportacionCiclo(cicloActualId);
         setIsHidden(true);
       }, 2000);
 
@@ -74,7 +77,8 @@ export function ImportarAsignaciones({ cicloActualId, cicloAnteriorId, anioAnter
     }
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
+    await desactivarImportacionCiclo(cicloActualId);
     setIsHidden(true);
   };
 

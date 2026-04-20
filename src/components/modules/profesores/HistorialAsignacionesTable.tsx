@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { History, Clock, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import ReincorporarButton from '@/components/modules/profesores/ReincorporarButton';
-import DeleteErrorButton from '@/components/modules/profesores/DeleteErrorButton';
 
 // Define types for better type safety, inferred from usage
 interface Persona {
@@ -130,8 +129,6 @@ export function HistorialAsignacionesTable({ historial }: HistorialAsignacionesT
                       id={reg.idAsignacion}
                       profeNombre={reg.profesor ? `${reg.profesor.persona.apellido}, ${reg.profesor.persona.nombre}` : 'Profesor no asignado'}
                     />
-
-                    <DeleteErrorButton id={reg.idAsignacion} />
                   </td>
                 </tr>
               ))

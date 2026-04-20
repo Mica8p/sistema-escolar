@@ -4,6 +4,7 @@ import { getCalificacionesHijo } from "@/service/calificaciones.service";
 import { getHorariosPorCurso, getHorarioConfig } from "@/service/horario.service";
 import { getDetalleCuenta } from "@/service/finanzas.service";
 import { getContadorNoLeidos } from "@/service/comunicado.service";
+import { batchPromises } from "@/lib/utils";
 import PadreViewClient from "@/components/modules/dashboard/PadreViewClient";
 import { Sparkles, Wallet } from "lucide-react";
 import Link from "next/link";
@@ -42,28 +43,16 @@ export default async function PadreView({ idPersona, idUsuario, idCiclo, idPadre
     };
   }>;
 
-  const hijosData = await Promise.all(rawHijos.map(async (hijo: {
-    idAlumno: number;
-    nombreCompleto: string;
-    curso: string;
-    stats: {
-      presentismo: number;
-      ausencias: number;
-      llegadasTarde: number;
-      faltasJustificadas: number;
-    };
-  }) => {
+  const hijosData = await batchPromises(rawHijos, async (hijo) => {
     const matricula = await db.matricula.findFirst({
       where: { idAlumno: hijo.idAlumno, idCiclo: idCiclo },
       select: { idCurso: true, idMatricula: true }
     });
 
-    const [notas, horarios, cuenta, curso] = await Promise.all([
-      getCalificacionesHijo(hijo.idAlumno, idCiclo),
-      matricula?.idCurso ? getHorariosPorCurso(matricula.idCurso, idCiclo) : [],
-      getDetalleCuenta(hijo.idAlumno, idCiclo),
-      matricula?.idCurso ? db.curso.findUnique({ where: { idCurso: matricula.idCurso } }) : null
-    ]);
+    const notas = await getCalificacionesHijo(hijo.idAlumno, idCiclo);
+    const horarios = matricula?.idCurso ? await getHorariosPorCurso(matricula.idCurso, idCiclo) : [];
+    const cuenta = await getDetalleCuenta(hijo.idAlumno, idCiclo);
+    const curso = matricula?.idCurso ? await db.curso.findUnique({ where: { idCurso: matricula.idCurso } }) : null;
 
     const deudaHijo = cuenta.cargos.reduce((acc: number, cargo: { saldo?: number }) => acc + (cargo.saldo || 0), 0);
     
@@ -90,7 +79,7 @@ export default async function PadreView({ idPersona, idUsuario, idCiclo, idPadre
         faltasJustificadas: number;
       }
     };
-  }));
+  }, 3);
 
   const totalDeudaFamilia = hijosData.reduce((acc, h) => acc + h.deudaHijo, 0);
 

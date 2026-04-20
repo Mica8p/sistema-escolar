@@ -100,6 +100,7 @@ export default async function DocentesPage({ searchParams }: PageProps) {
             cicloAnteriorId={cicloAnterior.idCiclo}
             anioAnterior={cicloAnterior.anio}
             yaTieneDatos={total > 0}
+            mostrarImportacion={cicloActualInfo?.mostrarImportacion ?? true}
           />
         )}
 

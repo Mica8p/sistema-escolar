@@ -1,0 +1,8 @@
+-- DropIndex
+DROP INDEX "CONCEPTO_PAGO_nombre_key";
+
+-- AlterTable
+ALTER TABLE "CICLO_LECTIVO" ADD COLUMN     "mostrarImportacion" BOOLEAN NOT NULL DEFAULT true;
+
+-- AlterTable
+ALTER TABLE "CONCEPTO_PAGO" ALTER COLUMN "idCiclo" DROP DEFAULT;
