@@ -20,7 +20,7 @@ export async function cambiarCiclo(idCiclo: number) {
 
   revalidatePath("/dashboard/finanzas");
   revalidatePath("/dashboard/finanzas/reporte-deudores");
-  revalidatePath("/dashboard/finanzas/[id]");
+  revalidatePath("/dashboard/finanzas/[id]", "page");
   revalidatePath("/dashboard/profesores");
   revalidatePath("/dashboard/asistencias");
   revalidatePath("/dashboard/calificaciones");
