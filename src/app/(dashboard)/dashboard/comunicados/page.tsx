@@ -50,7 +50,7 @@ export default async function ComunicadosPage() {
   let idsProfesoresHijos: number[] = [];
   
   if (rolPrincipal === "PADRE" && hijos.length > 0) {
-    idsCursosHijos = hijos.flatMap(h => h.alumno.matriculas.map(m => m.idCurso));
+    idsCursosHijos = hijos.flatMap((h: typeof hijos[number]) => h.alumno.matriculas.map((m: typeof h.alumno.matriculas[number]) => m.idCurso));
     
     // Obtener IDs de usuarios de profesores que enseñan en los cursos de los hijos
     if (idsCursosHijos.length > 0) {
@@ -77,15 +77,15 @@ export default async function ComunicadosPage() {
       // Obtener IDs de usuarios de esos profesores
       if (profesoresEnCursos.length > 0) {
         const idspersonasProfs = profesoresEnCursos
-          .map(p => p.profesor?.persona?.idPersona)
-          .filter((id): id is number => id !== undefined);
+          .map((p: typeof profesoresEnCursos[number]) => p.profesor?.persona?.idPersona)
+          .filter((id: number | undefined): id is number => id !== undefined);
 
         if (idspersonasProfs.length > 0) {
           const usuariosProfs = await db.usuario.findMany({
             where: { idPersona: { in: idspersonasProfs } },
             select: { idUsuario: true }
           });
-          idsProfesoresHijos = usuariosProfs.map(u => u.idUsuario);
+          idsProfesoresHijos = usuariosProfs.map((u: typeof usuariosProfs[number]) => u.idUsuario);
         }
       }
       

@@ -19,34 +19,20 @@ import { auth } from '@/auth';
 import { esSuperAdmin, puedeModificarUsuario } from '@/lib/security';
 import { revalidatePath } from 'next/cache';
 
-/**
- * EJEMPLO: Cambiar rol de un usuario
- * 
- * REGLA: Solo SUPER_ADMIN puede cambiar roles de otros ADMIN/SUPER_ADMIN
- */
-export async function cambiarRolUsuario(
-  idUsuarioTarget: number,
-  nuevoNombreRol: string
-) {
-  // 1. Obtener sesión del usuario actual
+export async function cambiarRolUsuario(idUsuarioTarget: number, nuevoNombreRol: string) {
   const session = await auth();
-  
+
   if (!session?.user) {
     throw new Error('No autenticado');
   }
 
-  // 2. Verificar que sea SUPER_ADMIN o propietario técnico
-  const esSuper = esSuperAdmin(
-    session.user.roles || [],
-    session.user.email
-  );
-
+  // 1. Validación: Solo SUPER_ADMIN puede hacer esto
+  const esSuper = esSuperAdmin(session.user.roles ?? [], session.user.email ?? '');
   if (!esSuper) {
-    console.error(`[SEGURIDAD] Usuario ${session.user.email} intentó cambiar rol sin permisos`);
-    throw new Error('❌ Solo Super Admin puede cambiar roles');
+    throw new Error('❌ Solo Super Admin puede cambiar roles de usuarios');
   }
 
-  // 3. Obtener el usuario target
+  // 2. Obtener usuario target
   const usuarioTarget = await db.usuario.findUnique({
     where: { idUsuario: idUsuarioTarget },
     include: {
@@ -61,7 +47,7 @@ export async function cambiarRolUsuario(
 
   // 4. EXTRA PROTECTION: No dejar que cambien roles de otros SUPER_ADMIN
   // a menos que sea otra sesión de SUPER_ADMIN
-  const targetEsSuper = usuarioTarget.roles.some(r => r.rol.nombre === 'SUPER_ADMIN');
+  const targetEsSuper = usuarioTarget.roles.some((r: { rol: { nombre: string } }) => r.rol.nombre === 'SUPER_ADMIN');
   if (targetEsSuper && !esSuper) {
     console.error(`[SEGURIDAD] Intento de modificar SUPER_ADMIN por usuario no autorizado`);
     throw new Error('❌ No puedes modificar permisos de otro Super Admin');

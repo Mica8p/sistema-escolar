@@ -14,11 +14,11 @@ interface HorarioCompleto {
       grado: string;
       seccion: string;
       turno: string;
-    };
+    } | null | undefined;
     profesor: {
       persona?: {
         apellido: string | null;
-      }
+      };
     } | null | undefined;
   };
   aula?: string | null;
@@ -72,7 +72,7 @@ export default function GrillaSemanal({ horarios, bloques, dias }: GrillaSemanal
                             {item.asignacion.materia.nombre}
                           </p>
                           <p className="text-[8px] font-black text-indigo-400 uppercase">
-                            {item.asignacion.curso.grado}° &quot;{item.asignacion.curso.seccion}&quot;
+                            {item.asignacion.curso?.grado}° &quot;{item.asignacion.curso?.seccion}&quot;
                           </p>
                           <p className="text-[9px] font-bold text-slate-500 mt-1">
                             {item.asignacion.profesor?.persona?.apellido || "Sin asignar"}

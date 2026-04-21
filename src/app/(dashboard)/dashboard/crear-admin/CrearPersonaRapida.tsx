@@ -57,8 +57,7 @@ export default function CrearPersonaRapida({ onPersonaCreated, adminRoleId }: Pr
         toast.error(result?.message || 'Error al crear persona');
       }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al crear persona';
-      toast.error(errorMessage);
+      toast.error(error instanceof Error ? error.message : 'Error al crear persona');
     } finally {
       setLoading(false);
     }

@@ -5,7 +5,7 @@ import { Loader2, Mail, Info } from "lucide-react";
 import { requestPasswordReset } from "@/lib/actions/auth-actions";
 
 export default function RequestResetForm() {
-  const [state, formAction, isPending] = useActionState(requestPasswordReset, { message: null, isError: false });
+  const [state, formAction, isPending] = useActionState(requestPasswordReset, { message: "", isError: false });
 
   return (
     <form action={formAction} className="space-y-5">

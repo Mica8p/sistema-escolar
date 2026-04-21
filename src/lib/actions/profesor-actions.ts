@@ -106,24 +106,6 @@ export async function editarDocenteAction(prevState: FormState, formData: FormDa
 
 
 
-export async function desactivarAsignacionAction(idAsignacion: number) {
-  try {
-    await ProfesorService.eliminarAsignacion(idAsignacion);
-    revalidatePath('/dashboard/profesores');
-    return { success: true };
-  } catch (error: unknown) {
-    console.error(error);
-    type PrismaErrorWithCode = Error & { code?: string };
-    const prismaError = error as PrismaErrorWithCode;
-    if (error instanceof Error && prismaError.code === 'P2003') {
-      return { success: false, message: 'No se puede eliminar: Esta materia ya tiene asistencias registradas.' };
-    }
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : 'Error al eliminar la asignación.'
-    };
-  }
-}
 
 export async function borrarErrorAsignacionAction(idAsignacion: number) {
   try {
@@ -157,14 +139,5 @@ export async function reincorporarDocenteAction(idAsignacion: number) {
     return { success: true };
   } catch (error: unknown) {
     return { success: false, message: error instanceof Error ? error.message : "Error inesperado." };
-  }
-}
-
-export async function getHistorialAsignacionesByCicloAction(idCiclo: number) {
-  try {
-    return await ProfesorService.getHistorialAsignaciones(idCiclo);
-  } catch (error: unknown) {
-    console.error("Error al obtener historial:", error);
-    throw error;
   }
 }

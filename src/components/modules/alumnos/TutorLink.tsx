@@ -27,7 +27,7 @@ type TutorDisponible = {
     nombre: string;
     apellido: string;
     dni: string;
-    padre: {
+    padre?: {
         idPadre: number;
     } | null;
 };

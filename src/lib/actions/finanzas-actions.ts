@@ -7,7 +7,6 @@ import {
     RegistrarPagoData,
     createConceptoDePago as createConcepto,
     updateConceptoDePago as updateConcepto,
-    deleteConceptoDePago as deleteConcepto,
     ConceptoDePagoData,
     crearCargoMasivo
 } from "@/service/finanzas.service";
@@ -88,12 +87,3 @@ export async function updateConceptoAction(id: number, data: ConceptoDePagoData)
     }
 }
 
-export async function deleteConceptoAction(id: number) {
-    try {
-        await deleteConcepto(id);
-        revalidatePath('/dashboard/finanzas/conceptos');
-        return { success: true };
-    } catch (error: unknown) {
-        return { success: false, message: error instanceof Error ? error.message : "No se pudo eliminar el concepto" };
-    }
-}
