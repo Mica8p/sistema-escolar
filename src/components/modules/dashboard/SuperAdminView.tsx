@@ -40,7 +40,7 @@ export default async function SuperAdminView({ userName, currentUserEmail }: Sup
         <div className="flex items-center gap-3">
           <ShieldAlert className="w-8 h-8 text-purple-600" />
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">👑 Panel de Super Admin</h1>
+            <h1 className="text-3xl font-bold text-slate-900"> Panel de Super Admin</h1>
             <p className="text-slate-600 mt-1">
               Bienvenido, {userName}. Gestiona los administradores del sistema
             </p>

@@ -179,7 +179,7 @@ export default function AdminManagementClient({
                   disabled={loading}
                   className="w-4 h-4"
                 />
-                <span className="text-slate-700 text-sm">👑 SUPER_ADMIN</span>
+                <span className="text-slate-700 text-sm"> SUPER_ADMIN</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input

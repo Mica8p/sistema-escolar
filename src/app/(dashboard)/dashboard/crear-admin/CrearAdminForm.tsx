@@ -300,7 +300,7 @@ export default function CrearAdminForm({ personas }: Props) {
                   disabled={loading}
                   className="w-4 h-4"
                 />
-                <span className="text-slate-700 font-medium">👑 SUPER_ADMIN</span>
+                <span className="text-slate-700 font-medium"> SUPER_ADMIN</span>
               </label>
             </div>
           </div>
