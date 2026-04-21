@@ -59,7 +59,7 @@ export default async function CrearAdminPage() {
     <div className="space-y-6 p-6 max-w-4xl mx-auto">
       <div className="flex items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">👑 Crear Nuevo Administrador</h1>
+          <h1 className="text-3xl font-bold text-slate-900"> Crear Nuevo Administrador</h1>
           <p className="text-slate-600 mt-1">
             Como SUPER_ADMIN, tienes control total para gestionar administradores
           </p>

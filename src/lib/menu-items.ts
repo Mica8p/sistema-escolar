@@ -7,7 +7,8 @@ import {
   Megaphone,
   ClipboardList,
   UserCheck,
-  CalendarDays
+  CalendarDays,
+  Crown
 } from "lucide-react";
 
 export const menuItems = [
@@ -93,5 +94,11 @@ export const menuItems = [
         roles: ["ADMIN", "DOCENTE"]
       },
     ],
+  },
+  {
+    title: "Ceder SUPER_ADMIN",
+    href: "/dashboard/ceder-super-admin",
+    icon: Crown,
+    roles: ["SUPER_ADMIN"],
   },
 ]

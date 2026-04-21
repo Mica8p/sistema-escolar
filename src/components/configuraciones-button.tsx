@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, CalendarDays, ChevronDown, Check, Edit, School, Book, Calendar, Sheet, Users, AlertTriangle } from "lucide-react";
+import { Settings, CalendarDays, ChevronDown, Check, Edit, School, Book, Calendar, Sheet, Users } from "lucide-react";
 import { cambiarCiclo } from "@/lib/actions/ciclo-actions";
 import type { CicloLectivo } from "@prisma/client";
 import Link from "next/link";
@@ -11,15 +11,13 @@ interface Props {
   cicloActual: number;
   isAdmin: boolean;
   isSuperAdmin?: boolean;
-  isTechnicalOwner?: boolean;
 }
 
 export function ConfiguracionesButton({ 
   ciclos, 
   cicloActual, 
   isAdmin,
-  isSuperAdmin = false,
-  isTechnicalOwner = false
+  isSuperAdmin = false
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -137,7 +135,7 @@ export function ConfiguracionesButton({
                 <>
                   <div className="border-t border-gray-100 my-2"></div>
                   <div className="px-4 py-2 text-xs font-semibold text-purple-600 uppercase tracking-wider">
-                    👑 Administración
+                    Administración
                   </div>
                   <Link
                     href="/dashboard/crear-admin"
@@ -150,25 +148,7 @@ export function ConfiguracionesButton({
                 </>
               )}
 
-              {/* ========================================
-                   TECHNICAL_OWNER: Panel de Emergencia
-                  ======================================== */}
-              {isTechnicalOwner && (
-                <>
-                  <div className="border-t border-gray-100 my-2"></div>
-                  <div className="px-4 py-2 text-xs font-semibold text-red-600 uppercase tracking-wider">
-                    🔐 Propietario Técnico
-                  </div>
-                  <Link
-                    href="/dashboard/panel-emergencia"
-                    className="flex items-center w-full px-4 py-2.5 text-sm text-red-700 hover:bg-red-50 transition-colors font-semibold"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <AlertTriangle className="w-4 h-4 mr-3 text-red-600 animate-pulse" />
-                    <span>🔴 Panel Emergencia</span>
-                  </Link>
-                </>
-              )}
+
             </div>
           </div>
         </>

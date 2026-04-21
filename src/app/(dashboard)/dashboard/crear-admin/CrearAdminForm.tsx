@@ -18,10 +18,12 @@ interface Props {
 }
 
 type FormMode = 'existing' | 'new';
+type RoleOption = 'ADMIN' | 'SUPER_ADMIN';
 
 export default function CrearAdminForm({ personas }: Props) {
   const [mode, setMode] = useState<FormMode>('new');
   const [loading, setLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<RoleOption>('ADMIN');
 
   // Para modo "de persona existente"
   const [selectedPersona, setSelectedPersona] = useState('');
@@ -50,8 +52,8 @@ export default function CrearAdminForm({ personas }: Props) {
         return;
       }
 
-      // Usar el DNI como contraseña y ADMIN como rol
-      const result = await crearAdminNuevo(parseInt(selectedPersona), persona.dni, 'ADMIN');
+      // Usar el DNI como contraseña y el rol seleccionado
+      const result = await crearAdminNuevo(parseInt(selectedPersona), persona.dni, selectedRole);
 
       if (result.success) {
         toast.success(`Admin creado correctamente: ${result.personaNombre}`);
@@ -77,14 +79,14 @@ export default function CrearAdminForm({ personas }: Props) {
 
     setLoading(true);
     try {
-      // Usar el DNI como contraseña y ADMIN como rol
+      // Usar el DNI como contraseña y el rol seleccionado
       const result = await crearAdminConPersona(
         nombre,
         apellido,
         email,
         dni,
         dni, // Usar DNI como contraseña
-        'ADMIN' // Siempre ADMIN
+        selectedRole
       );
 
       if (result.success) {
@@ -145,9 +147,40 @@ export default function CrearAdminForm({ personas }: Props) {
             </div>
           </div>
 
-          {/* Datos Personales */}
+          {/* Selector de Rol */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Rol del Admin *
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="ADMIN"
+                  checked={selectedRole === 'ADMIN'}
+                  onChange={(e) => setSelectedRole(e.target.value as RoleOption)}
+                  disabled={loading}
+                  className="w-4 h-4"
+                />
+                <span className="text-slate-700 font-medium">ADMIN</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="SUPER_ADMIN"
+                  checked={selectedRole === 'SUPER_ADMIN'}
+                  onChange={(e) => setSelectedRole(e.target.value as RoleOption)}
+                  disabled={loading}
+                  className="w-4 h-4"
+                />
+                <span className="text-slate-700 font-medium">SUPER_ADMIN</span>
+              </label>
+            </div>
+          </div>
           <div className="bg-slate-50 rounded-lg p-4 space-y-4">
-            <h3 className="font-semibold text-slate-900">📋 Datos Personales</h3>
+            <h3 className="font-semibold text-slate-900"> Datos Personales</h3>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -236,6 +269,39 @@ export default function CrearAdminForm({ personas }: Props) {
             <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
             <div className="text-sm text-blue-800">
               <strong>ℹ️ Asignar rol de admin:</strong> Selecciona una persona existente. La contraseña inicial será su DNI.
+            </div>
+          </div>
+
+          {/* Selector de Rol */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Rol del Admin *
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="ADMIN"
+                  checked={selectedRole === 'ADMIN'}
+                  onChange={(e) => setSelectedRole(e.target.value as RoleOption)}
+                  disabled={loading}
+                  className="w-4 h-4"
+                />
+                <span className="text-slate-700 font-medium">ADMIN</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="SUPER_ADMIN"
+                  checked={selectedRole === 'SUPER_ADMIN'}
+                  onChange={(e) => setSelectedRole(e.target.value as RoleOption)}
+                  disabled={loading}
+                  className="w-4 h-4"
+                />
+                <span className="text-slate-700 font-medium">👑 SUPER_ADMIN</span>
+              </label>
             </div>
           </div>
 

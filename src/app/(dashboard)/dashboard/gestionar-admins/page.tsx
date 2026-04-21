@@ -69,7 +69,7 @@ export default async function GestionarAdminsPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">👑 Gestionar Administradores</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Gestionar Administradores</h1>
           <p className="text-slate-600 mt-1">
             Manage admin accounts - enable, disable or create new administrators
           </p>

@@ -5,6 +5,13 @@ export function esDueñoTecnico(email: string | null | undefined): boolean {
   return owners.includes(email);
 }
 
+export function esBootstrap(dni: string | null | undefined): boolean {
+  if (!dni) return false;
+  
+  const bootstrapDni = process.env.SUPER_ADMIN_BOOTSTRAP?.trim();
+  return !!(bootstrapDni && bootstrapDni.length > 0 && bootstrapDni === dni);
+}
+
 export function esSuperAdmin(
   roles: string[],
   email: string | null | undefined
