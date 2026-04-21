@@ -10,11 +10,23 @@ interface DisablePersonaButtonProps {
   idPersona: number;
   rol: string;
   disabled?: boolean;
+  personaRoles: string[];
+  currentUserRoles: string[];
 }
 
-export default function DisablePersonaButton({ idPersona, rol, disabled }: DisablePersonaButtonProps) {
+export default function DisablePersonaButton({ idPersona, rol, disabled, personaRoles, currentUserRoles }: DisablePersonaButtonProps) {
+
   const [isPending, startTransition] = useTransition();
   const [isOpen, setIsOpen] = useState(false);
+
+  const esSuperAdminActual = currentUserRoles.includes('SUPER_ADMIN');
+  const esAdminActual = currentUserRoles.includes('ADMIN');
+  const esAdminTarget = personaRoles.includes('ADMIN') || personaRoles.includes('SUPER_ADMIN');
+
+  // ADMIN no puede deshabilitar a otros ADMIN/SUPER_ADMIN
+  if (esAdminActual && !esSuperAdminActual && esAdminTarget) {
+    return null;
+  }
 
   if (rol === "ALUMNO") return null;
 

@@ -59,7 +59,7 @@ export default async function AdminView({ idCiclo, userName }: { idCiclo: number
 
           {/* GRÁFICO DE ASISTENCIA */}
           <Panel title="📈 Asistencia por Nivel Educativo">
-            <div className="h-75 w-full mt-4 bg-white rounded-4xl p-6 border border-slate-200/60 relative shadow-inner">
+            <div className="h-80 w-full mt-4 bg-white rounded-4xl p-6 border border-slate-200/60 relative shadow-inner">
                <ChartAsistenciaGlobal data={adminData.asistenciaGlobal} />
             </div>
             <div className="flex justify-center gap-6 mt-4">

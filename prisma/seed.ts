@@ -12,7 +12,10 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("Sembrando base de datos...");
   try {
-    const roles = ["ADMIN", "DOCENTE", "PADRE", "ALUMNO"];
+    // ⭐ IMPORTANTE: SUPER_ADMIN es el rol más alto del sistema
+    // El establecimiento elegirá quién será el SUPER_ADMIN
+    // Los desarrolladores SOLO intervienen en emergencias
+    const roles = ["SUPER_ADMIN", "ADMIN", "DOCENTE", "PADRE", "ALUMNO"];
     const rolesMap: Record<string, number> = {};
 
     for (const rol of roles) {
@@ -24,10 +27,19 @@ async function main() {
       rolesMap[rol] = r.idRol;
     }
 
+    console.log("✅ Roles creados:", Object.keys(rolesMap));
+
     const pass = await bcrypt.hash("admin123", 10);
+    
+    // 1. Crear o actualizar persona
     const p = await prisma.persona.upsert({
       where: { dni: "39571184" },
-      update: {},
+      update: {
+        nombre: "Gabriel",
+        apellido: "Timo",
+        telefono: "3813430992",
+        email: "gabitimo006@gmail.com",
+      },
       create: {
         nombre: "Gabriel",
         apellido: "Timo",
@@ -37,16 +49,44 @@ async function main() {
       },
     });
 
-    await prisma.usuario.upsert({
-      where: { idPersona: p.idPersona },
-      update: {},
-      create: {
-        idPersona: p.idPersona,
-        passwordHash: pass,
-        estado: true,
-        defaultPassword: false,
-        roles: { create: { idRol: rolesMap["ADMIN"] } },
-      },
+    // 2. Crear o actualizar usuario
+    let usuario = await prisma.usuario.findUnique({
+      where: { idPersona: p.idPersona }
+    });
+
+    if (usuario) {
+      // Actualizar contraseña
+      usuario = await prisma.usuario.update({
+        where: { idPersona: p.idPersona },
+        data: {
+          passwordHash: pass,
+          estado: true,
+          defaultPassword: false,
+        },
+      });
+    } else {
+      // Crear usuario
+      usuario = await prisma.usuario.create({
+        data: {
+          idPersona: p.idPersona,
+          passwordHash: pass,
+          estado: true,
+          defaultPassword: false,
+        },
+      });
+    }
+
+    // 3. Eliminar todos los roles anteriores
+    await prisma.usuarioRol.deleteMany({
+      where: { idUsuario: usuario.idUsuario }
+    });
+
+    // 4. Asignar rol SUPER_ADMIN
+    await prisma.usuarioRol.create({
+      data: {
+        idUsuario: usuario.idUsuario,
+        idRol: rolesMap["SUPER_ADMIN"]
+      }
     });
 
     console.log("✅ Base de datos lista!");

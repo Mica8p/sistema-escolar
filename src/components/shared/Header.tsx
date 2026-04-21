@@ -5,6 +5,7 @@ import { CicloService } from "@/service/ciclo.service";
 import { LogOut, User } from "lucide-react";
 import { ConfiguracionesButton } from "../configuraciones-button";
 import { auth } from "@/auth";
+import { esSuperAdmin, esDueñoTecnico } from "@/lib/security";
 
 interface HeaderProps {
   userName?: string | null;
@@ -14,7 +15,10 @@ export default async function Header({ userName }: HeaderProps) {
   const session = await auth();
 
   const roles = session?.user?.roles ?? [];
+  const email = session?.user?.email;
   const isAdmin = roles.includes("ADMIN");
+  const isSuperAdmin = esSuperAdmin(roles, email);
+  const isTechnicalOwner = esDueñoTecnico(email);
 
   const [ciclos, cicloActual] = await Promise.all([
     CicloService.getAll(),
@@ -46,6 +50,8 @@ export default async function Header({ userName }: HeaderProps) {
           ciclos={ciclos}
           cicloActual={cicloActual}
           isAdmin={isAdmin}
+          isSuperAdmin={isSuperAdmin}
+          isTechnicalOwner={isTechnicalOwner}
         />
 
         <form action={logout}>

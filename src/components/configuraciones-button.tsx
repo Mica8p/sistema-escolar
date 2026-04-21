@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, CalendarDays, ChevronDown, Check, Edit, School, Book, Calendar, Sheet } from "lucide-react";
+import { Settings, CalendarDays, ChevronDown, Check, Edit, School, Book, Calendar, Sheet, Users, AlertTriangle } from "lucide-react";
 import { cambiarCiclo } from "@/lib/actions/ciclo-actions";
 import type { CicloLectivo } from "@prisma/client";
 import Link from "next/link";
@@ -10,9 +10,17 @@ interface Props {
   ciclos: CicloLectivo[];
   cicloActual: number;
   isAdmin: boolean;
+  isSuperAdmin?: boolean;
+  isTechnicalOwner?: boolean;
 }
 
-export function ConfiguracionesButton({ ciclos, cicloActual, isAdmin }: Props) {
+export function ConfiguracionesButton({ 
+  ciclos, 
+  cicloActual, 
+  isAdmin,
+  isSuperAdmin = false,
+  isTechnicalOwner = false
+}: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -120,6 +128,46 @@ export function ConfiguracionesButton({ ciclos, cicloActual, isAdmin }: Props) {
                 <span>Plantilla de Horarios</span>
               </Link>
               </>
+              )}
+
+              {/* ========================================
+                   SUPER_ADMIN: Crear nuevo admin
+                  ======================================== */}
+              {isSuperAdmin && (
+                <>
+                  <div className="border-t border-gray-100 my-2"></div>
+                  <div className="px-4 py-2 text-xs font-semibold text-purple-600 uppercase tracking-wider">
+                    👑 Administración
+                  </div>
+                  <Link
+                    href="/dashboard/crear-admin"
+                    className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-purple-50 transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Users className="w-4 h-4 mr-3 text-purple-500" />
+                    <span className="font-medium">+ Crear Admin</span>
+                  </Link>
+                </>
+              )}
+
+              {/* ========================================
+                   TECHNICAL_OWNER: Panel de Emergencia
+                  ======================================== */}
+              {isTechnicalOwner && (
+                <>
+                  <div className="border-t border-gray-100 my-2"></div>
+                  <div className="px-4 py-2 text-xs font-semibold text-red-600 uppercase tracking-wider">
+                    🔐 Propietario Técnico
+                  </div>
+                  <Link
+                    href="/dashboard/panel-emergencia"
+                    className="flex items-center w-full px-4 py-2.5 text-sm text-red-700 hover:bg-red-50 transition-colors font-semibold"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <AlertTriangle className="w-4 h-4 mr-3 text-red-600 animate-pulse" />
+                    <span>🔴 Panel Emergencia</span>
+                  </Link>
+                </>
               )}
             </div>
           </div>

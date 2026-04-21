@@ -2,16 +2,20 @@
 
 import { useState, useMemo } from "react";
 import type { PersonaWithRelations } from "@/types/persona";
-import Link from "next/link";
 import { UserPlus, Mail, Fingerprint, Tag, CheckCircle2, ChevronLeft, ChevronRight, Edit3 } from "lucide-react";
+import Link from "next/link";
+import type { UsuarioRol, Rol } from "@prisma/client";
 import EnableAccessButton from "@/components/modules/personas/EnableAccessButton";
 import DisablePersonaButton from "@/components/modules/personas/DisablePersonaButton";
+import { esSuperAdmin } from "@/lib/security";
 interface PersonasClientProps {
   personas: PersonaWithRelations[];
   success?: string;
+  currentUserRoles: string[];
+  currentUserEmail?: string;
 }
 
-export default function PersonasClient({ personas, success }: PersonasClientProps) {
+export default function PersonasClient({ personas, success, currentUserRoles, currentUserEmail }: PersonasClientProps) {
   const [search, setSearch] = useState("");
   const [selectedRole, setSelectedRole] = useState(() => {
     const adminRole = personas
@@ -35,7 +39,9 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
         rolesMap.set(ur.rol.idRol, ur.rol.nombre);
       });
     });
-    return Array.from(rolesMap.entries()).map(([id, nombre]) => ({ id, nombre }));
+    return Array.from(rolesMap.entries())
+      .filter(([, nombre]) => nombre !== 'SUPER_ADMIN')
+      .map(([id, nombre]) => ({ id, nombre }));
   }, [personas]);
 
   const filteredPersonas = useMemo(() => {
@@ -87,6 +93,18 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
 
   const selectedRoleName = availableRoles.find(r => r.id.toString() === selectedRole)?.nombre || "";
   const isAlumnoRoleSelected = selectedRoleName.toLowerCase() === 'alumno';
+
+  const esSuperAdminActual = currentUserRoles ? esSuperAdmin(currentUserRoles, currentUserEmail) : false;
+  
+  const esAdminTarget = (roles: (UsuarioRol & { rol: Rol })[]) => {
+    return roles.some(r => r.rol.nombre.toLowerCase() === 'admin' || r.rol.nombre.toLowerCase() === 'super_admin');
+  };
+
+  const puedeModificar = (targetRoles: (UsuarioRol & { rol: Rol })[]) => {
+    if (esSuperAdminActual) return true;
+    if (esAdminTarget(targetRoles)) return false;
+    return true;
+  };
 
   return (
     <div className="space-y-6">
@@ -141,7 +159,6 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
           }}
           className="w-full md:w-64 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
         >
-          <option value="">Todos los Roles</option>
           {availableRoles.map((role) => (
             <option key={role.id} value={role.id}>
               {role.nombre}
@@ -226,26 +243,36 @@ export default function PersonasClient({ personas, success }: PersonasClientProp
                 <td className="px-6 py-4 text-right flex justify-end gap-3">
                   {!isAlumno && (
                     <>
-                      <EnableAccessButton
-                        idPersona={p.idPersona}
-                        dni={p.dni}
-                        isActive={p.usuario?.estado ?? false}
-                      />
-                      <DisablePersonaButton
-                        idPersona={p.idPersona}
-                        rol={p.usuario?.roles[0]?.rol?.nombre || ""}
-                        disabled={!p.usuario?.estado}
-                      />
+                      {puedeModificar(p.usuario?.roles || []) ? (
+                        <>
+                          <EnableAccessButton
+                            idPersona={p.idPersona}
+                            dni={p.dni}
+                            isActive={p.usuario?.estado ?? false}
+                            personaRoles={p.usuario?.roles.map(r => r.rol.nombre) || []}
+                            currentUserRoles={currentUserRoles}
+                          />
+                          <DisablePersonaButton
+                            idPersona={p.idPersona}
+                            rol={p.usuario?.roles[0]?.rol?.nombre || ""}
+                            disabled={!p.usuario?.estado}
+                            personaRoles={p.usuario?.roles.map(r => r.rol.nombre) || []}
+                            currentUserRoles={currentUserRoles}
+                          />
+                        </>
+                      ) : null}
                     </>
                   )}
 
-                  <Link
-                    href={`/dashboard/personas/${p.idPersona}`}
-                    className="p-2 text-cyan-600 hover:text-white hover:bg-blue-400/80 rounded-xl transition-all"
-                    title="Editar información básica"
-                  >
-                    <Edit3 size={18} />
-                  </Link>
+                  {(puedeModificar(p.usuario?.roles || []) || isAlumno) ? (
+                    <Link
+                      href={esAdminTarget(p.usuario?.roles || []) ? "/dashboard/gestionar-admins" : `/dashboard/personas/${p.idPersona}`}
+                      className="p-2 text-cyan-600 hover:text-white hover:bg-blue-400/80 rounded-xl transition-all"
+                      title={esAdminTarget(p.usuario?.roles || []) ? "Editar en gestión de administradores" : "Editar información"}
+                    >
+                      <Edit3 size={18} />
+                    </Link>
+                  ) : null}
                   
                 </td>
               </tr>

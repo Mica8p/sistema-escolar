@@ -10,11 +10,23 @@ interface Props {
   idPersona: number;
   dni: string;
   isActive: boolean;
+  personaRoles: string[];
+  currentUserRoles: string[];
 }
 
-export default function EnableAccessButton({ idPersona, dni, isActive }: Props) {
+export default function EnableAccessButton({ idPersona, dni, isActive, personaRoles, currentUserRoles }: Props) {
+  // Mover hooks al inicio - antes de cualquier lógica condicional
   const [isPending, startTransition] = useTransition();
   const [isOpen, setIsOpen] = useState(false);
+
+  const esSuperAdminActual = currentUserRoles.includes('SUPER_ADMIN');
+  const esAdminActual = currentUserRoles.includes('ADMIN');
+  const esAdminTarget = personaRoles.includes('ADMIN') || personaRoles.includes('SUPER_ADMIN');
+
+  // ADMIN no puede reestablecer contraseña a otros ADMIN/SUPER_ADMIN
+  if (esAdminActual && !esSuperAdminActual && esAdminTarget) {
+    return null;
+  }
 
   const actionTitle = isActive ? "Restablecer Contraseña" : "Habilitar Acceso";
   const actionDescription = isActive

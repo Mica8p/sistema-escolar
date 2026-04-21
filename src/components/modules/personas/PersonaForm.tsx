@@ -18,6 +18,7 @@ import {
     Users
 } from "lucide-react";
 import { toast } from "sonner";
+import { esSuperAdmin } from "@/lib/security";
 
 interface PersonaFormProps {
     roles: Array<{ idRol: number; nombre: string }>;
@@ -34,9 +35,10 @@ interface PersonaFormProps {
         idAlumno: number;
         persona: { apellido: string; nombre: string };
     }>;
+    currentUserRoles?: string[];
 }
 
-export default function PersonaForm({ roles, initialData, alumnos = [] }: PersonaFormProps) {
+export default function PersonaForm({ roles, initialData, alumnos = [], currentUserRoles = [] }: PersonaFormProps) {
     const router = useRouter();
     const [nombre, setNombre] = useState(initialData?.nombre ?? "");
     const [apellido, setApellido] = useState(initialData?.apellido ?? "");
@@ -65,7 +67,12 @@ useEffect(() => {
             });
 
             const timer = setTimeout(() => {
-                router.push("/dashboard/personas");
+                // Si es SUPER_ADMIN, redirigir al dashboard principal
+                // Si es ADMIN u otro rol, redirigir a la lista de personas
+                const esSuperAdminActual = esSuperAdmin(currentUserRoles, undefined);
+                const redirectPath = esSuperAdminActual ? "/dashboard" : "/dashboard/personas";
+                
+                router.push(redirectPath);
                 router.refresh();
             }, 1500);
 
@@ -77,7 +84,7 @@ useEffect(() => {
             });
         }
     }
-}, [state, router]);
+}, [state, router, currentUserRoles, initialData, roles]);
 
     const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedRole(e.target.value);
@@ -224,7 +231,9 @@ useEffect(() => {
                         className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-black focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                     >
                         <option value="">Seleccioná un rol...</option>
-                        {roles.map((rol) => (
+                        {roles
+                            .filter((rol) => !['ADMIN', 'SUPER_ADMIN'].includes(rol.nombre))
+                            .map((rol) => (
                             <option key={rol.idRol} value={rol.idRol}>
                                 {rol.nombre}
                             </option>
