@@ -80,7 +80,7 @@ export function ConceptoForm({ conceptoAEditar, onCancel, esElCicloActivo = true
       <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-6">
         {/* CAMPO: NOMBRE */}
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-700 ml-2">
             Nombre del Concepto
           </label>
           <div className="relative group">
@@ -103,7 +103,7 @@ export function ConceptoForm({ conceptoAEditar, onCancel, esElCicloActivo = true
 
         {/* CAMPO: DESCRIPCIÓN */}
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-700 ml-2">
             Descripción (Opcional)
           </label>
           <div className="relative group">
@@ -119,7 +119,7 @@ export function ConceptoForm({ conceptoAEditar, onCancel, esElCicloActivo = true
 
         {/* CAMPO: MONTO FIJO */}
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-700 ml-2">
             Monto Estimado
           </label>
           <div className="relative group">
@@ -137,14 +137,14 @@ export function ConceptoForm({ conceptoAEditar, onCancel, esElCicloActivo = true
 
         {/* CAMPO: FECHA DE VENCIMIENTO */}
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-700 ml-2">
             Vencimiento de la cuota
           </label>
           <div className="relative group">
             <input
               id="fechaVencimiento"
               type="date"
-              className="w-full pl-4 pr-4 py-3.5 bg-slate-50 border-2 border-slate-50 rounded-2xl text-sm text-slate-700 font-black outline-none focus:bg-white focus:border-indigo-500 transition-all"
+              className="w-full pl-4 pr-4 py-3.5 bg-slate-50 border-2 border-slate-50 rounded-2xl text-sm text-slate-400 font-black outline-none focus:bg-white focus:border-indigo-500 transition-all"
               {...register("fechaVencimiento")}
             />
           </div>

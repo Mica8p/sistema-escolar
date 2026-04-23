@@ -6,10 +6,10 @@ const prismaClientSingleton = () => {
   const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
   const pool = new Pool({
     connectionString,
-    max: 50,
+    max: 100, // Aumentado para soportar 3+ usuarios simultáneos
     min: 5,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    idleTimeoutMillis: 10000, // Libera conexiones inactivas más rápido
+    connectionTimeoutMillis: 5000,
   });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
