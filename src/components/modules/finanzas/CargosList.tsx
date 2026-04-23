@@ -64,17 +64,30 @@ export default function CargosList({ cargos }: CargosListProps) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {paginatedCargos.map((cargo) => (
-              <tr key={cargo.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{cargo.concepto.nombre}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cargo.fechaVencimiento ? new Date(cargo.fechaVencimiento).toLocaleDateString() : '-'}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-700">${cargo.monto.toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-red-600">${cargo.saldo.toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                  <EstadoCargoBadge estado={cargo.estado} />
-                </td>
-              </tr>
-            ))}
+            {paginatedCargos.map((cargo) => {
+              // Determinar el estado dinámicamente basado en el saldo
+              let estadoDinamico = cargo.estado;
+              if (cargo.saldo === 0) {
+                estadoDinamico = 'Pagado';
+              } else if (cargo.saldo > 0 && cargo.saldo < cargo.monto) {
+                estadoDinamico = 'Parcial';
+              } else if (cargo.saldo === cargo.monto) {
+                // Si el saldo es igual al monto, significa que no hay pagos
+                estadoDinamico = cargo.estado; // Usa el estado original (Pendiente o Vencido)
+              }
+              
+              return (
+                <tr key={cargo.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{cargo.concepto.nombre}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cargo.fechaVencimiento ? new Date(cargo.fechaVencimiento).toLocaleDateString() : '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-700">${cargo.monto.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-red-600">${cargo.saldo.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <EstadoCargoBadge estado={estadoDinamico} />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
