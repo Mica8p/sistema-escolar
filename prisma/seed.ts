@@ -12,9 +12,6 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("Sembrando base de datos...");
   try {
-    // ⭐ IMPORTANTE: SUPER_ADMIN es el rol más alto del sistema
-    // El establecimiento elegirá quién será el SUPER_ADMIN
-    // Los desarrolladores SOLO intervienen en emergencias
     const roles = ["SUPER_ADMIN", "ADMIN", "DOCENTE", "PADRE", "ALUMNO"];
     const rolesMap: Record<string, number> = {};
 
