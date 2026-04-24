@@ -61,6 +61,7 @@ export default function CalificacionesTable({
   const [searchTerm, setSearchTerm] = useState('');
   const [cambios, setCambios] = useState<Map<number, CambioNota>>(new Map());
   const [guardando, setGuardando] = useState(false);
+  const [guardandoIndividual, setGuardandoIndividual] = useState<number | null>(null);
   const [itemsPorMostrar, setItemsPorMostrar] = useState(10);
   const observerTarget = useRef<HTMLDivElement>(null);
   const notaMap = new Map<number, Nota>(notaByMatricula);
@@ -79,7 +80,7 @@ export default function CalificacionesTable({
   const nombrePeriodo = periodoActual?.nombre;
   const esInstanciaDeCierre = ["DICIEMBRE", "FEBRERO", "JULIO_PREVIAS"].includes(nombrePeriodo);
 
-  const guardarCambioLocal = (idMatricula: number, formData: FormData) => {
+  const guardarIndividual = async (idMatricula: number, formData: FormData) => {
     const nota = Number(formData.get("nota"));
     const observacion = (formData.get("observacion") as string) || "";
 
@@ -88,11 +89,33 @@ export default function CalificacionesTable({
       return;
     }
 
-    const nuevosCambios = new Map(cambios);
-    nuevosCambios.set(idMatricula, { nota, observacion });
-    setCambios(nuevosCambios);
-    setEditando(null);
-    toast.success("Cambio registrado (sin guardar aún)");
+    setGuardandoIndividual(idMatricula);
+
+    try {
+      const fd = new FormData();
+      fd.set("idMatricula", String(idMatricula));
+      fd.set("idAsignacion", String(idAsignacion));
+      fd.set("idPeriodo", String(idPeriodo));
+      fd.set("tipo", tipo);
+      fd.set("nota", String(nota));
+      fd.set("observacion", observacion);
+
+      const res = await guardarNotaAction(fd);
+      if (res.ok) {
+        toast.success(`✅ Nota guardada para alumno`);
+        setEditando(null);
+        // Remover del mapa de cambios pendientes si existía
+        const nuevosCambios = new Map(cambios);
+        nuevosCambios.delete(idMatricula);
+        setCambios(nuevosCambios);
+        // Refrescar datos
+        router.refresh();
+      } else {
+        toast.error(res.message || "Error al guardar");
+      }
+    } finally {
+      setGuardandoIndividual(null);
+    }
   };
 
   const guardarTodo = async () => {
@@ -106,6 +129,13 @@ export default function CalificacionesTable({
     let errores = 0;
 
     for (const [idMatricula, { nota, observacion }] of cambios.entries()) {
+      // Validar que la nota sea válida
+      if (!Number.isFinite(nota) || nota < 0 || nota > 10) {
+        errores++;
+        toast.error(`Nota inválida para alumno ${idMatricula}: debe estar entre 0 y 10`);
+        continue; // Saltar este alumno
+      }
+
       const formData = new FormData();
       formData.set("idMatricula", String(idMatricula));
       formData.set("idAsignacion", String(idAsignacion));
@@ -130,13 +160,15 @@ export default function CalificacionesTable({
 
     setGuardando(false);
 
-    if (errores === 0) {
+    if (errores === 0 && exitosos > 0) {
       toast.success(`✅ ${exitosos} calificaciones guardadas exitosamente`);
       setCambios(new Map());
       // Usar router.refresh() para refrescar los datos del servidor
       router.refresh();
-    } else {
+    } else if (exitosos > 0) {
       toast.error(`${exitosos} guardadas, ${errores} fallidas`);
+    } else {
+      toast.error(`No se guardó nada. Verifica que todas las notas sean válidas (0-10)`);
     }
   };
 
@@ -255,9 +287,10 @@ export default function CalificacionesTable({
               const notaParcialActual = historialNotas.find((n: NotaWithPeriodo) =>
                 n.idMatricula === m.idMatricula && n.idPeriodo === idPeriodo && n.tipo === "Parcial"
               );
-              const yaAproboParcial = (notaParcialActual?.nota ?? 0) >= 6;
+              const tieneParcial = notaParcialActual !== undefined;
+              const parcialMenorA6 = tieneParcial && (notaParcialActual.nota ?? 0) < 6;
               const bloquearPorPromocion = esInstanciaDeCierre && esPromocionado;
-              const bloquearRecuperatorio = tipo === "Recuperatorio" && yaAproboParcial;
+              const bloquearRecuperatorio = tipo === "Recuperatorio" && (!tieneParcial || !parcialMenorA6);
 
               const estaBloqueado = bloquearPorPromocion || bloquearRecuperatorio || periodoCerrado;
               const isEditMode = (editando === m.idMatricula || !tieneNota) && !estaBloqueado;
@@ -363,8 +396,8 @@ export default function CalificacionesTable({
                             <button type="button" onClick={() => {
                               const form = document.getElementById(`f-${m.idMatricula}`) as HTMLFormElement;
                               const formData = new FormData(form);
-                              guardarCambioLocal(m.idMatricula, formData);
-                            }} className="bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-700 shadow-lg active:scale-95">
+                              guardarIndividual(m.idMatricula, formData);
+                            }} disabled={guardandoIndividual === m.idMatricula} className="bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-700 shadow-lg active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed">
                               <Save size={18} />
                             </button>
                           ) : (

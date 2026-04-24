@@ -5,7 +5,6 @@ import AsistenciasHeader from "./AsistenciasHeader";
 import { Materia, EstadoAsistencia, AsignacionAcademica, Alumno, Persona, Turno } from "@prisma/client";
 import { useState, useMemo, useEffect, useRef } from "react";
 import AsistenciasTable from "@/components/modules/asistencias/AsistenciasTable";
-import { useRouter, useSearchParams } from "next/navigation";
 
 type AsistenciaMap = Map<number, {
     idMatricula: number;
@@ -69,10 +68,9 @@ export default function AsistenciasClient({
 }: Props) {
   const [asistenciaMap, setAsistenciaMap] = useState<AsistenciaMap>(new Map());
   const [searchTerm, setSearchTerm] = useState('');
+  const [materiasSearchTerm, setMateriasSearchTerm] = useState('');
   const [itemsPorMostrar, setItemsPorMostrar] = useState(10);
   const observerTarget = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (planilla?.asistenciaByMatricula) {
@@ -93,6 +91,14 @@ export default function AsistenciasClient({
     });
     return { presentes: p, ausentes: a, tardes: t, justificados: j };
   }, [asistenciaMap]);
+
+  // Filtrar materias en tiempo real
+  const materiasFiltradas = useMemo(() => {
+    if (!materiasSearchTerm) return materiasUnicas;
+    return materiasUnicas.filter(m => 
+      m.nombre.toLowerCase().includes(materiasSearchTerm.toLowerCase())
+    );
+  }, [materiasUnicas, materiasSearchTerm]);
 
   const handleAsistenciaChange = (idMatricula: number, nuevoEstado: EstadoAsistencia) => {
     setAsistenciaMap(prev => {
@@ -203,14 +209,15 @@ export default function AsistenciasClient({
             <input
               type="text"
               placeholder="🔍 Buscar materia..."
-              onChange={(e) => router.push(`?${new URLSearchParams({ ...Object.fromEntries(searchParams.entries()), mat_search: e.target.value })}`)}
+              value={materiasSearchTerm}
+              onChange={(e) => setMateriasSearchTerm(e.target.value)}
               className="w-full text-[10px] font-black uppercase p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 ring-indigo-500 transition-all text-slate-700 placeholder:text-slate-300"
             />
           </div>
 
           <div className="p-4 space-y-2 overflow-y-auto custom-scrollbar flex-1">
-            {materiasUnicas.length > 0 ? (
-              materiasUnicas.map((m) => (
+            {materiasFiltradas.length > 0 ? (
+              materiasFiltradas.map((m) => (
                 <a
                   key={m.idMateria}
                   href={`?curso=${idCurso}&turno=${turno}&mat=${m.idMateria}&fecha=${fechaISO}`}

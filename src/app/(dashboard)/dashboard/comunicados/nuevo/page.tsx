@@ -33,7 +33,7 @@ export default async function NuevoComunicadoPage() {
         </div>
       </div>
 
-      <FormComunicado cursos={cursos}/>
+      <FormComunicado cursos={cursos} rolPrincipal={rolPrincipal} />
     </div>
   );
 }

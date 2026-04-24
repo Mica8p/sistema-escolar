@@ -13,6 +13,13 @@ type ComunicadoWithIncludes = Comunicado & {
       nombre: string;
       apellido: string;
     };
+    roles: Array<{
+      idUsuario: number;
+      idRol: number;
+      rol: {
+        nombre: string;
+      };
+    }>;
   };
   vistos: ComunicadoVisto[];
 };
@@ -44,6 +51,11 @@ export default async function ComunicadosPage() {
       : Promise.resolve([]),
     getComunicadosRecibidos(idUsuario, rolPrincipal, []) // Inicializar con array vacío
   ]);
+
+  // Filtrar comunicados para que SOLO sean de ADMINS en bandeja de entrada
+  const comunicadosFiltrados = comunicados.filter((c: ComunicadoWithIncludes) => {
+    return c.usuario?.roles?.some((ur) => ur.rol?.nombre === "ADMIN") ?? false;
+  });
 
   // Obtener IDs de cursos y profesores después si es necesario
   let idsCursosHijos: number[] = [];
@@ -90,9 +102,12 @@ export default async function ComunicadosPage() {
       }
       
       const comunicadosActualizados = await getComunicadosRecibidos(idUsuario, rolPrincipal, idsCursosHijos);
+      const comunicadosFiltradosActualizados = comunicadosActualizados.filter((c: ComunicadoWithIncludes) => {
+        return c.usuario?.roles?.some((ur) => ur.rol?.nombre === "ADMIN") ?? false;
+      });
       return (
         <ComunicadosContent 
-          comunicados={comunicadosActualizados}
+          comunicados={comunicadosFiltradosActualizados}
           puedeCrear={puedeCrear}
           rolPrincipal={rolPrincipal}
           idsProfesoresHijos={idsProfesoresHijos}
@@ -103,7 +118,7 @@ export default async function ComunicadosPage() {
 
   return (
     <ComunicadosContent 
-      comunicados={comunicados}
+      comunicados={comunicadosFiltrados}
       puedeCrear={puedeCrear}
       rolPrincipal={rolPrincipal}
       idsProfesoresHijos={idsProfesoresHijos}

@@ -36,6 +36,13 @@ export async function getComunicadosRecibidos(idUsuario: number, rol: string, id
         include: {
           persona: {
             select: { nombre: true, apellido: true }
+          },
+          roles: {
+            include: {
+              rol: {
+                select: { nombre: true }
+              }
+            }
           }
         }
       },

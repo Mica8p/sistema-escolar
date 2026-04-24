@@ -17,6 +17,11 @@ interface Comunicado {
     persona: {
       nombre: string;
     };
+    roles?: Array<{
+      rol: {
+        nombre: string;
+      };
+    }>;
   };
   idUsuario: number;
   curso?: {
@@ -36,12 +41,16 @@ interface FiltroProps {
   isEnviados?: boolean;
   rolPrincipal?: string;
   idsProfesoresHijos?: number[];
+  cursosAsignados?: Array<{ idCurso: number; grado: string; seccion: string; turno: string; nivel: string }>;
 }
 
-export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsProfesoresHijos = [] }: FiltroProps) {
+export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsProfesoresHijos = [], cursosAsignados = [] }: FiltroProps) {
   const [search, setSearch] = useState("");
   const [targetFilter, setTargetFilter] = useState("TODOS_FILTRO");
   const [dateFilter, setDateFilter] = useState("");
+  const [cursoFilter, setCursoFilter] = useState("");
+  
+  const soloAdmin = !isEnviados && rolPrincipal !== "ADMIN"; // Solo filtrar por admin en bandeja de entrada y si no es admin
 
   const filteredData = useMemo(() => {
     return data.filter((item) => {
@@ -51,8 +60,28 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
 
       let matchesTarget = true;
 
+      // Filtrado para DOCENTES en mensajes enviados
+      if (isEnviados && rolPrincipal === "DOCENTE") {
+        const cursosIds = cursosAsignados.map(c => c.idCurso);
+        if (targetFilter === "TODOS_FILTRO") {
+          // Mostrar todos los enviados válidos
+          matchesTarget = 
+            item.target === "ADMINS" || 
+            (cursosIds.length > 0 && (item.target === "PADRES" || item.target === "CURSO_PADRES"));
+        } else if (targetFilter === "ADMINS") {
+          matchesTarget = item.target === "ADMINS";
+        } else if (targetFilter === "PADRES") {
+          matchesTarget = item.target === "PADRES" && cursosIds.length > 0;
+        } else if (targetFilter === "CURSO_PADRES") {
+          matchesTarget = item.target === "CURSO_PADRES" && cursosIds.length > 0;
+          // Si hay un curso específico seleccionado, filtrar por ese curso
+          if (cursoFilter) {
+            matchesTarget = matchesTarget && item.idTarget === parseInt(cursoFilter);
+          }
+        }
+      } 
       // Filtrado diferente para PADRES
-      if (rolPrincipal === "PADRE") {
+      else if (rolPrincipal === "PADRE") {
         if (targetFilter === "TODOS_FILTRO") {
           // Mostrar todos válidos para padres
           matchesTarget = item.target === "TODOS" || item.target === "PADRES" || item.target === "CURSO" || idsProfesoresHijos.includes(item.idUsuario);
@@ -77,9 +106,12 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
       const matchesDate =
         !dateFilter || new Date(item.fecha).toLocaleDateString() === new Date(dateFilter + "T12:00:00").toLocaleDateString();
 
-      return matchesSearch && matchesTarget && matchesDate;
+      // Filtrar solo admin si está habilitado (solo para bandeja de entrada)
+      const matchesAdmin = !soloAdmin || (item.usuario?.roles?.some(ur => ur.rol?.nombre === "ADMIN") ?? false);
+
+      return matchesSearch && matchesTarget && matchesDate && matchesAdmin;
     });
-  }, [data, search, targetFilter, dateFilter, rolPrincipal, idsProfesoresHijos]);
+  }, [data, search, targetFilter, dateFilter, cursoFilter, rolPrincipal, idsProfesoresHijos, soloAdmin, isEnviados, cursosAsignados]);
 
   return (
     <div className="space-y-8">
@@ -97,32 +129,74 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
           />
         </div>
 
-        <div className="relative w-full md:w-56 group">
-          <Users className="absolute left-5 top-1/2 -translate-y-1/2 text-indigo-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
-          <select
-            value={targetFilter}
-            onChange={(e) => setTargetFilter(e.target.value)}
-            className="w-full pl-12 pr-8 py-4 bg-indigo-50/30 border border-transparent rounded-[1.8rem] text-[11px] font-black uppercase tracking-widest focus:bg-white focus:border-indigo-200 focus:ring-4 focus:ring-indigo-50/50 appearance-none cursor-pointer transition-all text-indigo-700"
-          >
-            {rolPrincipal === "PADRE" ? (
-              <>
-                <option value="TODOS_FILTRO">Todos los comunicados</option>
-                <option value="TODOS">📢 Públicos</option>
-                <option value="PADRES">👨‍👩‍👧 Para padres</option>
-                <option value="PROFESORES">👨‍🏫 Mis profesores</option>
-                <option value="ADMIN">🏛️ Administración</option>
-              </>
-            ) : (
-              <>
-                <option value="TODOS_FILTRO">Destinatarios</option>
-                <option value="TODOS">Público: Todos</option>
-                <option value="PADRES">Sólo Padres</option>
-                <option value="DOCENTES">Sólo Docentes</option>
-                <option value="CURSO">Cursos Específicos</option>
-              </>
+        {/* FILTRO DESLIZABLE - Solo se muestra en Mensajes Enviados o si es PADRE */}
+        {(isEnviados || rolPrincipal === "PADRE") && (
+          <>
+            <div className="relative w-full md:w-72 group">
+              <Users className="absolute left-5 top-1/2 -translate-y-1/2 text-indigo-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
+              <select
+                value={targetFilter}
+                onChange={(e) => {
+                  setTargetFilter(e.target.value);
+                  setCursoFilter(""); // Reset curso filter cuando cambia target
+                }}
+                className="w-full pl-12 pr-8 py-4 bg-indigo-50/30 border border-transparent rounded-[1.8rem] text-xs font-bold uppercase tracking-wide focus:bg-white focus:border-indigo-200 focus:ring-4 focus:ring-indigo-50/50 appearance-none cursor-pointer transition-all text-indigo-700"
+              >
+                {rolPrincipal === "PADRE" ? (
+                  <>
+                    <option value="TODOS_FILTRO">Todos los comunicados</option>
+                    <option value="TODOS">📢 Públicos</option>
+                    <option value="PADRES">👨‍👩‍👧 Para padres</option>
+                    <option value="PROFESORES">👨‍🏫 Mis profesores</option>
+                    <option value="ADMIN">🏛️ Administración</option>
+                  </>
+                ) : isEnviados && rolPrincipal === "DOCENTE" ? (
+                  <>
+                    <option value="TODOS_FILTRO">Todos los enviados</option>
+                    <option value="ADMINS">A los Admins</option>
+                    {cursosAsignados.length > 0 && (
+                      <>
+                        <option value="PADRES">A todos los Padres</option>
+                        <option value="CURSO_PADRES">Padres de un curso específico</option>
+                      </>
+                    )}
+                  </>
+                ) : isEnviados ? (
+                  <>
+                    <option value="TODOS_FILTRO">Todos los enviados</option>
+                    <option value="ADMINS">A los Admins</option>
+                    <option value="PADRES">A todos los Padres</option>
+                    <option value="CURSO_PADRES">Padres de un curso específico</option>
+                    <option value="TODOS">A toda la Institución</option>
+                    <option value="DOCENTES">A todos los Docentes</option>
+                    <option value="CURSO">Cursos Específicos</option>
+                  </>
+                ) : null}
+              </select>
+            </div>
+
+            {/* SEGUNDO FILTRO - Aparece solo cuando se selecciona CURSO_PADRES */}
+            {targetFilter === "CURSO_PADRES" && cursosAsignados.length > 0 && (
+              <div className="relative w-full md:w-64 group">
+                <Users className="absolute left-5 top-1/2 -translate-y-1/2 text-green-400 group-focus-within:text-green-600 transition-colors" size={18} />
+                <select
+                  value={cursoFilter}
+                  onChange={(e) => setCursoFilter(e.target.value)}
+                  className="w-full pl-12 pr-8 py-4 bg-green-50/30 border border-transparent rounded-[1.8rem] text-xs font-bold uppercase tracking-wide focus:bg-white focus:border-green-200 focus:ring-4 focus:ring-green-50/50 appearance-none cursor-pointer transition-all text-green-700"
+                >
+                  <option value="">-- Selecciona un curso --</option>
+                  {cursosAsignados.map((curso) => {
+                    return (
+                      <option key={curso.idCurso} value={curso.idCurso}>
+                        {curso.grado} - {curso.seccion} ({curso.turno}) - {curso.nivel}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
             )}
-          </select>
-        </div>
+          </>
+        )}
 
         {/*  Filtro Fecha */}
         <div className="relative w-full md:w-52 group">
@@ -136,9 +210,9 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
         </div>
 
         {/*  Botón Limpiar */}
-        {(search || targetFilter !== "TODOS_FILTRO" || dateFilter) && (
+        {(search || targetFilter !== "TODOS_FILTRO" || dateFilter || cursoFilter) && (
           <button
-            onClick={() => {setSearch(""); setTargetFilter("TODOS_FILTRO"); setDateFilter("");}}
+            onClick={() => {setSearch(""); setTargetFilter("TODOS_FILTRO"); setDateFilter(""); setCursoFilter("");}}
             className="p-4 bg-rose-50 text-rose-500 rounded-3xl hover:bg-rose-100 hover:scale-110 active:scale-95 transition-all shadow-lg shadow-rose-100/50 flex items-center justify-center"
             title="Limpiar filtros"
           >

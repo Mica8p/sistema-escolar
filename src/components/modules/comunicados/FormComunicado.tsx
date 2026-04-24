@@ -10,14 +10,19 @@ interface Curso {
   grado: string;
   seccion: string;
   nivel: string;
+  turno: string;
 }
 
-export default function FormComunicado({ cursos }: { cursos: Curso[] }) {
+export default function FormComunicado({ 
+  cursos,
+  rolPrincipal = "ADMIN"
+}: { 
+  cursos: Curso[];
+  rolPrincipal?: "ADMIN" | "DOCENTE";
+}) {
   const [target, setTarget] = useState("TODOS");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-
-  const requiereCurso = ["CURSO", "CURSO_PADRES", "CURSO_DOCENTES"].includes(target);
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
@@ -55,33 +60,44 @@ export default function FormComunicado({ cursos }: { cursos: Curso[] }) {
               name="target"
               required
               value={target}
-              onChange={(e) => setTarget(e.target.value)} // ✅ Ahora el estado sí se actualiza
+              onChange={(e) => setTarget(e.target.value)} 
               className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-700 font-bold appearance-none focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
             >
-              <option value="TODOS">Toda la Institución</option>
-              <option value="PADRES">Todos los Padres</option>
-              <option value="DOCENTES">Todos los Docentes</option>
-              <option value="CURSO">Curso: Padres y Docentes</option>
-              <option value="CURSO_PADRES">Curso: Solo Padres</option>
-              <option value="CURSO_DOCENTES">Curso: Solo Docentes</option>
+              {rolPrincipal === "ADMIN" ? (
+                <>
+                  <option value="TODOS">Toda la Institución</option>
+                  <option value="PADRES">Todos los Padres</option>
+                  <option value="DOCENTES">Todos los Docentes</option>
+                  <option value="ADMINS">A los Admins</option>
+                  <option value="CURSO">Curso: Padres y Docentes</option>
+                  <option value="CURSO_PADRES">Curso: Solo Padres</option>
+                  <option value="CURSO_DOCENTES">Curso: Solo Docentes</option>
+                </>
+              ) : (
+                <>
+                  <option value="ADMINS">A los Admins</option>
+                  <option value="PADRES_CURSOS_DOCENTE">Padres de mis cursos</option>
+                  <option value="CURSO_PADRES">Padres de un curso específico</option>
+                </>
+              )}
             </select>
             <Users className="absolute right-4 top-4 text-slate-300 pointer-events-none" size={20} />
           </div>
         </div>
 
-        <div className={`space-y-2 transition-all duration-300 ${requiereCurso ? 'opacity-100' : 'opacity-30'}`}>
+        <div className={`space-y-2 transition-all duration-300 ${(rolPrincipal === "ADMIN" && ["CURSO", "CURSO_PADRES", "CURSO_DOCENTES"].includes(target)) || (rolPrincipal === "DOCENTE" && target === "CURSO_PADRES") ? 'opacity-100' : 'opacity-30'}`}>
           <label className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] ml-2">Seleccionar Curso</label>
           <div className="relative">
             <select
               name="idTarget"
-              disabled={!requiereCurso}
-              required={requiereCurso}
+              disabled={!((rolPrincipal === "ADMIN" && ["CURSO", "CURSO_PADRES", "CURSO_DOCENTES"].includes(target)) || (rolPrincipal === "DOCENTE" && target === "CURSO_PADRES"))}
+              required={(rolPrincipal === "ADMIN" && ["CURSO", "CURSO_PADRES", "CURSO_DOCENTES"].includes(target)) || (rolPrincipal === "DOCENTE" && target === "CURSO_PADRES")}
               className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-700 font-bold appearance-none focus:ring-2 focus:ring-indigo-500 outline-none disabled:cursor-not-allowed"
             >
               <option value="">Seleccione un curso...</option>
               {cursos.map(c => (
                 <option key={c.idCurso} value={c.idCurso}>
-                  {c.grado}° &quot;{c.seccion}&quot; - {c.nivel}
+                  {c.grado}° &quot;{c.seccion}&quot; ({c.turno}) - {c.nivel}
                 </option>
               ))}
             </select>

@@ -60,7 +60,7 @@ export default function FiltrosCalificaciones({
           onChange={(e) => handleFilterChange("curso", e.target.value)}
           value={cursoKey || ""}
         >
-          <option value="">Todos</option>
+          <option value="">-- Seleccione el curso --</option>
           {cursos.map((curso) => (
             <option key={curso.key} value={curso.key}>
               {curso.label}
@@ -83,7 +83,7 @@ export default function FiltrosCalificaciones({
           onChange={(e) => handleFilterChange("turno", e.target.value)}
           value={turno || ""}
         >
-          <option value="">Todos</option>
+          <option value="">-- Seleccione el turno --</option>
           {turnos.map((t) => (
             <option key={t} value={t}>
               {t}

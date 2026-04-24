@@ -136,24 +136,28 @@ export default function AsistenciasTable({
                         color="bg-emerald-500"
                         onClick={() => handleToggleAsistencia(m.idMatricula, "Presente")}
                         icon={<Check size={20} strokeWidth={3}/>}
+                        label="Presente"
                       />
                       <AsistBtn
                         active={estadoActual === "AUSENTE"}
                         color="bg-red-500"
                         onClick={() => handleToggleAsistencia(m.idMatricula, "Ausente")}
                         icon={<X size={20} strokeWidth={3}/>}
+                        label="Ausente"
                       />
                       <AsistBtn
                         active={estadoActual === "TARDE"}
                         color="bg-amber-400"
                         onClick={() => handleToggleAsistencia(m.idMatricula, "Tarde")}
                         icon={<Clock size={20} strokeWidth={3}/>}
+                        label="Tarde"
                       />
                       <AsistBtn
                         active={estadoActual === "JUSTIFICADO"}
                         color="bg-blue-500"
                         onClick={() => handleToggleAsistencia(m.idMatricula, "Justificado")}
                         icon={<AlertCircle size={20} strokeWidth={3}/>}
+                        label="Justificado"
                       />
                     </div>
                   </td>
@@ -167,22 +171,33 @@ export default function AsistenciasTable({
   );
 }
 
-function AsistBtn({ active, color, onClick, icon }: {
+function AsistBtn({ active, color, onClick, icon, label }: {
   active: boolean;
   color: string;
   onClick: () => void;
   icon: React.JSX.Element;
+  label: string;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className={`p-2.5 rounded-xl transition-all ${
+    <div className="flex flex-col items-center gap-1">
+      <button
+        onClick={onClick}
+        className={`p-2.5 rounded-xl transition-all ${
+          active
+            ? `${color} text-white shadow-lg scale-110`
+            : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+        }`}
+        title={label}
+      >
+        {icon}
+      </button>
+      <span className={`text-[9px] font-semibold uppercase tracking-tight ${
         active
-          ? `${color} text-white shadow-lg scale-110`
-          : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
-      }`}
-    >
-      {icon}
-    </button>
+          ? "text-slate-900"
+          : "text-slate-500"
+      }`}>
+        {label}
+      </span>
+    </div>
   );
 }
