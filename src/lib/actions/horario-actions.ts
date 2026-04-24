@@ -75,6 +75,7 @@ export async function deleteHorario(idHorario: number) {
     return { success: true };
   } catch (error) {
     console.error("❌ ERROR AL ELIMINAR:", error);
-    return { success: false, message: 'Error al eliminar el horario' };
+    const message = error instanceof Error ? error.message : 'Error al eliminar el horario';
+    return { success: false, message };
   }
 }

@@ -38,7 +38,8 @@ export async function deleteMateria(id: number) {
     await materiaService.delete(id);
     revalidatePath('/dashboard/materias');
     return { success: true };
-  } catch {
-    return { success: false, message: 'Error al eliminar la materia.' };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error al eliminar la materia.';
+    return { success: false, message };
   }
 }

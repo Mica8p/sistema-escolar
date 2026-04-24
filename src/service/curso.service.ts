@@ -70,12 +70,40 @@ export const cursoService = {
 
   delete: async (id: number) => {
     try {
+      // Verificar si el curso tiene asignaciones académicas activas
+      const asignaciones = await db.asignacionAcademica.findMany({
+        where: { idCurso: id },
+      });
+
+      if (asignaciones.length > 0) {
+        throw new Error('No se puede eliminar este curso porque tiene materias asignadas. Elimine primero las asignaciones académicas.');
+      }
+
+      // Verificar si el curso tiene matrículas activas
+      const matriculas = await db.matricula.findMany({
+        where: { idCurso: id },
+      });
+
+      if (matriculas.length > 0) {
+        throw new Error('No se puede eliminar este curso porque tiene alumnos matriculados. Elimine primero las matrículas.');
+      }
+
+      // Verificar si el curso tiene comunicados asociados
+      const comunicados = await db.comunicado.findMany({
+        where: { idTarget: id },
+      });
+
+      if (comunicados.length > 0) {
+        throw new Error('No se puede eliminar este curso porque tiene comunicados asociados. Elimine primero los comunicados.');
+      }
+
       return await db.curso.delete({
         where: { idCurso: id },
       });
     } catch (error) {
       console.error('Error al eliminar el curso:', error);
-      throw new Error('No se puede eliminar un curso que ya tiene alumnos o materias asignadas.');
+      const message = error instanceof Error ? error.message : 'No se puede eliminar el curso.';
+      throw new Error(message);
     }
   },
 };

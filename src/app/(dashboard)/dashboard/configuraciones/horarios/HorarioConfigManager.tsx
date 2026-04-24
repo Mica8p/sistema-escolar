@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { DiaHabil, BloqueHorario, DiaSemana, Turno } from '@prisma/client';
 import { guardarConfiguracionDias, guardarConfiguracionBloques } from '@/lib/actions/configuracion-actions';
 import { toast } from 'sonner';
-import { Trash2, PlusCircle, CalendarDays, Sun, Moon, Save } from 'lucide-react';
+import { Trash2, PlusCircle, CalendarDays, Sun, Moon, Save, Edit2, X } from 'lucide-react';
 
 interface Props {
     diasHabiles: DiaHabil[];
@@ -16,6 +16,7 @@ const ALL_DIAS: DiaSemana[] = [DiaSemana.LUNES, DiaSemana.MARTES, DiaSemana.MIER
 
 export default function HorarioConfigManager({ diasHabiles, bloquesManana, bloquesTarde }: Props) {
     const [isPending, startTransition] = useTransition();
+    const [editingIndex, setEditingIndex] = useState<{ turno: 'Mañana' | 'Tarde', index: number } | null>(null);
 
     // --- ESTADOS ---
     const [dias, setDias] = useState(
@@ -37,7 +38,7 @@ export default function HorarioConfigManager({ diasHabiles, bloquesManana, bloqu
     const handleGuardarDias = () => {
         startTransition(async () => {
             const res = await guardarConfiguracionDias(dias);
-            if (res.success) toast.success('Días guardados.');
+            if (res.success) toast.success('Días guardados correctamente.');
             else toast.error(res.message);
         });
     };
@@ -46,9 +47,22 @@ export default function HorarioConfigManager({ diasHabiles, bloquesManana, bloqu
     const handleGuardarBloques = (turno: Turno) => {
         startTransition(async () => {
             const bloques = turno === 'Mañana' ? manana : tarde;
+            const bloqueOriginal = turno === 'Mañana' ? bloquesManana : bloquesTarde;
+            
             const res = await guardarConfiguracionBloques(turno, bloques);
-            if (res.success) toast.success(`Turno ${turno} guardado.`);
-            else toast.error(res.message);
+            if (res.success) {
+                toast.success(`Turno ${turno} guardado correctamente.`);
+                setEditingIndex(null);
+            }
+            else {
+                // Si hay error, restaurar los bloques a su estado original
+                if (turno === 'Mañana') {
+                    setManana(bloqueOriginal.map(b => ({ horaInicio: b.horaInicio, horaFin: b.horaFin })));
+                } else {
+                    setTarde(bloqueOriginal.map(b => ({ horaInicio: b.horaInicio, horaFin: b.horaFin })));
+                }
+                toast.error(res.message);
+            }
         });
     }
 
@@ -63,8 +77,21 @@ export default function HorarioConfigManager({ diasHabiles, bloquesManana, bloqu
 
                 if (resDias.success && resManana.success && resTarde.success) {
                     toast.success('¡Configuración completa guardada con éxito!');
+                    setEditingIndex(null);
                 } else {
-                    toast.warning('Se guardaron los cambios, pero hubo algunas alertas.');
+                    // Restaurar bloques si hay error
+                    if (!resManana.success) {
+                        setManana(bloquesManana.map(b => ({ horaInicio: b.horaInicio, horaFin: b.horaFin })));
+                    }
+                    if (!resTarde.success) {
+                        setTarde(bloquesTarde.map(b => ({ horaInicio: b.horaInicio, horaFin: b.horaFin })));
+                    }
+                    const errorMessages = [
+                        !resDias.success && resDias.message,
+                        !resManana.success && resManana.message,
+                        !resTarde.success && resTarde.message,
+                    ].filter(Boolean);
+                    toast.error(errorMessages[0] || "Hubo un error al guardar los cambios");
                 }
             } catch {
                 toast.error('Ocurrió un error al intentar guardar todo.');
@@ -84,10 +111,27 @@ export default function HorarioConfigManager({ diasHabiles, bloquesManana, bloqu
 
     const addBloque = (turno: 'Mañana' | 'Tarde') => {
         const setter = turno === 'Mañana' ? setManana : setTarde;
+        const arrayActual = turno === 'Mañana' ? manana : tarde;
+        const nuevoIndice = arrayActual.length;
+        
         setter(prev => [...prev, { horaInicio: '', horaFin: '' }]);
+        // Poner automáticamente en modo edición el bloque nuevo
+        setEditingIndex({ turno: turno as 'Mañana' | 'Tarde', index: nuevoIndice });
     }
 
     const removeBloque = (turno: 'Mañana' | 'Tarde', index: number) => {
+        const bloque = turno === 'Mañana' ? manana[index] : tarde[index];
+        
+        // Si es un bloque vacío (nuevo que no se guardó), eliminarlo directamente
+        if (!bloque.horaInicio || !bloque.horaFin) {
+            const setter = turno === 'Mañana' ? setManana : setTarde;
+            setter(prev => prev.filter((_, i) => i !== index));
+            setEditingIndex(null);
+            return;
+        }
+
+        // Si tiene datos, marcar como "borrable pendiente" (solo visualmente)
+        toast.info("Clickea 'Guardar' para confirmar la eliminación del bloque");
         const setter = turno === 'Mañana' ? setManana : setTarde;
         setter(prev => prev.filter((_, i) => i !== index));
     }
@@ -132,7 +176,7 @@ export default function HorarioConfigManager({ diasHabiles, bloquesManana, bloqu
                     <button
                         onClick={handleGuardarDias}
                         disabled={isPending}
-                        className="mt-6 w-full bg-slate-100 text-slate-600 font-black py-3 px-4 rounded-xl hover:bg-slate-200 transition-colors text-[10px] uppercase tracking-widest"
+                        className="mt-6 w-full bg-slate-100 text-slate-600 font-black py-3 px-4 rounded-xl hover:bg-slate-200 transition-colors text-[10px] uppercase tracking-widest disabled:opacity-50"
                     >
                         Solo Guardar Días
                     </button>
@@ -149,19 +193,56 @@ export default function HorarioConfigManager({ diasHabiles, bloquesManana, bloqu
                         <div className="space-y-3">
                             {manana.map((bloque, index) => (
                                 <div key={index} className="flex items-center gap-2 group">
-                                    <input type="time" value={bloque.horaInicio} onChange={e => handleBloqueChange('Mañana', index, 'horaInicio', e.target.value)} className="w-full p-3 bg-slate-50 border-none rounded-xl text-slate-700 font-bold focus:ring-2 focus:ring-indigo-500" />
-                                    <span className="text-slate-300 font-black">-</span>
-                                    <input type="time" value={bloque.horaFin} onChange={e => handleBloqueChange('Mañana', index, 'horaFin', e.target.value)} className="w-full p-3 bg-slate-50 border-none rounded-xl text-slate-700 font-bold focus:ring-2 focus:ring-indigo-500" />
-                                    <button onClick={() => removeBloque('Mañana', index)} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
-                                        <Trash2 size={18}/>
-                                    </button>
+                                    {editingIndex?.turno === 'Mañana' && editingIndex?.index === index ? (
+                                        <>
+                                            <input 
+                                                type="time" 
+                                                value={bloque.horaInicio} 
+                                                onChange={e => handleBloqueChange('Mañana', index, 'horaInicio', e.target.value)} 
+                                                className="w-full p-3 bg-indigo-50 border-2 border-indigo-500 rounded-xl text-slate-700 font-bold focus:ring-2 focus:ring-indigo-500" 
+                                            />
+                                            <span className="text-slate-300 font-black">-</span>
+                                            <input 
+                                                type="time" 
+                                                value={bloque.horaFin} 
+                                                onChange={e => handleBloqueChange('Mañana', index, 'horaFin', e.target.value)} 
+                                                className="w-full p-3 bg-indigo-50 border-2 border-indigo-500 rounded-xl text-slate-700 font-bold focus:ring-2 focus:ring-indigo-500" 
+                                            />
+                                            <button 
+                                                onClick={() => setEditingIndex(null)} 
+                                                className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
+                                            >
+                                                <X size={18}/>
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-bold">
+                                                {bloque.horaInicio} - {bloque.horaFin}
+                                            </div>
+                                            <button 
+                                                onClick={() => setEditingIndex({ turno: 'Mañana', index })} 
+                                                className="p-2 text-slate-400 hover:text-blue-500 transition-colors"
+                                                title="Editar"
+                                            >
+                                                <Edit2 size={18}/>
+                                            </button>
+                                            <button 
+                                                onClick={() => removeBloque('Mañana', index)} 
+                                                className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                                                title="Eliminar"
+                                            >
+                                                <Trash2 size={18}/>
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             ))}
                         </div>
                         <button onClick={() => addBloque('Mañana')} className="mt-4 text-indigo-600 font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:opacity-70">
                             <PlusCircle size={16} /> Agregar Bloque
                         </button>
-                        <button onClick={() => handleGuardarBloques('Mañana')} disabled={isPending} className="mt-6 w-full bg-slate-100 text-slate-600 font-black py-3 px-4 rounded-xl hover:bg-slate-200 text-[10px] uppercase tracking-widest">
+                        <button onClick={() => handleGuardarBloques('Mañana')} disabled={isPending} className="mt-6 w-full bg-slate-100 text-slate-600 font-black py-3 px-4 rounded-xl hover:bg-slate-200 text-[10px] uppercase tracking-widest disabled:opacity-50">
                             Solo Guardar Mañana
                         </button>
                     </div>
@@ -175,19 +256,56 @@ export default function HorarioConfigManager({ diasHabiles, bloquesManana, bloqu
                         <div className="space-y-3">
                             {tarde.map((bloque, index) => (
                                 <div key={index} className="flex items-center gap-2 group">
-                                    <input type="time" value={bloque.horaInicio} onChange={e => handleBloqueChange('Tarde', index, 'horaInicio', e.target.value)} className="w-full p-3 bg-slate-50 border-none rounded-xl text-slate-700 font-bold focus:ring-2 focus:ring-indigo-500" />
-                                    <span className="text-slate-300 font-black">-</span>
-                                    <input type="time" value={bloque.horaFin} onChange={e => handleBloqueChange('Tarde', index, 'horaFin', e.target.value)} className="w-full p-3 bg-slate-50 border-none rounded-xl text-slate-700 font-bold focus:ring-2 focus:ring-indigo-500" />
-                                    <button onClick={() => removeBloque('Tarde', index)} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
-                                        <Trash2 size={18}/>
-                                    </button>
+                                    {editingIndex?.turno === 'Tarde' && editingIndex?.index === index ? (
+                                        <>
+                                            <input 
+                                                type="time" 
+                                                value={bloque.horaInicio} 
+                                                onChange={e => handleBloqueChange('Tarde', index, 'horaInicio', e.target.value)} 
+                                                className="w-full p-3 bg-indigo-50 border-2 border-indigo-500 rounded-xl text-slate-700 font-bold focus:ring-2 focus:ring-indigo-500" 
+                                            />
+                                            <span className="text-slate-300 font-black">-</span>
+                                            <input 
+                                                type="time" 
+                                                value={bloque.horaFin} 
+                                                onChange={e => handleBloqueChange('Tarde', index, 'horaFin', e.target.value)} 
+                                                className="w-full p-3 bg-indigo-50 border-2 border-indigo-500 rounded-xl text-slate-700 font-bold focus:ring-2 focus:ring-indigo-500" 
+                                            />
+                                            <button 
+                                                onClick={() => setEditingIndex(null)} 
+                                                className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
+                                            >
+                                                <X size={18}/>
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-bold">
+                                                {bloque.horaInicio} - {bloque.horaFin}
+                                            </div>
+                                            <button 
+                                                onClick={() => setEditingIndex({ turno: 'Tarde', index })} 
+                                                className="p-2 text-slate-400 hover:text-blue-500 transition-colors"
+                                                title="Editar"
+                                            >
+                                                <Edit2 size={18}/>
+                                            </button>
+                                            <button 
+                                                onClick={() => removeBloque('Tarde', index)} 
+                                                className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                                                title="Eliminar"
+                                            >
+                                                <Trash2 size={18}/>
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             ))}
                         </div>
                         <button onClick={() => addBloque('Tarde')} className="mt-4 text-indigo-600 font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:opacity-70">
                             <PlusCircle size={16} /> Agregar Bloque
                         </button>
-                        <button onClick={() => handleGuardarBloques('Tarde')} disabled={isPending} className="mt-6 w-full bg-slate-100 text-slate-600 font-black py-3 px-4 rounded-xl hover:bg-slate-200 text-[10px] uppercase tracking-widest">
+                        <button onClick={() => handleGuardarBloques('Tarde')} disabled={isPending} className="mt-6 w-full bg-slate-100 text-slate-600 font-black py-3 px-4 rounded-xl hover:bg-slate-200 text-[10px] uppercase tracking-widest disabled:opacity-50">
                             Solo Guardar Tarde
                         </button>
                     </div>

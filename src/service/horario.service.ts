@@ -144,9 +144,23 @@ export const createHorario = async (data: {
 };
 
 export const deleteHorario = async (horarioId: number): Promise<Horario> => {
-  return db.horario.delete({
-    where: { idHorario: horarioId },
-  });
+  try {
+    // Verificar si el horario tiene registros de asistencia
+    const asistencias = await db.asistencia.findMany({
+      where: { idHorario: horarioId },
+    });
+
+    if (asistencias.length > 0) {
+      throw new Error('No se puede eliminar este horario porque ya tiene registros de asistencia. Elimine primero los registros de asistencia.');
+    }
+
+    return db.horario.delete({
+      where: { idHorario: horarioId },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'No se puede eliminar el horario.';
+    throw new Error(message);
+  }
 };
 
 export const getHorariosPorCurso = async (idCurso: number, idCiclo: number) => {

@@ -47,12 +47,22 @@ export const materiaService = {
 
   delete: async (id: number) => {
     try {
+      // Verificar si la materia está asignada a cursos (AsignacionAcademica)
+      const asignaciones = await db.asignacionAcademica.findMany({
+        where: { idMateria: id },
+      });
+
+      if (asignaciones.length > 0) {
+        throw new Error('No se puede eliminar esta materia porque está asignada a uno o más cursos. Desasigne primero las clases que usan esta materia.');
+      }
+
       return await db.materia.delete({
         where: { idMateria: id },
       });
     } catch (error) {
       console.error('Error al eliminar la materia:', error);
-      throw new Error('No se pudo eliminar la materia.');
+      const message = error instanceof Error ? error.message : 'No se pudo eliminar la materia.';
+      throw new Error(message);
     }
   },
 };

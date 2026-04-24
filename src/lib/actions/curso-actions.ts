@@ -44,7 +44,8 @@ export async function deleteCurso(id: number) {
     await cursoService.delete(id);
     revalidatePath('/dashboard/cursos');
     return { success: true };
-  } catch {
-    return { success: false, message: 'No se puede eliminar un curso con alumnos o materias asignadas.' };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'No se puede eliminar el curso.';
+    return { success: false, message };
   }
 }

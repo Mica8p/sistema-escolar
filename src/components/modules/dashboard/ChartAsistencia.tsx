@@ -13,7 +13,7 @@ export default function ChartAsistencia({ data }: { data: AsistenciaData[] }) {
   if (!data || data.length === 0) return <div className="h-full flex items-center justify-center text-slate-400 text-xs italic">Esperando datos de asistencia...</div>;
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height={300}>
       <BarChart data={data} margin={{ top: 20, right: 20, left: -20, bottom: 10 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
         <XAxis
