@@ -41,9 +41,9 @@ export default async function AdminView({ idCiclo, userName }: { idCiclo: number
                </div>
             </div>
 
-            <Link href="/dashboard/finanzas/reporte-deudores" className="bg-slate-900 p-6 rounded-[2.5rem] shadow-2xl shadow-slate-900/20 flex items-center justify-between group hover:bg-slate-800 transition-all border border-slate-800">
+            <Link href="/dashboard/finanzas/reporte-deudores" className="bg-slate-600 p-6 rounded-[2.5rem] shadow-2xl shadow-slate-900/20 flex items-center justify-between group hover:bg-slate-800 transition-all border border-slate-800">
                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Morosidad Actual</p>
+                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-widest mb-1">Morosidad Actual</p>
                   <h4 className="text-2xl font-black text-white tracking-tighter">
                     ${adminData.morosidadTotal.toLocaleString('es-AR')}
                   </h4>

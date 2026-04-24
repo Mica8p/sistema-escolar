@@ -36,7 +36,7 @@ export default function FormComunicado({ cursos }: { cursos: Curso[] }) {
 
       {/* TÍTULO */}
       <div className="space-y-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Título del Mensaje</label>
+        <label className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] ml-2">Título del Mensaje</label>
         <input
           name="titulo"
           required
@@ -70,7 +70,7 @@ export default function FormComunicado({ cursos }: { cursos: Curso[] }) {
         </div>
 
         <div className={`space-y-2 transition-all duration-300 ${requiereCurso ? 'opacity-100' : 'opacity-30'}`}>
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Seleccionar Curso</label>
+          <label className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] ml-2">Seleccionar Curso</label>
           <div className="relative">
             <select
               name="idTarget"
@@ -92,7 +92,7 @@ export default function FormComunicado({ cursos }: { cursos: Curso[] }) {
 
       {/* CONTENIDO */}
       <div className="space-y-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Contenido</label>
+        <label className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] ml-2">Contenido</label>
         <textarea
           name="contenido"
           required

@@ -97,8 +97,8 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
     }
   }
 
-  const cursos = esAdmin 
-    ? await db.curso.findMany({ 
+  const cursos = esAdmin
+    ? await db.curso.findMany({
         where: {
           asignaciones: {
             some: {
@@ -108,14 +108,14 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
           }
         },
         orderBy: [{ grado: 'asc' }, { seccion: 'asc' }]
-      }) 
+      })
     : [];
 
   const horariosMañana = esDocente ? (horarios as HorarioCompleto[]).filter((h: HorarioCompleto) => h.asignacion.curso !== null && h.asignacion.curso !== undefined && h.asignacion.curso.turno === 'Mañana') : [];
   const horariosTarde = esDocente ? (horarios as HorarioCompleto[]).filter((h: HorarioCompleto) => h.asignacion.curso !== null && h.asignacion.curso !== undefined && h.asignacion.curso.turno === 'Tarde') : [];
   const bloquesMañana = bloques.filter(b => b.turno === 'Mañana');
   const bloquesTarde = bloques.filter(b => b.turno === 'Tarde');
-  
+
   const bloquesFiltrados = cursoSeleccionado
     ? bloques.filter(b => b.turno === cursoSeleccionado.turno)
     : bloques;
@@ -134,7 +134,7 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
 
       {esAdmin && (
         <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm flex gap-6 items-center">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Seleccionar Curso:</span>
+          <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Seleccionar Curso:</span>
           <form className="flex gap-3">
             <select name="curso" defaultValue={curso || ""} className="text-[10px] font-black text-gray-600 uppercase tracking-widest transition-all">
               <option value="" disabled>Elegir curso...</option>

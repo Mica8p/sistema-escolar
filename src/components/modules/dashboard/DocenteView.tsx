@@ -115,8 +115,8 @@ export default async function DocenteView({ idProfesor, idUsuario, userName }: {
 
           {/* --- NOTIFICACIÓN FIJA DE NOTAS PENDIENTES (ROJO) --- */}
           {pendingNotifications.length > 0 && (
-            <div className="bg-red-50 border-l-4 border-red-500 text-red-800 p-6 rounded-[2.5rem] shadow-sm mb-8">
-              <p className="font-bold text-lg mb-2">⚠️ ¡ATENCIÓN! Notas Pendientes por Cargar</p>
+            <div className="bg-red-100 border-l-4 border-red-600 text-red-600 p-6 rounded-[2.5rem] shadow-sm mb-8">
+              <p className="font-bold text-lg mb-2"> ¡ATENCIÓN! Notas Pendientes por Cargar</p>
               {pendingNotifications.map((notif, index) => (
                 <div key={index} className="mb-4 last:mb-0">
                   <p className="font-semibold">El período &quot;{notif.periodoNombre}&quot; cierra en {notif.diasFaltantes} día(s).</p>
@@ -128,7 +128,7 @@ export default async function DocenteView({ idProfesor, idUsuario, userName }: {
                   </ul>
                 </div>
               ))}
-              <p className="text-sm mt-4 italic font-bold text-red-900">
+              <p className="text-sm mt-4 italic font-bold text-red-600">
                 Este mensaje permanecerá visible hasta que todas las notas pendientes sean cargadas.
               </p>
             </div>

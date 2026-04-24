@@ -55,7 +55,7 @@ export default async function PadreView({ idPersona, idUsuario, idCiclo, idPadre
     const curso = matricula?.idCurso ? await db.curso.findUnique({ where: { idCurso: matricula.idCurso } }) : null;
 
     const deudaHijo = cuenta.cargos.reduce((acc: number, cargo: { saldo?: number }) => acc + (cargo.saldo || 0), 0);
-    
+
     // Filtrar bloques según el turno del curso
     const bloquesFiltrados = curso ? bloques.filter(b => b.turno === curso.turno) : bloques;
 
@@ -103,11 +103,11 @@ export default async function PadreView({ idPersona, idUsuario, idCiclo, idPadre
         </div>
 
         <Link href="/dashboard/finanzas" className="h-full">
-          <div className={`p-6 rounded-4xl text-white flex flex-col justify-between h-full shadow-lg transition-transform hover:scale-[1.02] ${totalDeudaFamilia > 0 ? 'bg-rose-600 shadow-rose-100' : 'bg-slate-900 shadow-slate-200'}`}>
-            <p className="text-[9px] font-black text-white/60 uppercase tracking-widest">Deuda Familiar</p>
+          <div className={`p-6 rounded-4xl text-white flex flex-col justify-between h-full shadow-lg transition-transform hover:scale-[1.02] ${totalDeudaFamilia > 0 ? 'bg-rose-500 shadow-rose-100' : 'bg-slate-900 shadow-slate-200'}`}>
+            <p className="text-[9px] font-black text-white/80 uppercase tracking-widest">Deuda Familiar</p>
             <div className="flex items-end justify-between">
               <span className="text-xl font-black tracking-tighter">{totalDeudaFamilia > 0 ? `-$${totalDeudaFamilia.toLocaleString()}` : 'Al día'}</span>
-              <Wallet className="opacity-30" size={24} />
+              <Wallet className="opacity-80" size={24} />
             </div>
           </div>
         </Link>

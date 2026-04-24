@@ -28,7 +28,7 @@ export default function WelcomeHeader({ name, claseActual }: WelcomeProps) {
   });
 
   return (
-    <div className="relative overflow-hidden rounded-[2.5rem] bg-linear-to-br from-indigo-700 via-indigo-600 to-blue-500 p-1 shadow-2xl shadow-indigo-200/40">
+    <div className="relative overflow-hidden rounded-[2.5rem] bg-linear-to-br from-indigo-500 via-indigo-400 to-blue-300 p-1 shadow-2xl shadow-indigo-200/40">
       <div className="bg-indigo-900/10 backdrop-blur-md rounded-[2.4rem] p-6 lg:p-8 flex flex-col lg:flex-row justify-between items-center gap-6">
 
         <div className="relative z-10 text-center lg:text-left">

@@ -82,7 +82,7 @@ export default function CalificacionesTable({
   const guardarCambioLocal = (idMatricula: number, formData: FormData) => {
     const nota = Number(formData.get("nota"));
     const observacion = (formData.get("observacion") as string) || "";
-    
+
     if (!Number.isFinite(nota) || nota < 0 || nota > 10) {
       toast.error("La nota debe estar entre 0 y 10");
       return;
@@ -218,10 +218,10 @@ export default function CalificacionesTable({
         <table className="w-full border-separate border-spacing-y-2">
           <thead className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">
             <tr>
-              <th className="px-6 py-4 text-left">Alumno</th>
-              <th className="px-6 py-4 text-center">Nota Actual</th>
-              <th className="px-6 py-4 text-left">Observaciones</th>
-              <th className="px-6 py-4 text-center">Promedio Anual</th>
+              <th className="px-6 py-4 text-left text-slate-700">Alumno</th>
+              <th className="px-6 py-4 text-center text-slate-700">Nota Actual</th>
+              <th className="px-6 py-4 text-left text-slate-700">Observaciones</th>
+              <th className="px-6 py-4 text-center text-slate-700">Promedio Anual</th>
               {!readOnly && <th className="px-6 py-4 text-center">Gestión</th>}
             </tr>
           </thead>
