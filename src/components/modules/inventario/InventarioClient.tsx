@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { consumirInsumo } from "@/lib/actions/movimiento-stock-actions";
 import InsumoFormModal from "./InsumoFormModal";
 import MovimientoStockModal from "./MovimientoStockModal";
 import EditarMovimientoModal from "./EditarMovimientoModal";
@@ -58,8 +57,6 @@ export default function InventarioClient({
     return new Date().getMonth();
   });
 
-  const [consumoLoading, setConsumoLoading] = useState<number | null>(null);
-
   /* ---------- Movimientos de stock ---------- */
   const [movOpen, setMovOpen] = useState(false);
   const [movInsumo, setMovInsumo] = useState<Insumo | null>(null);
@@ -71,18 +68,6 @@ export default function InventarioClient({
     setMovInsumo(i);
     setMovTipo(tipo);
     setMovOpen(true);
-  };
-
-  const onConsumir = async (insumo: Insumo) => {
-    setConsumoLoading(insumo.idInsumo);
-    try {
-      const res = await consumirInsumo(insumo.idInsumo);
-      if (!res.success) {
-        alert(res.message);
-      }
-    } finally {
-      setConsumoLoading(null);
-    }
   };
 
   const onNew = () => {
@@ -248,17 +233,16 @@ export default function InventarioClient({
                         <div className="flex items-center justify-end gap-3">
                           <button 
                             title="Consumo" 
-                            onClick={() => onConsumir(i)} 
+                            onClick={() => openMovimiento(i, "Salida")} 
                             className="text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50"
-                            disabled={consumoLoading === i.idInsumo || i.stockActual === 0}
+                            disabled={i.stockActual === 0}
                           >
                             <MinusCircle size={20} />
                           </button>
                           <button 
                             title="Reposición" 
                             onClick={() => openMovimiento(i, "Entrada")} 
-                            className="text-emerald-600 hover:text-emerald-800 transition-colors disabled:opacity-50"
-                            disabled={consumoLoading === i.idInsumo}
+                            className="text-emerald-600 hover:text-emerald-800 transition-colors"
                           >
                             <ShoppingCart size={20} />
                           </button>

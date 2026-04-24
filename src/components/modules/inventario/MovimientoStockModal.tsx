@@ -24,12 +24,18 @@ export default function MovimientoStockModal({
   const [pending, startTransition] = useTransition();
   const [cantidad, setCantidad] = useState(() => "1");
   const [ajusteSign, setAjusteSign] = useState<"sumar" | "restar">(() => "sumar");
+  const [error, setError] = useState<string | null>(null);
 
   const [monto, setMonto] = useState(() => "");
   const [concepto, setConcepto] = useState(() => "");
   const [categoria, setCategoria] = useState<"Insumos" | "Servicios" | "Mantenimiento" | "Sueldos">(() => "Insumos");
 
   if (!open || !insumo) return null;
+
+  const handleClose = () => {
+    setError(null);
+    onClose();
+  };
 
   const onlyInt = (v: string) => (/^\d*$/.test(v) ? v : v.replace(/[^\d]/g, ""));
 
@@ -53,9 +59,10 @@ export default function MovimientoStockModal({
     startTransition(async () => {
       const res = await createMovimientoStock(fd);
       if (!res.success) {
-        alert(res.message);
+        setError(res.message);
         return;
       }
+      setError(null);
       onClose();
     });
   };
@@ -69,6 +76,12 @@ export default function MovimientoStockModal({
             {insumo.nombre} • Stock actual: <b className="text-gray-900">{insumo.stockActual}</b> {insumo.unidadMedida}
           </p>
         </div>
+
+        {error && (
+          <div className="mx-5 mt-4 rounded-lg bg-red-50 border border-red-200 p-3">
+            <p className="text-sm text-red-800">{error}</p>
+          </div>
+        )}
 
         <form onSubmit={onSubmit} className="space-y-4 px-5 py-4">
 
@@ -157,7 +170,7 @@ export default function MovimientoStockModal({
           <div className="flex items-center justify-end gap-2 pt-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="rounded-lg border px-4 py-2 text-sm hover:bg-slate-50 text-gray-700"
               disabled={pending}
             >
