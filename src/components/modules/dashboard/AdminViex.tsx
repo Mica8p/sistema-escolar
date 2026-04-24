@@ -5,8 +5,8 @@ import Link from "next/link";
 import WelcomeHeader from "./WelcomeHeader";
 import ChartAsistenciaGlobal from "@/components/modules/dashboard/ChartAsistenciaGlobal";
 
-export default async function AdminView({ idCiclo, userName }: { idCiclo: number, userName: string }) {
-  const adminData = await getDashboardAdminData(idCiclo);
+export default async function AdminView({ idCiclo, userName, idUsuario }: { idCiclo: number, userName: string, idUsuario: number }) {
+  const adminData = await getDashboardAdminData(idUsuario, idCiclo);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -92,27 +92,27 @@ export default async function AdminView({ idCiclo, userName }: { idCiclo: number
             </div>
           </Panel>
 
-          <Panel title="📢 Comunicados Enviados">
+          <Panel title="� Comunicados Recibidos">
             <div className="space-y-3 mt-4">
               {adminData?.comunicadosRecientes.length > 0 ? (
-                adminData.comunicadosRecientes.slice(0, 3).map((c: { idComunicado: number; titulo: string; fecha: string | Date; usuario: { persona: { nombre: string } } }) => (
+                adminData.comunicadosRecientes.slice(0, 3).map((c: { idComunicado: number; titulo: string; fecha: string | Date; usuario: { persona: { nombre: string; apellido: string } }; vistos: { idComunicado: number; idUsuario: number }[] }) => (
                   <Link
                     key={c.idComunicado}
                     href={`/dashboard/comunicados/${c.idComunicado}`}
-                    className="block p-3 bg-slate-50 border border-slate-100 rounded-xl hover:bg-white hover:border-indigo-100 transition-all group"
+                    className={`block p-3 border rounded-xl transition-all group ${c.vistos.length > 0 ? 'bg-slate-50 border-slate-100' : 'bg-red-50 border-red-200'}`}
                   >
-                    <p className="font-bold text-slate-800 text-[11px] leading-tight line-clamp-1 group-hover:text-indigo-600 transition-colors">{c.titulo}</p>
+                    <p className={`font-bold text-[11px] leading-tight line-clamp-1 group-hover:text-indigo-600 transition-colors ${c.vistos.length > 0 ? 'text-slate-800' : 'text-red-600'}`}>{c.titulo}</p>
                     <div className="flex justify-between items-center mt-2">
-                      <span className="text-[8px] text-slate-400 font-black uppercase tracking-tighter">Por {c.usuario.persona.nombre}</span>
+                      <span className="text-[8px] text-slate-400 font-black uppercase tracking-tighter">De {c.usuario.persona.nombre} {c.usuario.persona.apellido}</span>
                       <span className="text-[8px] font-bold text-slate-300">{new Date(c.fecha).toLocaleDateString()}</span>
                     </div>
                   </Link>
                 ))
               ) : (
-                <p className="text-[10px] text-slate-400 italic text-center py-4 uppercase font-black">Sin envíos recientes</p>
+                <p className="text-[10px] text-slate-400 italic text-center py-4 uppercase font-black">Sin mensajes recientes</p>
               )}
               <Link href="/dashboard/comunicados" className="block text-center text-[9px] font-black text-indigo-500 uppercase tracking-widest mt-4 hover:underline">
-                Ver centro de noticias
+                Ver bandeja de entrada
               </Link>
             </div>
           </Panel>

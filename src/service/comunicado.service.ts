@@ -1,4 +1,9 @@
 import db from "@/lib/db";
+import type { Prisma } from "@prisma/client";
+
+type ComunicadoOrCondition = 
+  | { target: string }
+  | { AND: Prisma.ComunicadoWhereInput[] };
 
 export async function getComunicadosRecibidos(idUsuario: number, rol: string, idsCursos: number[] = []) {
   if (!idUsuario || isNaN(idUsuario)) {
@@ -6,30 +11,44 @@ export async function getComunicadosRecibidos(idUsuario: number, rol: string, id
     return [];
   }
 
+  // Construir la condición OR según el rol del usuario
+  const orConditions: ComunicadoOrCondition[] = [
+    { target: "TODOS" },
+  ];
+
+  if (rol === "ADMIN") {
+    // Los admins reciben: TODOS, ADMINS
+    orConditions.push({ target: "ADMINS" });
+  } else if (rol === "PADRE") {
+    // Los padres reciben: TODOS, PADRES y comunicados de sus cursos
+    orConditions.push({ target: "PADRES" });
+    if (idsCursos.length > 0) {
+      orConditions.push({
+        AND: [
+          { idTarget: { in: idsCursos } },
+          { target: { in: ["CURSO", "CURSO_PADRES"] } }
+        ]
+      });
+    }
+  } else if (rol === "DOCENTE") {
+    // Los docentes reciben: TODOS, DOCENTES (pero NO ADMINS), y comunicados de sus cursos
+    orConditions.push({ target: "DOCENTES" });
+    if (idsCursos.length > 0) {
+      orConditions.push({
+        AND: [
+          { idTarget: { in: idsCursos } },
+          { target: { in: ["CURSO", "CURSO_DOCENTES"] } }
+        ]
+      });
+    }
+  }
+
   return await db.comunicado.findMany({
     where: {
       NOT: {
         idUsuario: idUsuario
       },
-      OR: [
-        { target: "TODOS" },
-
-        { target: rol === "PADRE" ? "PADRES" : "DOCENTES" },
-
-        {
-          AND: [
-            { idTarget: { in: idsCursos } },
-            {
-              target: {
-                in: [
-                  "CURSO",
-                  rol === "PADRE" ? "CURSO_PADRES" : "CURSO_DOCENTES"
-                ]
-              }
-            }
-          ]
-        }
-      ]
+      OR: orConditions
     },
     include: {
       usuario: {
@@ -57,21 +76,44 @@ export async function getComunicadosRecibidos(idUsuario: number, rol: string, id
 export async function getContadorNoLeidos(idUsuario: number, rol: string, idsCursos: number[] = []) {
   if (!idUsuario) return 0;
 
+  // Construir la condición OR según el rol del usuario
+  const orConditions: ComunicadoOrCondition[] = [
+    { target: "TODOS" },
+  ];
+
+  if (rol === "ADMIN") {
+    // Los admins reciben: TODOS, ADMINS
+    orConditions.push({ target: "ADMINS" });
+  } else if (rol === "PADRE") {
+    // Los padres reciben: TODOS, PADRES y comunicados de sus cursos
+    orConditions.push({ target: "PADRES" });
+    if (idsCursos.length > 0) {
+      orConditions.push({
+        AND: [
+          { idTarget: { in: idsCursos } },
+          { target: { in: ["CURSO", "CURSO_PADRES"] } }
+        ]
+      });
+    }
+  } else if (rol === "DOCENTE") {
+    // Los docentes reciben: TODOS, DOCENTES (pero NO ADMINS), y comunicados de sus cursos
+    orConditions.push({ target: "DOCENTES" });
+    if (idsCursos.length > 0) {
+      orConditions.push({
+        AND: [
+          { idTarget: { in: idsCursos } },
+          { target: { in: ["CURSO", "CURSO_DOCENTES"] } }
+        ]
+      });
+    }
+  }
+
   return await db.comunicado.count({
     where: {
       NOT: { idUsuario },
       AND: [
         {
-          OR: [
-            { target: "TODOS" },
-            { target: rol === "PADRE" ? "PADRES" : "DOCENTES" },
-            {
-              AND: [
-                { idTarget: { in: idsCursos } },
-                { target: { in: ["CURSO", rol === "PADRE" ? "CURSO_PADRES" : "CURSO_DOCENTES"] } }
-              ]
-            }
-          ]
+          OR: orConditions
         },
         {
           vistos: {

@@ -20,7 +20,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const shouldForceChange = session.user.isDefaultPassword;
 
   const rolPrincipal = roles[0] || "USUARIO";
-  let idsCursosHijos: number[] = [];
+  let idsCursos: number[] = [];
 
   if (roles.includes("PADRE") && idPadre) {
     const relaciones = await db.alumnoPadre.findMany({
@@ -36,11 +36,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
         }
       }
     });
-    idsCursosHijos = relaciones.flatMap(r => r.alumno.matriculas.map(m => m.idCurso));
+    idsCursos = relaciones.flatMap(r => r.alumno.matriculas.map(m => m.idCurso));
+  } else if (roles.includes("DOCENTE") && session.user.idProfesor) {
+    const asignaciones = await db.asignacionAcademica.findMany({
+      where: {
+        idProfesor: session.user.idProfesor,
+        estado: true
+      },
+      select: { idCurso: true },
+      distinct: ['idCurso']
+    });
+    idsCursos = asignaciones.map(a => a.idCurso);
   }
 
   const noLeidos = idUsuario
-    ? await getContadorNoLeidos(idUsuario, rolPrincipal, idsCursosHijos)
+    ? await getContadorNoLeidos(idUsuario, rolPrincipal, idsCursos)
     : 0;
 
   return (

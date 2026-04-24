@@ -30,7 +30,7 @@ export default function FormComunicado({
     setLoading(false);
 
     if (result?.success) {
-      router.push("/dashboard/comunicados");
+      router.push("/dashboard/comunicados/enviados");
     } else {
       alert(result?.error || "Error al enviar");
     }

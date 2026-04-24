@@ -4,6 +4,7 @@ import React, { ReactNode } from "react";
 interface PanelProps {
   title: ReactNode;
   children: ReactNode;
+  variant?: "white" | "red";
 }
 
 export function WelcomeBanner({ title, subtitle }: { title: string; subtitle: string }) {
@@ -68,9 +69,13 @@ export function StatCard({ icon, title, value, color }: StatCardProps) {
   );
 }
 
-export function Panel({ title, children }: PanelProps) {
+export function Panel({ title, children, variant = "white" }: PanelProps) {
+  const bgClass = variant === "red" 
+    ? "bg-red-50 border-red-200" 
+    : "bg-white border-slate-400/40";
+  
   return (
-    <div className="bg-white p-6 rounded-[2.5rem] border border-slate-400/40 shadow-lg shadow-slate-900/20">
+    <div className={`p-6 rounded-[2.5rem] border shadow-lg shadow-slate-900/20 ${bgClass}`}>
       <div className="text-lg font-black text-slate-800 tracking-tight mb-6">
         {title}
       </div>

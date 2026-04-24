@@ -3,6 +3,27 @@
 import db from "@/lib/db";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { getCursosParaComunicado } from "@/service/curso.service";
+
+export async function obtenerCursosDisponibles() {
+  const session = await auth();
+
+  if (!session?.user || !["ADMIN", "DOCENTE"].some(rol => session.user.roles?.includes(rol))) {
+    return { error: "No tienes permisos", cursos: [] };
+  }
+
+  const roles = session.user.roles || [];
+  const rol = roles.includes("ADMIN") ? "ADMIN" : "DOCENTE";
+  const idProfesor = session.user.idProfesor || null;
+
+  try {
+    const cursos = await getCursosParaComunicado(rol, idProfesor);
+    return { success: true, cursos };
+  } catch (error) {
+    console.error("Error al obtener cursos:", error);
+    return { error: "No se pudieron obtener los cursos", cursos: [] };
+  }
+}
 
 export async function enviarComunicado(formData: FormData) {
   const session = await auth();
@@ -32,6 +53,7 @@ export async function enviarComunicado(formData: FormData) {
     });
 
     revalidatePath("/dashboard/comunicados");
+    revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
     console.error("Error al enviar comunicado:", error);
@@ -66,6 +88,60 @@ export async function marcarComoLeido(idComunicado: number) {
   } catch (error) {
     console.error("Error al marcar como leído:", error);
     return { error: "No se pudo actualizar el estado de lectura" };
+  }
+}
+
+export async function editarComunicado(idComunicado: number, formData: FormData) {
+  const session = await auth();
+
+  if (!session?.user || !["ADMIN", "DOCENTE"].some(rol => session.user.roles?.includes(rol))) {
+    return { error: "No tienes permisos para editar comunicados." };
+  }
+
+  const idUsuario = session.user.idUsuario;
+  const titulo = formData.get("titulo") as string;
+  const contenido = formData.get("contenido") as string;
+  const target = formData.get("target") as string;
+  const idTargetRaw = formData.get("idTarget") as string;
+  const idTarget = idTargetRaw ? parseInt(idTargetRaw) : null;
+
+  if (!titulo || !contenido || !target) {
+    return { error: "Faltan datos requeridos" };
+  }
+
+  try {
+    // Verificar que el comunicado existe y pertenece al usuario
+    const comunicado = await db.comunicado.findUnique({
+      where: { idComunicado },
+      select: { idUsuario: true }
+    });
+
+    if (!comunicado) {
+      return { error: "El comunicado no existe" };
+    }
+
+    if (comunicado.idUsuario !== idUsuario) {
+      return { error: "No tienes permiso para editar este comunicado" };
+    }
+
+    // Actualizar el comunicado
+    await db.comunicado.update({
+      where: { idComunicado },
+      data: {
+        titulo,
+        contenido,
+        target,
+        idTarget,
+        fecha: new Date(), // Actualizar fecha de edición
+      },
+    });
+
+    revalidatePath("/dashboard/comunicados");
+    revalidatePath("/dashboard/comunicados/enviados");
+    return { success: true };
+  } catch (error) {
+    console.error("Error al editar comunicado:", error);
+    return { error: "Error interno al guardar los cambios." };
   }
 }
 

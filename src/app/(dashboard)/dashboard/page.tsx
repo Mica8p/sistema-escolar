@@ -58,6 +58,7 @@ export default async function DashboardPage() {
         <AdminView
           idCiclo={idCiclo}
           userName={user.name ?? "Admin"}
+          idUsuario={user.idUsuario}
         />
       )}
 

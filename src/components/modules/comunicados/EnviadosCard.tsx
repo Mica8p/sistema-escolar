@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Send, Eye, Calendar, ChevronDown, ChevronUp, Users, Trash2 } from "lucide-react";
+import { Send, Eye, Calendar, ChevronDown, ChevronUp, Users, Trash2, Edit2 } from "lucide-react";
 import { eliminarComunicado } from "@/lib/actions/comunicado-actions";
 import ConfirmModal from "@/components/shared/ConfirmModal";
+import EditarComunicadoModal from "@/components/modules/comunicados/EditarComunicadoModal";
 
 interface EnviadosCardProps {
   msg: {
@@ -25,12 +26,20 @@ interface EnviadosCardProps {
       fechaLectura: Date;
     }[];
   };
+  cursos?: Array<{
+    idCurso: number;
+    grado: string;
+    seccion: string;
+    turno: string;
+    nivel: string;
+  }>;
 }
 
-export default function EnviadoCard({ msg }: EnviadosCardProps) {
+export default function EnviadoCard({ msg, cursos = [] }: EnviadosCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -88,6 +97,16 @@ export default function EnviadoCard({ msg }: EnviadosCardProps) {
 
             <div className="flex items-center gap-4">
               <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowEdit(true);
+                }}
+                className="p-3 bg-blue-50 text-blue-400 rounded-2xl hover:bg-blue-500 hover:text-white transition-all active:scale-90"
+              >
+                <Edit2 size={18} />
+              </button>
+
+              <button
                 onClick={handleDeleteClick}
                 className="p-3 bg-red-50 text-red-400 rounded-2xl hover:bg-red-500 hover:text-white transition-all active:scale-90"
               >
@@ -119,6 +138,13 @@ export default function EnviadoCard({ msg }: EnviadosCardProps) {
             </div>
           </div>
         )}
+
+      <EditarComunicadoModal
+        isOpen={showEdit}
+        onClose={() => setShowEdit(false)}
+        comunicado={msg}
+        cursos={cursos}
+      />
       </div>
 
       <ConfirmModal

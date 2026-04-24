@@ -3,8 +3,8 @@
 import { useState, useMemo } from "react";
 import { Search, Calendar, Users, X, Megaphone, User } from "lucide-react";
 import Link from "next/link";
-import BotonLeido from "@/components/modules/comunicados/BotonLeido";
 import EnviadoCard from "@/components/modules/comunicados/EnviadosCard";
+import AutoLectura from "@/components/modules/comunicados/AutoLectura";
 
 interface Comunicado {
   idComunicado: number;
@@ -84,7 +84,7 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
       else if (rolPrincipal === "PADRE") {
         if (targetFilter === "TODOS_FILTRO") {
           // Mostrar todos válidos para padres
-          matchesTarget = item.target === "TODOS" || item.target === "PADRES" || item.target === "CURSO" || idsProfesoresHijos.includes(item.idUsuario);
+          matchesTarget = item.target === "TODOS" || item.target === "PADRES" || item.target === "CURSO" || item.target === "CURSO_PADRES" || idsProfesoresHijos.includes(item.idUsuario);
         } else if (targetFilter === "TODOS") {
           // Públicos
           matchesTarget = item.target === "TODOS";
@@ -226,7 +226,7 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
         {filteredData.length > 0 ? (
           filteredData.map((msg) => (
             isEnviados ? (
-              <EnviadoCard key={msg.idComunicado} msg={msg} />
+              <EnviadoCard key={msg.idComunicado} msg={msg} cursos={cursosAsignados} />
             ) : (
               <ComunicadoRecibidoCard key={msg.idComunicado} msg={msg} />
             )
@@ -248,12 +248,14 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
 function ComunicadoRecibidoCard({ msg }: { msg: Comunicado }) {
   const isRead = msg.vistos.length > 0;
   return (
-    <div className={`
-      relative bg-white p-6 rounded-[2.5rem] border transition-all duration-300
-      ${isRead
-        ? "border-slate-200 opacity-70 shadow-sm"
-        : "border-indigo-200 shadow-2xl shadow-indigo-100/40 ring-1 ring-indigo-50 hover:translate-x-2"}
-    `}>
+    <>
+      {!isRead && <AutoLectura id={msg.idComunicado} />}
+      <div className={`
+        relative bg-white p-6 rounded-[2.5rem] border transition-all duration-300
+        ${isRead
+          ? "border-slate-200 opacity-70 shadow-sm"
+          : "border-indigo-200 shadow-2xl shadow-indigo-100/40 ring-1 ring-indigo-50 hover:translate-x-2"}
+      `}>
       <Link href={`/dashboard/comunicados/${msg.idComunicado}`} className="absolute inset-0 z-10 rounded-[2.5rem]" />
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-4">
@@ -282,12 +284,11 @@ function ComunicadoRecibidoCard({ msg }: { msg: Comunicado }) {
         {msg.contenido}
       </p>
       <div className="flex justify-end border-t border-slate-50 pt-4 relative z-30">
-        {!isRead ? (
-          <BotonLeido idComunicado={msg.idComunicado} />
-        ) : (
-          <span className="text-[9px] font-black text-slate-700 uppercase tracking-[0.2em] italic">Visto por vos</span>
+        {isRead && (
+          <span className="text-[9px] font-black text-slate-700 uppercase tracking-[0.2em] italic">✓ Visto</span>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

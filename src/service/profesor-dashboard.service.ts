@@ -204,21 +204,28 @@ export async function getRendimientoAsistenciaDocente(idProfesor: number, idCicl
 
 export async function getComunicadosDashboard(idUsuario: number, idsCursos: number[]) {
   try {
+    // Construir las condiciones OR según el rol del docente
+    const orConditions: any[] = [
+      { target: "TODOS" },
+      { target: "DOCENTES" }
+    ];
+
+    // Agregar condiciones para cursos específicos
+    if (idsCursos.length > 0) {
+      orConditions.push({
+        AND: [
+          { idTarget: { in: idsCursos } },
+          { target: { in: ["CURSO", "CURSO_DOCENTES"] } }
+        ]
+      });
+    }
+
     return await db.comunicado.findMany({
       where: {
         NOT: { idUsuario: idUsuario },
-        OR: [
-          { target: "TODOS" },
-          { target: "DOCENTES" },
-          {
-            AND: [
-              { idTarget: { in: idsCursos } },
-              { target: { in: ["CURSO", "CURSO_DOCENTES"] } }
-            ]
-          }
-        ]
+        OR: orConditions
       },
-      take: 2,
+      take: 3,
       orderBy: {
         fecha: 'desc'
       },

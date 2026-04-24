@@ -1,20 +1,16 @@
 import db from "@/lib/db";
 import { Nivel } from "@prisma/client";
+import { getComunicadosRecibidos } from "./comunicado.service";
 
-export async function getDashboardAdminData(idCiclo: number) {
+export async function getDashboardAdminData(idAdmin: number, idCiclo: number) {
   const hoy = new Date();
   const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
 
-  const [alumnos, profesores, cursos, comunicados, pagosMes, morosidad] = await Promise.all([
+  const [alumnos, profesores, cursos, comunicadosRecibidos, pagosMes, morosidad] = await Promise.all([
     db.matricula.count({ where: { idCiclo, estadoAcademico: "Activo" } }),
     db.profesor.count(),
     db.curso.count({ where: { asignaciones: { some: { idCiclo } } } }),
-    db.comunicado.findMany({
-      where: { target: { in: ["TODOS", "PADRES", "DOCENTES"] } },
-      take: 5,
-      orderBy: { fecha: 'desc' },
-      include: { usuario: { include: { persona: { select: { nombre: true, apellido: true } } } } }
-    }),
+    getComunicadosRecibidos(idAdmin, "ADMIN", []).then(coms => coms.slice(0, 5)),
     db.pago.aggregate({
       where: { fechaPago: { gte: primerDiaMes } },
       _sum: { montoTotal: true }
@@ -43,7 +39,7 @@ export async function getDashboardAdminData(idCiclo: number) {
     alumnos,
     docentes: profesores,
     cursos,
-    comunicadosRecientes: comunicados,
+    comunicadosRecientes: comunicadosRecibidos,
     asistenciaGlobal,
     promedioAsis,
     recaudacionMes: pagosMes._sum.montoTotal || 0,

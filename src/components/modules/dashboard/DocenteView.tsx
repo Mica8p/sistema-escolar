@@ -15,6 +15,7 @@ import { getCicloActual } from "@/lib/ciclo-session";
 import WelcomeHeader from "./WelcomeHeader";
 import BannerClaseActualClient from "@/components/modules/dashboard/BannerClaseActualClient";
 import { getDocenteDashboardPendingNotifications } from "@/service/calificaciones.service"; // Importa la nueva función
+import db from "@/lib/db";
 
 // Define la interfaz para las notificaciones
 interface PendingNotification {
@@ -52,14 +53,24 @@ export default async function DocenteView({ idProfesor, idUsuario, userName }: {
   const pendingNotifications: PendingNotification[] = await getDocenteDashboardPendingNotifications(idProfesor, idCiclo);
 
   const clasesHoy = await getClasesDeHoyDocente(idProfesor, new Date(), idCiclo);
-  const idsCursos = Array.from(new Set(clasesHoy.map(h => h.asignacion.idCurso)));
+
+  // Obtener TODOS los cursos asignados al docente (no solo de hoy)
+  const todosLosCursos = await db.asignacionAcademica.findMany({
+    where: {
+      idProfesor: idProfesor,
+      estado: true
+    },
+    select: { idCurso: true },
+    distinct: ['idCurso']
+  });
+  const idsCursosTodos = todosLosCursos.map(c => c.idCurso);
 
   const [pendientes, notasRecientes, cierres, rendimiento, comunicados] = await Promise.all([
     getAsistenciasPendientesDocente(idProfesor, new Date(), idCiclo),
     getNotasRecientesDocente(idProfesor, 5, idCiclo),
     getProximosCierresDocente(idProfesor, 3, idCiclo),
     getRendimientoAsistenciaDocente(idProfesor, idCiclo),
-    getComunicadosDashboard(idUsuario, idsCursos),
+    getComunicadosDashboard(idUsuario, idsCursosTodos),
   ]);
 
   const ahoraDate = new Date();
@@ -69,6 +80,9 @@ export default async function DocenteView({ idProfesor, idUsuario, userName }: {
   const progresoDia = clasesHoy.length > 0 ? (clasesFinalizadas / clasesHoy.length) * 100 : 0;
 
   const claseActual = clasesHoy.find(h => horaActual >= h.horaInicio && horaActual <= h.horaFin);
+
+  // Verificar si hay comunicados no leídos
+  const tieneNoLeidos = comunicados && comunicados.length > 0 && comunicados.some((c: Comunicado) => c.vistos.length === 0);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
@@ -202,6 +216,7 @@ export default async function DocenteView({ idProfesor, idUsuario, userName }: {
                 <Link href="/dashboard/comunicados" className="text-[10px] text-indigo-500 hover:underline font-black uppercase tracking-tighter">Ver Todo</Link>
               </div>
             }
+            variant={tieneNoLeidos ? "red" : "white"}
           >
             <div className="space-y-3">
               {comunicados?.slice(0,3).map((com: Comunicado) => (
