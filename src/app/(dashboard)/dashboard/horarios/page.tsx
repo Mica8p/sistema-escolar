@@ -36,15 +36,18 @@ export default async function HorariosPage({ searchParams }: { searchParams: Pro
   const idCiclo = await getCicloActual();
 
   // Ejecutar todas las queries que siempre se hacen en paralelo
-  const [cicloActualObj, { bloques, dias }, profesorData] = await Promise.all([
+  const [cicloActualObj, horarioConfig, profesorData] = await Promise.all([
     db.cicloLectivo.findUnique({ where: { idCiclo } }),
     getHorarioConfig(),
     esDocente && !idProfesor && session?.user?.idPersona
       ? db.profesor.findUnique({
           where: { idPersona: Number(session.user.idPersona) }
         })
-      : null
+      : Promise.resolve(null)
   ]);
+
+  // Desempacar con validación
+  const { bloques = [], dias = [] } = horarioConfig || {};
 
   if (profesorData) {
     idProfesor = profesorData.idProfesor;

@@ -41,12 +41,12 @@ export default function FormComunicado({
 
       {/* TÍTULO */}
       <div className="space-y-2">
-        <label className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] ml-2">Título del Mensaje</label>
+        <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] ml-2">Título del Mensaje</label>
         <input
           name="titulo"
           required
           placeholder="Ej: Reunión de Padres - 2° B"
-          className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-700 font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
+          className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-700 font-bold placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
         />
       </div>
 
@@ -54,14 +54,14 @@ export default function FormComunicado({
 
         {/* SELECTOR DE DESTINATARIO */}
         <div className="space-y-2">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">¿A quién enviamos?</label>
+          <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] ml-2">¿A quién enviamos?</label>
           <div className="relative">
             <select
               name="target"
               required
               value={target}
               onChange={(e) => setTarget(e.target.value)} 
-              className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-700 font-bold appearance-none focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+              className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-500 font-bold appearance-none focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
             >
               {rolPrincipal === "ADMIN" ? (
                 <>
@@ -81,18 +81,18 @@ export default function FormComunicado({
                 </>
               )}
             </select>
-            <Users className="absolute right-4 top-4 text-slate-300 pointer-events-none" size={20} />
+            <Users className="absolute right-4 top-4 text-slate-500 pointer-events-none" size={20} />
           </div>
         </div>
 
         <div className={`space-y-2 transition-all duration-300 ${(rolPrincipal === "ADMIN" && ["CURSO", "CURSO_PADRES", "CURSO_DOCENTES"].includes(target)) || (rolPrincipal === "DOCENTE" && target === "CURSO_PADRES") ? 'opacity-100' : 'opacity-30'}`}>
-          <label className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] ml-2">Seleccionar Curso</label>
+          <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] ml-2">Seleccionar Curso</label>
           <div className="relative">
             <select
               name="idTarget"
               disabled={!((rolPrincipal === "ADMIN" && ["CURSO", "CURSO_PADRES", "CURSO_DOCENTES"].includes(target)) || (rolPrincipal === "DOCENTE" && target === "CURSO_PADRES"))}
               required={(rolPrincipal === "ADMIN" && ["CURSO", "CURSO_PADRES", "CURSO_DOCENTES"].includes(target)) || (rolPrincipal === "DOCENTE" && target === "CURSO_PADRES")}
-              className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-700 font-bold appearance-none focus:ring-2 focus:ring-indigo-500 outline-none disabled:cursor-not-allowed"
+              className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-500 font-bold appearance-none focus:ring-2 focus:ring-indigo-500 outline-none disabled:cursor-not-allowed"
             >
               <option value="">Seleccione un curso...</option>
               {cursos.map(c => (
@@ -101,20 +101,20 @@ export default function FormComunicado({
                 </option>
               ))}
             </select>
-            <GraduationCap className="absolute right-4 top-4 text-slate-300 pointer-events-none" size={20} />
+            <GraduationCap className="absolute right-4 top-4 text-slate-500 pointer-events-none" size={20} />
           </div>
         </div>
       </div>
 
       {/* CONTENIDO */}
       <div className="space-y-2">
-        <label className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] ml-2">Contenido</label>
+        <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] ml-2">Contenido</label>
         <textarea
           name="contenido"
           required
           rows={5}
           placeholder="Escribe aquí el mensaje oficial..."
-          className="w-full bg-slate-50 border-none rounded-3xl p-6 text-slate-700 font-medium placeholder:text-slate-300 focus:ring-2 focus:ring-indigo-500 transition-all outline-none resize-none"
+          className="w-full bg-slate-50 border-none rounded-3xl p-6 text-slate-700 font-medium placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 transition-all outline-none resize-none"
         />
       </div>
 
