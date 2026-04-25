@@ -40,8 +40,34 @@ export async function enviarComunicado(formData: FormData) {
   const idUsuario = session.user.idUsuario;
   const idTarget = idTargetRaw ? parseInt(idTargetRaw) : null;
   const idProfesor = session.user.idProfesor || null;
+  const rolPrincipal = session.user.roles?.[0];
 
   try {
+    // Validar que los docentes solo pueden enviar "PADRES_CURSOS_DOCENTE" sin curso específico
+    if (rolPrincipal === "DOCENTE" && target === "PADRES_CURSOS_DOCENTE" && idTarget) {
+      return { error: "Al enviar a 'Padres de todos mis cursos', no debes seleccionar un curso específico. El comunicado se enviará a los padres de TODOS tus cursos." };
+    }
+
+    // Validar que los docentes seleccionen un curso cuando usan "CURSO_PADRES"
+    if (rolPrincipal === "DOCENTE" && target === "CURSO_PADRES" && !idTarget) {
+      return { error: "Debes seleccionar un curso específico para enviar a los padres de ese curso." };
+    }
+
+    // Validar que el docente envíe a un curso que le pertenece (solo para docentes con CURSO_PADRES)
+    if (rolPrincipal === "DOCENTE" && target === "CURSO_PADRES" && idTarget && idProfesor) {
+      const cursoDelDocente = await db.asignacionAcademica.findFirst({
+        where: {
+          idProfesor: idProfesor,
+          idCurso: idTarget,
+          estado: true
+        }
+      });
+
+      if (!cursoDelDocente) {
+        return { error: "No puedes enviar comunicados a un curso que no es tuyo." };
+      }
+    }
+
     // Caso especial: docente enviando a "Padres de mis cursos"
     if (target === "PADRES_CURSOS_DOCENTE" && !idTarget && idProfesor) {
       // Verificar que el docente tenga cursos

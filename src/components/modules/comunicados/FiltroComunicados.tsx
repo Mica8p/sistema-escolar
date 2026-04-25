@@ -47,7 +47,10 @@ interface FiltroProps {
 export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsProfesoresHijos = [], cursosAsignados = [] }: FiltroProps) {
   const [search, setSearch] = useState("");
   const [targetFilter, setTargetFilter] = useState("TODOS_FILTRO");
-  const [dateFilter, setDateFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const [cursoFilter, setCursoFilter] = useState("");
 
   const filteredData = useMemo(() => {
@@ -64,11 +67,14 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
           // Mostrar todos los enviados válidos
           matchesTarget = 
             item.target === "ADMINS" || 
-            item.target === "PADRES_CURSOS_DOCENTE";
+            item.target === "PADRES_CURSOS_DOCENTE" ||
+            item.target === "CURSO_PADRES";
         } else if (targetFilter === "ADMINS") {
           matchesTarget = item.target === "ADMINS";
         } else if (targetFilter === "PADRES_CURSOS_DOCENTE") {
           matchesTarget = item.target === "PADRES_CURSOS_DOCENTE";
+        } else if (targetFilter === "CURSO_PADRES") {
+          matchesTarget = item.target === "CURSO_PADRES";
         }
       } 
       // Filtrado diferente para PADRES
@@ -138,6 +144,7 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
                     {cursosAsignados.length > 0 && (
                       <>
                         <option value="PADRES_CURSOS_DOCENTE">Padres de todos mis cursos</option>
+                        <option value="CURSO_PADRES">Padres de un curso específico</option>
                       </>
                     )}
                   </>
@@ -171,9 +178,15 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
         </div>
 
         {/*  Botón Limpiar */}
-        {(search || targetFilter !== "TODOS_FILTRO" || dateFilter || cursoFilter) && (
+        {(search || targetFilter !== "TODOS_FILTRO" || cursoFilter) && (
           <button
-            onClick={() => {setSearch(""); setTargetFilter("TODOS_FILTRO"); setDateFilter(""); setCursoFilter("");}}
+            onClick={() => {
+              setSearch("");
+              setTargetFilter("TODOS_FILTRO");
+              const today = new Date();
+              setDateFilter(today.toISOString().split('T')[0]);
+              setCursoFilter("");
+            }}
             className="p-4 bg-rose-50 text-rose-500 rounded-3xl hover:bg-rose-100 hover:scale-110 active:scale-95 transition-all shadow-lg shadow-rose-100/50 flex items-center justify-center"
             title="Limpiar filtros"
           >
