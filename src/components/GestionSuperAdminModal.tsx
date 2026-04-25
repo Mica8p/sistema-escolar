@@ -5,10 +5,18 @@ import { cederSuperAdmin, desactivarSuperAdmin, obtenerSuperAdmins } from '@/lib
 import { toast } from 'sonner';
 import { Key, AlertTriangle, Users, LogOut } from 'lucide-react';
 
+interface SuperAdmin {
+  idUsuario: number;
+  nombre: string;
+  dni: string;
+  email: string | null;
+  esActual: boolean;
+}
+
 export default function GestionSuperAdminModal() {
   const [modo, setModo] = useState<'menu' | 'ceder' | 'desactivar' | 'lista'>('menu');
   const [loading, setLoading] = useState(false);
-  const [superAdmins, setSuperAdmins] = useState<any[]>([]);
+  const [superAdmins, setSuperAdmins] = useState<SuperAdmin[]>([]);
   const [selectedAdmin, setSelectedAdmin] = useState<number | null>(null);
 
   const handleCeder = async (formData: FormData) => {
@@ -220,7 +228,7 @@ export default function GestionSuperAdminModal() {
                       <div>
                         <p className="font-bold text-slate-900">{admin.nombre}</p>
                         <p className="text-sm text-slate-600">DNI: {admin.dni}</p>
-                        <p className="text-sm text-slate-600">{admin.email}</p>
+                        <p className="text-sm text-slate-600">{admin.email ?? '—'}</p>
                         {admin.esActual && (
                           <span className="inline-block mt-2 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">
                             TÚ (Actual)

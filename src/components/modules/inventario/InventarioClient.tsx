@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import InsumoFormModal from "./InsumoFormModal";
 import MovimientoStockModal from "./MovimientoStockModal";
 import EditarMovimientoModal from "./EditarMovimientoModal";
@@ -42,6 +43,7 @@ export default function InventarioClient({
   movimientos: Movimiento[];
   totalGastos: number;
 }) {
+  const router = useRouter();
   /* ---------- Insumos (alta / edición) ---------- */
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"create" | "edit">("create");
