@@ -65,12 +65,11 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
           // Mostrar todos los enviados válidos
           matchesTarget = 
             item.target === "ADMINS" || 
-            (cursosIds.length > 0 && item.target === "CURSO_PADRES" && item.idTarget !== null && cursosIds.includes(item.idTarget));
+            item.target === "PADRES_CURSOS_DOCENTE";
         } else if (targetFilter === "ADMINS") {
           matchesTarget = item.target === "ADMINS";
         } else if (targetFilter === "PADRES_CURSOS_DOCENTE") {
-          // Filtrar comunicados CURSO_PADRES cuyos cursos pertenecen al docente
-          matchesTarget = item.target === "CURSO_PADRES" && cursosIds.length > 0 && item.idTarget !== null && cursosIds.includes(item.idTarget);
+          matchesTarget = item.target === "PADRES_CURSOS_DOCENTE";
         }
       } 
       // Filtrado diferente para PADRES
@@ -78,19 +77,13 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
         if (targetFilter === "TODOS_FILTRO") {
           // Mostrar todos - ya están filtrados en el backend
           matchesTarget = true;
-        } else if (targetFilter === "TODOS") {
-          // Públicos
-          matchesTarget = item.target === "TODOS";
-        } else if (targetFilter === "PADRES") {
-          // Para padres
-          matchesTarget = item.target === "PADRES";
-        } else if (targetFilter === "PROFESORES") {
-          // De profesores (incluye comunicados CURSO_PADRES o de cualquier tipo de profesores de sus hijos)
-          // Verificar si es un comunicado de un profesor que tiene cursos con el padre
-          matchesTarget = idsProfesoresHijos.includes(item.idUsuario);
         } else if (targetFilter === "ADMIN") {
           // Del admin: públicos o para padres que NO sean de profesores
           matchesTarget = (item.target === "TODOS" || item.target === "PADRES") && !idsProfesoresHijos.includes(item.idUsuario);
+        } else if (targetFilter === "PROFESORES") {
+          // De profesores (incluye comunicados PADRES_CURSOS_DOCENTE o de cualquier tipo de profesores de sus hijos)
+          // Verificar si es un comunicado de un profesor que tiene cursos con el padre
+          matchesTarget = item.target === "PADRES_CURSOS_DOCENTE" || idsProfesoresHijos.includes(item.idUsuario);
         }
       } else {
         // Filtrado original para otros roles
@@ -136,10 +129,8 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
                 {rolPrincipal === "PADRE" ? (
                   <>
                     <option value="TODOS_FILTRO">Todos los comunicados</option>
-                    <option value="TODOS">📢 Públicos</option>
-                    <option value="PADRES">👨‍👩‍👧 Para padres</option>
-                    <option value="PROFESORES">👨‍🏫 Mis profesores</option>
-                    <option value="ADMIN">🏛️ Administración</option>
+                    <option value="PROFESORES"> Mis profesores </option>
+                    <option value="ADMIN"> Administración </option>
                   </>
                 ) : isEnviados && rolPrincipal === "DOCENTE" ? (
                   <>

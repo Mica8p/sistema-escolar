@@ -23,15 +23,57 @@ export async function getComunicadosRecibidos(idUsuario: number, rol: string, id
     // Los padres reciben: TODOS, PADRES, comunicados de sus cursos
     orConditions.push({ target: "PADRES" });
     if (idsCursos.length > 0) {
-      console.log(`[DEBUG] Buscando comunicados de cursos [${idsCursos.join(", ")}]`);
       orConditions.push({
         AND: [
           { idTarget: { in: idsCursos } },
           { target: { in: ["CURSO", "CURSO_PADRES"] } }
         ]
       });
-    } else {
-      console.log(`[DEBUG] Padre ${idUsuario} NO tiene cursos, solo recibirá TODOS y PADRES`);
+
+      // Para comunicados PADRES_CURSOS_DOCENTE: verificar que el docente tiene cursos donde está el hijo del padre
+      // Obtener profesores de los cursos del padre
+      const asignacionesDelPadre = await db.asignacionAcademica.findMany({
+        where: {
+          idCurso: { in: idsCursos },
+          estado: true,
+          idProfesor: { not: null }
+        },
+        distinct: ['idProfesor'],
+        select: { 
+          profesor: {
+            select: {
+              idPersona: true
+            }
+          }
+        }
+      });
+
+      // Obtener los idUsuario de esos profesores
+      const idsPersonasProfs = asignacionesDelPadre
+        .map(a => a.profesor?.idPersona)
+        .filter((id): id is number => id !== undefined);
+
+      if (idsPersonasProfs.length > 0) {
+        const usuariosProfs = await db.usuario.findMany({
+          where: {
+            idPersona: { in: idsPersonasProfs }
+          },
+          select: { idUsuario: true }
+        });
+
+        const idsUsuariosProfs = usuariosProfs.map(u => u.idUsuario);
+
+        if (idsUsuariosProfs.length > 0) {
+          // El comunicado PADRES_CURSOS_DOCENTE debe venir de un docente que tiene cursos del padre
+          // Usamos idUsuario en lugar de idTarget porque PADRES_CURSOS_DOCENTE no tiene idTarget específico
+          orConditions.push({
+            AND: [
+              { target: "PADRES_CURSOS_DOCENTE" },
+              { idUsuario: { in: idsUsuariosProfs } }
+            ]
+          });
+        }
+      }
     }
   } else if (rol === "DOCENTE") {
     // Los docentes reciben: TODOS, DOCENTES (pero NO ADMINS), y comunicados de sus cursos
@@ -97,6 +139,51 @@ export async function getContadorNoLeidos(idUsuario: number, rol: string, idsCur
           { target: { in: ["CURSO", "CURSO_PADRES"] } }
         ]
       });
+
+      // Para comunicados PADRES_CURSOS_DOCENTE: verificar que el docente tiene cursos donde está el hijo del padre
+      // Obtener profesores de los cursos del padre
+      const asignacionesDelPadre = await db.asignacionAcademica.findMany({
+        where: {
+          idCurso: { in: idsCursos },
+          estado: true,
+          idProfesor: { not: null }
+        },
+        distinct: ['idProfesor'],
+        select: { 
+          profesor: {
+            select: {
+              idPersona: true
+            }
+          }
+        }
+      });
+
+      // Obtener los idUsuario de esos profesores
+      const idsPersonasProfs = asignacionesDelPadre
+        .map(a => a.profesor?.idPersona)
+        .filter((id): id is number => id !== undefined);
+
+      if (idsPersonasProfs.length > 0) {
+        const usuariosProfs = await db.usuario.findMany({
+          where: {
+            idPersona: { in: idsPersonasProfs }
+          },
+          select: { idUsuario: true }
+        });
+
+        const idsUsuariosProfs = usuariosProfs.map(u => u.idUsuario);
+
+        if (idsUsuariosProfs.length > 0) {
+          // El comunicado PADRES_CURSOS_DOCENTE debe venir de un docente que tiene cursos del padre
+          // Usamos idUsuario en lugar de idTarget porque PADRES_CURSOS_DOCENTE no tiene idTarget específico
+          orConditions.push({
+            AND: [
+              { target: "PADRES_CURSOS_DOCENTE" },
+              { idUsuario: { in: idsUsuariosProfs } }
+            ]
+          });
+        }
+      }
     }
   } else if (rol === "DOCENTE") {
     // Los docentes reciben: TODOS, DOCENTES (pero NO ADMINS), y comunicados de sus cursos

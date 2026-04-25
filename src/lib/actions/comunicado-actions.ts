@@ -58,28 +58,17 @@ export async function enviarComunicado(formData: FormData) {
         return { error: "No tienes cursos asignados para enviar este comunicado." };
       }
 
-      console.log(`[DEBUG] Creando ${cursosDocente.length} comunicados para cursos:`, cursosDocente.map(c => c.idCurso));
-
-      // Crear un comunicado por cada curso del docente
-      // Esto asegura que solo los padres cuyos hijos estén en ese curso específico lo reciban
-      const promises = cursosDocente.map((curso) =>
-        db.comunicado.create({
-          data: {
-            titulo,
-            contenido,
-            target: "CURSO_PADRES",
-            idTarget: curso.idCurso, // idTarget es el id del curso, no del profesor
-            idUsuario,
-            fecha: new Date(),
-          },
-        })
-      );
-
-      const resultados = await db.$transaction(promises);
-      console.log(`[DEBUG] Se crearon ${resultados.length} comunicados exitosamente`);
-
-      revalidatePath("/dashboard/comunicados");
-      revalidatePath("/dashboard");
+      // Crear UN ÚNICO comunicado para todos los padres de los cursos del docente
+      await db.comunicado.create({
+        data: {
+          titulo,
+          contenido,
+          target: "PADRES_CURSOS_DOCENTE",
+          idTarget: null, // Sin idTarget específico, el filtrado usa idUsuario (profesor que lo envía)
+          idUsuario,
+          fecha: new Date(),
+        },
+      });
     } else {
       // Caso normal: enviar un único comunicado
       await db.comunicado.create({

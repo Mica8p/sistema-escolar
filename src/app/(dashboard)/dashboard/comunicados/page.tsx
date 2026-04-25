@@ -62,14 +62,11 @@ export default async function ComunicadosPage() {
   let idsCursos: number[] = [];
   if (rolPrincipal === "PADRE" && hijos.length > 0) {
     idsCursos = hijos.flatMap((h: typeof hijos[number]) => h.alumno.matriculas.map((m: typeof h.alumno.matriculas[number]) => m.idCurso));
-    console.log(`[DEBUG] Padre ${idUsuario} tiene cursos:`, idsCursos);
   } else if (rolPrincipal === "DOCENTE" && cursosDocente.length > 0) {
     idsCursos = cursosDocente.map((c: typeof cursosDocente[number]) => c.idCurso);
-    console.log(`[DEBUG] Docente ${idUsuario} tiene cursos:`, idsCursos);
   }
 
   const comunicados = await getComunicadosRecibidos(idUsuario, rolPrincipal, idsCursos);
-  console.log(`[DEBUG] ${rolPrincipal} ${idUsuario} recibió ${comunicados.length} comunicados`);
   const comunicadosFiltrados = comunicados;
 
   // Obtener IDs de profesores de cursos del padre (para poder filtrar después)

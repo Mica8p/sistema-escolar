@@ -4,6 +4,7 @@ import { enviarComunicado } from "@/lib/actions/comunicado-actions";
 import { Send, Users, GraduationCap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface Curso {
   idCurso: number;
@@ -30,9 +31,10 @@ export default function FormComunicado({
     setLoading(false);
 
     if (result?.success) {
+      toast.success("Comunicado enviado correctamente");
       router.push("/dashboard/comunicados/enviados");
     } else {
-      alert(result?.error || "Error al enviar");
+      toast.error(result?.error || "Error al enviar el comunicado");
     }
   }
 
