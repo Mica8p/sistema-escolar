@@ -1,9 +1,56 @@
 import { getComunicadosRecibidos } from "@/service/comunicado.service";
 import { Megaphone, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import db from "@/lib/db";
 
-export default async function WidgetComunicados({ idUsuario, rol }: { idUsuario: number, rol: string }) {
-  const comunicados = await getComunicadosRecibidos(idUsuario, rol);
+export default async function WidgetComunicados({ 
+  idUsuario, 
+  rol, 
+  idPadre,
+  idProfesor
+}: { 
+  idUsuario: number
+  rol: string
+  idPadre?: number
+  idProfesor?: number
+}) {
+  // Obtener cursos del usuario (si es padre o docente)
+  let idsCursos: number[] = [];
+  
+  if (rol === "PADRE" && idPadre) {
+    const hijos = await db.alumnoPadre.findMany({
+      where: { idPadre },
+      include: {
+        alumno: {
+          include: {
+            matriculas: { 
+              where: { estadoAcademico: "Activo" }, 
+              select: { idCurso: true } 
+            }
+          }
+        }
+      }
+    });
+    
+    if (hijos.length > 0) {
+      idsCursos = hijos.flatMap((h) => h.alumno.matriculas.map((m) => m.idCurso));
+    }
+  } else if (rol === "DOCENTE" && idProfesor) {
+    const cursos = await db.asignacionAcademica.findMany({
+      where: {
+        idProfesor,
+        estado: true
+      },
+      select: { idCurso: true },
+      distinct: ['idCurso']
+    });
+    
+    if (cursos.length > 0) {
+      idsCursos = cursos.map((c) => c.idCurso);
+    }
+  }
+  
+  const comunicados = await getComunicadosRecibidos(idUsuario, rol, idsCursos);
   const ultimos = comunicados.slice(0, 3);
 
   return (

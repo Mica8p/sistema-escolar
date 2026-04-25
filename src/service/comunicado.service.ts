@@ -20,15 +20,18 @@ export async function getComunicadosRecibidos(idUsuario: number, rol: string, id
     // Los admins reciben: TODOS, ADMINS
     orConditions.push({ target: "ADMINS" });
   } else if (rol === "PADRE") {
-    // Los padres reciben: TODOS, PADRES y comunicados de sus cursos
+    // Los padres reciben: TODOS, PADRES, comunicados de sus cursos
     orConditions.push({ target: "PADRES" });
     if (idsCursos.length > 0) {
+      console.log(`[DEBUG] Buscando comunicados de cursos [${idsCursos.join(", ")}]`);
       orConditions.push({
         AND: [
           { idTarget: { in: idsCursos } },
           { target: { in: ["CURSO", "CURSO_PADRES"] } }
         ]
       });
+    } else {
+      console.log(`[DEBUG] Padre ${idUsuario} NO tiene cursos, solo recibirá TODOS y PADRES`);
     }
   } else if (rol === "DOCENTE") {
     // Los docentes reciben: TODOS, DOCENTES (pero NO ADMINS), y comunicados de sus cursos
@@ -85,7 +88,7 @@ export async function getContadorNoLeidos(idUsuario: number, rol: string, idsCur
     // Los admins reciben: TODOS, ADMINS
     orConditions.push({ target: "ADMINS" });
   } else if (rol === "PADRE") {
-    // Los padres reciben: TODOS, PADRES y comunicados de sus cursos
+    // Los padres reciben: TODOS, PADRES, comunicados de sus cursos
     orConditions.push({ target: "PADRES" });
     if (idsCursos.length > 0) {
       orConditions.push({

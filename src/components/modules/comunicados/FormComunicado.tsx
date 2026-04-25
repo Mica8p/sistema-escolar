@@ -76,8 +76,7 @@ export default function FormComunicado({
               ) : (
                 <>
                   <option value="ADMINS">A los Admins</option>
-                  <option value="PADRES_CURSOS_DOCENTE">Padres de mis cursos</option>
-                  <option value="CURSO_PADRES">Padres de un curso específico</option>
+                  <option value="PADRES_CURSOS_DOCENTE">Padres de todos mis cursos</option>
                 </>
               )}
             </select>
@@ -85,16 +84,22 @@ export default function FormComunicado({
           </div>
         </div>
 
-        <div className={`space-y-2 transition-all duration-300 ${(rolPrincipal === "ADMIN" && ["CURSO", "CURSO_PADRES", "CURSO_DOCENTES"].includes(target)) || (rolPrincipal === "DOCENTE" && target === "CURSO_PADRES") ? 'opacity-100' : 'opacity-30'}`}>
-          <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] ml-2">Seleccionar Curso</label>
+        <div className={`space-y-2 transition-all duration-300 ${(rolPrincipal === "ADMIN" && ["CURSO", "CURSO_PADRES", "CURSO_DOCENTES"].includes(target)) || (rolPrincipal === "DOCENTE" && target === "PADRES_CURSOS_DOCENTE") ? 'opacity-100' : 'opacity-30'}`}>
+          <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] ml-2">
+            {target === "PADRES_CURSOS_DOCENTE" ? "Seleccionar Cursos (Opcional)" : "Seleccionar Curso"}
+          </label>
           <div className="relative">
             <select
               name="idTarget"
-              disabled={!((rolPrincipal === "ADMIN" && ["CURSO", "CURSO_PADRES", "CURSO_DOCENTES"].includes(target)) || (rolPrincipal === "DOCENTE" && target === "CURSO_PADRES"))}
-              required={(rolPrincipal === "ADMIN" && ["CURSO", "CURSO_PADRES", "CURSO_DOCENTES"].includes(target)) || (rolPrincipal === "DOCENTE" && target === "CURSO_PADRES")}
+              disabled={!((rolPrincipal === "ADMIN" && ["CURSO", "CURSO_PADRES", "CURSO_DOCENTES"].includes(target)) || (rolPrincipal === "DOCENTE" && target === "PADRES_CURSOS_DOCENTE"))}
+              required={(rolPrincipal === "ADMIN" && ["CURSO", "CURSO_PADRES", "CURSO_DOCENTES"].includes(target))}
               className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-500 font-bold appearance-none focus:ring-2 focus:ring-indigo-500 outline-none disabled:cursor-not-allowed"
             >
-              <option value="">Seleccione un curso...</option>
+              {target === "PADRES_CURSOS_DOCENTE" ? (
+                <option value="">-- Dejar vacío para enviar a TODOS mis cursos --</option>
+              ) : (
+                <option value="">Seleccione un curso...</option>
+              )}
               {cursos.map(c => (
                 <option key={c.idCurso} value={c.idCurso}>
                   {c.grado}° &quot;{c.seccion}&quot; ({c.turno}) - {c.nivel}

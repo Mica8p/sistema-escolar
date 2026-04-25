@@ -49,8 +49,6 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
   const [targetFilter, setTargetFilter] = useState("TODOS_FILTRO");
   const [dateFilter, setDateFilter] = useState("");
   const [cursoFilter, setCursoFilter] = useState("");
-  
-  const soloAdmin = !isEnviados && rolPrincipal !== "ADMIN"; // Solo filtrar por admin en bandeja de entrada y si no es admin
 
   const filteredData = useMemo(() => {
     return data.filter((item) => {
@@ -67,24 +65,19 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
           // Mostrar todos los enviados válidos
           matchesTarget = 
             item.target === "ADMINS" || 
-            (cursosIds.length > 0 && (item.target === "PADRES" || item.target === "CURSO_PADRES"));
+            (cursosIds.length > 0 && item.target === "CURSO_PADRES" && item.idTarget !== null && cursosIds.includes(item.idTarget));
         } else if (targetFilter === "ADMINS") {
           matchesTarget = item.target === "ADMINS";
-        } else if (targetFilter === "PADRES") {
-          matchesTarget = item.target === "PADRES" && cursosIds.length > 0;
-        } else if (targetFilter === "CURSO_PADRES") {
-          matchesTarget = item.target === "CURSO_PADRES" && cursosIds.length > 0;
-          // Si hay un curso específico seleccionado, filtrar por ese curso
-          if (cursoFilter) {
-            matchesTarget = matchesTarget && item.idTarget === parseInt(cursoFilter);
-          }
+        } else if (targetFilter === "PADRES_CURSOS_DOCENTE") {
+          // Filtrar comunicados CURSO_PADRES cuyos cursos pertenecen al docente
+          matchesTarget = item.target === "CURSO_PADRES" && cursosIds.length > 0 && item.idTarget !== null && cursosIds.includes(item.idTarget);
         }
       } 
       // Filtrado diferente para PADRES
       else if (rolPrincipal === "PADRE") {
         if (targetFilter === "TODOS_FILTRO") {
-          // Mostrar todos válidos para padres
-          matchesTarget = item.target === "TODOS" || item.target === "PADRES" || item.target === "CURSO" || item.target === "CURSO_PADRES" || idsProfesoresHijos.includes(item.idUsuario);
+          // Mostrar todos - ya están filtrados en el backend
+          matchesTarget = true;
         } else if (targetFilter === "TODOS") {
           // Públicos
           matchesTarget = item.target === "TODOS";
@@ -92,7 +85,8 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
           // Para padres
           matchesTarget = item.target === "PADRES";
         } else if (targetFilter === "PROFESORES") {
-          // De profesores
+          // De profesores (incluye comunicados CURSO_PADRES o de cualquier tipo de profesores de sus hijos)
+          // Verificar si es un comunicado de un profesor que tiene cursos con el padre
           matchesTarget = idsProfesoresHijos.includes(item.idUsuario);
         } else if (targetFilter === "ADMIN") {
           // Del admin: públicos o para padres que NO sean de profesores
@@ -106,12 +100,9 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
       const matchesDate =
         !dateFilter || new Date(item.fecha).toLocaleDateString() === new Date(dateFilter + "T12:00:00").toLocaleDateString();
 
-      // Filtrar solo admin si está habilitado (solo para bandeja de entrada)
-      const matchesAdmin = !soloAdmin || (item.usuario?.roles?.some(ur => ur.rol?.nombre === "ADMIN") ?? false);
-
-      return matchesSearch && matchesTarget && matchesDate && matchesAdmin;
+      return matchesSearch && matchesTarget && matchesDate;
     });
-  }, [data, search, targetFilter, dateFilter, cursoFilter, rolPrincipal, idsProfesoresHijos, soloAdmin, isEnviados, cursosAsignados]);
+  }, [data, search, targetFilter, dateFilter, rolPrincipal, idsProfesoresHijos, isEnviados, cursosAsignados]);
 
   return (
     <div className="space-y-8">
@@ -156,8 +147,7 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
                     <option value="ADMINS">A los Admins</option>
                     {cursosAsignados.length > 0 && (
                       <>
-                        <option value="PADRES">A todos los Padres</option>
-                        <option value="CURSO_PADRES">Padres de un curso específico</option>
+                        <option value="PADRES_CURSOS_DOCENTE">Padres de todos mis cursos</option>
                       </>
                     )}
                   </>
@@ -175,26 +165,7 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
               </select>
             </div>
 
-            {/* SEGUNDO FILTRO - Aparece solo cuando se selecciona CURSO_PADRES */}
-            {targetFilter === "CURSO_PADRES" && cursosAsignados.length > 0 && (
-              <div className="relative w-full md:w-64 group">
-                <Users className="absolute left-5 top-1/2 -translate-y-1/2 text-green-400 group-focus-within:text-green-600 transition-colors" size={18} />
-                <select
-                  value={cursoFilter}
-                  onChange={(e) => setCursoFilter(e.target.value)}
-                  className="w-full pl-12 pr-8 py-4 bg-green-50/30 border border-transparent rounded-[1.8rem] text-xs font-bold uppercase tracking-wide focus:bg-white focus:border-green-200 focus:ring-4 focus:ring-green-50/50 appearance-none cursor-pointer transition-all text-green-700"
-                >
-                  <option value="">-- Selecciona un curso --</option>
-                  {cursosAsignados.map((curso) => {
-                    return (
-                      <option key={curso.idCurso} value={curso.idCurso}>
-                        {curso.grado} - {curso.seccion} ({curso.turno}) - {curso.nivel}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            )}
+            {/* SEGUNDO FILTRO - Ya no necesario, eliminado */}
           </>
         )}
 

@@ -39,18 +39,60 @@ export async function enviarComunicado(formData: FormData) {
 
   const idUsuario = session.user.idUsuario;
   const idTarget = idTargetRaw ? parseInt(idTargetRaw) : null;
+  const idProfesor = session.user.idProfesor || null;
 
   try {
-    await db.comunicado.create({
-      data: {
-        titulo,
-        contenido,
-        target,
-        idTarget,
-        idUsuario,
-        fecha: new Date(),
-      },
-    });
+    // Caso especial: docente enviando a "Padres de mis cursos"
+    if (target === "PADRES_CURSOS_DOCENTE" && !idTarget && idProfesor) {
+      // Verificar que el docente tenga cursos
+      const cursosDocente = await db.asignacionAcademica.findMany({
+        where: {
+          idProfesor: idProfesor,
+          estado: true
+        },
+        distinct: ['idCurso'],
+        select: { idCurso: true }
+      });
+
+      if (cursosDocente.length === 0) {
+        return { error: "No tienes cursos asignados para enviar este comunicado." };
+      }
+
+      console.log(`[DEBUG] Creando ${cursosDocente.length} comunicados para cursos:`, cursosDocente.map(c => c.idCurso));
+
+      // Crear un comunicado por cada curso del docente
+      // Esto asegura que solo los padres cuyos hijos estén en ese curso específico lo reciban
+      const promises = cursosDocente.map((curso) =>
+        db.comunicado.create({
+          data: {
+            titulo,
+            contenido,
+            target: "CURSO_PADRES",
+            idTarget: curso.idCurso, // idTarget es el id del curso, no del profesor
+            idUsuario,
+            fecha: new Date(),
+          },
+        })
+      );
+
+      const resultados = await db.$transaction(promises);
+      console.log(`[DEBUG] Se crearon ${resultados.length} comunicados exitosamente`);
+
+      revalidatePath("/dashboard/comunicados");
+      revalidatePath("/dashboard");
+    } else {
+      // Caso normal: enviar un único comunicado
+      await db.comunicado.create({
+        data: {
+          titulo,
+          contenido,
+          target,
+          idTarget,
+          idUsuario,
+          fecha: new Date(),
+        },
+      });
+    }
 
     revalidatePath("/dashboard/comunicados");
     revalidatePath("/dashboard");
