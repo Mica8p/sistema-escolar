@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { createMovimientoStock } from "@/lib/actions/movimiento-stock-actions";
 
 type Insumo = {
@@ -21,6 +22,7 @@ export default function MovimientoStockModal({
   insumo: Insumo | null;
   tipoInicial?: "Entrada" | "Salida" | "Ajuste";
 }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [cantidad, setCantidad] = useState(() => "1");
   const [ajusteSign, setAjusteSign] = useState<"sumar" | "restar">(() => "sumar");
@@ -64,6 +66,7 @@ export default function MovimientoStockModal({
       }
       setError(null);
       onClose();
+      router.refresh();
     });
   };
 

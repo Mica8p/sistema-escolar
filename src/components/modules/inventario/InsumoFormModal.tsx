@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { createInsumo, updateInsumo } from "@/lib/actions/inventario-actions";
 
 type Insumo = {
@@ -22,6 +23,7 @@ export default function InsumoFormModal({
   mode: "create" | "edit";
   insumo?: Insumo | null;
 }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -70,6 +72,7 @@ export default function InsumoFormModal({
       }
       setOk(res.message);
       onClose();
+      router.refresh();
     });
   };
 

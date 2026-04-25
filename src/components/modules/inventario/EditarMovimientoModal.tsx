@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { updateMovimientoStock } from "@/lib/actions/movimiento-stock-actions";
 import { X } from "lucide-react";
 
@@ -23,6 +24,7 @@ export default function EditarMovimientoModal({
   onClose: () => void;
   movimiento: Movimiento | null;
 }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [cantidad, setCantidad] = useState(() => String(movimiento?.cantidad ?? 0));
   const [monto, setMonto] = useState(() => String(movimiento?.gastos?.[0]?.monto ?? ""));
@@ -50,6 +52,7 @@ export default function EditarMovimientoModal({
     startTransition(async () => {
       const res = await updateMovimientoStock(fd);
       if (res.success) {
+        router.refresh();
         onClose();
       } else {
         alert(res.message);

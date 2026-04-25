@@ -13,7 +13,7 @@ export default function GestionSuperAdminModal() {
 
   const handleCeder = async (formData: FormData) => {
     setLoading(true);
-    const result = await cederSuperAdmin(formData);
+    const result = await cederSuperAdmin(null, formData);
     setLoading(false);
 
     if (result.success) {

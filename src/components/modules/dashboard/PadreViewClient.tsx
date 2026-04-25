@@ -15,6 +15,8 @@ type HorarioPorCurso = Awaited<ReturnType<typeof getHorariosPorCurso>>[number];
 interface Nota {
   idNota: number;
   nota: number;
+  tipo: string;
+  observacion?: string | null;
   asignacion: {
     materia: { nombre: string };
   };

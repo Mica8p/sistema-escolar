@@ -1,11 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import InsumoFormModal from "./InsumoFormModal";
 import MovimientoStockModal from "./MovimientoStockModal";
 import EditarMovimientoModal from "./EditarMovimientoModal";
-import PaginationControls from "@/components/shared/PaginationControls";
 import {
   Archive,
   Package,
@@ -82,12 +80,10 @@ export default function InventarioClient({
     setOpen(true);
   };
 
-  const searchParams = useSearchParams();
-  const page = searchParams.get("page") ?? "1";
-  const per_page = searchParams.get("per_page") ?? "5";
-
-  const start = (Number(page) - 1) * Number(per_page);
-  const end = start + Number(per_page);
+  // Cambiar filtro
+  const handleStatusFilterChange = (filter: "todos" | "alerta" | "sin-stock") => {
+    setStatusFilter(filter);
+  };
 
   const filteredInsumos = useMemo(() => {
     return insumos.filter((insumo) => {
@@ -106,16 +102,6 @@ export default function InventarioClient({
     });
   }, [insumos, searchTerm, statusFilter]);
 
-  const paginatedInsumos = useMemo(
-    () => filteredInsumos.slice(start, end),
-    [filteredInsumos, start, end]
-  );
-
-  const rows = paginatedInsumos;
-
-  const page_mov = searchParams.get("page_mov") ?? "1";
-  const per_page_mov = searchParams.get("per_page_mov") ?? "5";
-
   const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
   const monthlyFilteredMovimientos = useMemo(() => {
@@ -124,14 +110,6 @@ export default function InventarioClient({
         return movDate.getMonth() === selectedMonth;
     });
   }, [movimientos, selectedMonth]);
-
-  const start_mov = (Number(page_mov) - 1) * Number(per_page_mov);
-  const end_mov = start_mov + Number(per_page_mov);
-
-  const paginatedMovimientos = useMemo(
-    () => monthlyFilteredMovimientos.slice(start_mov, end_mov),
-    [monthlyFilteredMovimientos, start_mov, end_mov]
-  );
 
   const totalInsumos = insumos.length;
   const insumosEnAlerta = insumos.filter((i) => i.stockActual > 0 && i.stockActual <= i.stockMinimo).length;
@@ -190,20 +168,24 @@ export default function InventarioClient({
                 type="text"
                 placeholder="Buscar insumo..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  router.push("?page=1&page_mov=1", { scroll: false });
+                }}
                 className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-4 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
             <div className="flex items-center gap-2">
-              <FilterChip label="Todos" isActive={statusFilter === "todos"} onClick={() => setStatusFilter("todos")} />
-              <FilterChip label="En Alerta" isActive={statusFilter === "alerta"} onClick={() => setStatusFilter("alerta")} />
-              <FilterChip label="Sin Stock" isActive={statusFilter === "sin-stock"} onClick={() => setStatusFilter("sin-stock")} />
+              <FilterChip label="Todos" isActive={statusFilter === "todos"} onClick={() => handleStatusFilterChange("todos")} />
+              <FilterChip label={`En Alerta (${insumosEnAlerta})`} isActive={statusFilter === "alerta"} onClick={() => handleStatusFilterChange("alerta")} />
+              <FilterChip label={`Sin Stock (${insumosSinStock})`} isActive={statusFilter === "sin-stock"} onClick={() => handleStatusFilterChange("sin-stock")} />
             </div>
           </div>
 
           {/* ---------- Tabla principal: INVENTARIO ---------- */}
           <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
-            <table className="w-full text-sm">
+            <div className="max-h-96 overflow-y-auto">
+              <table className="w-full text-sm">
               <thead className="bg-slate-50 text-slate-700">
                 <tr>
                   <th className="px-4 py-3 text-left font-semibold">Insumo</th>
@@ -215,7 +197,7 @@ export default function InventarioClient({
                 </tr>
               </thead>
               <tbody>
-                {rows.map((i) => {
+                {filteredInsumos.map((i) => {
                   const sinStock = i.stockActual === 0;
                   const bajoStock = !sinStock && i.stockActual <= i.stockMinimo;
                   return (
@@ -259,7 +241,7 @@ export default function InventarioClient({
                     </tr>
                   );
                 })}
-                {rows.length === 0 && (
+                {filteredInsumos.length === 0 && (
                   <tr className="border-t">
                     <td className="px-4 py-10 text-center text-gray-500" colSpan={6}>
                       {searchTerm || statusFilter !== "todos" ? "No se encontraron insumos con esos filtros." : "No hay insumos cargados todavía."}
@@ -268,7 +250,7 @@ export default function InventarioClient({
                 )}
               </tbody>
             </table>
-            <PaginationControls currentPage={Number(page)} totalPages={Math.ceil(filteredInsumos.length / Number(per_page))} />
+            </div>
           </div>
         </div>
       )}
@@ -295,6 +277,7 @@ export default function InventarioClient({
                 Total: {monthlyFilteredMovimientos.length}
               </span>
             </div>
+            <div className="max-h-96 overflow-y-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-slate-700">
                 <tr>
@@ -308,7 +291,7 @@ export default function InventarioClient({
                 </tr>
               </thead>
               <tbody>
-                {paginatedMovimientos.map((m) => {
+                {monthlyFilteredMovimientos.map((m) => {
                   const isNeg = m.tipo === "Salida" || (m.tipo === "Ajuste" && m.cantidad < 0);
                   const isPos = m.tipo === "Entrada" || (m.tipo === "Ajuste" && m.cantidad > 0);
                   const fecha = new Date(m.fecha).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -359,15 +342,7 @@ export default function InventarioClient({
                 )}
               </tbody>
             </table>
-            {monthlyFilteredMovimientos.length > Number(per_page_mov) && (
-              <PaginationControls
-                currentPage={Number(page_mov)}
-                totalPages={Math.ceil(
-                  monthlyFilteredMovimientos.length / Number(per_page_mov)
-                )}
-                pageParam="page_mov"
-              />
-            )}
+            </div>
           </div>
         </div>
       )}
