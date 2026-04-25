@@ -3,36 +3,36 @@
 import db from '@/lib/db';
 import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
-import { hash } from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 
 /**
  * Ceder control de SUPER_ADMIN a otro usuario
  * El super admin actual es desactivado inmediatamente
+ * La contraseña por defecto del nuevo super admin será su DNI
  */
-export async function cederSuperAdmin(formData: FormData) {
+export async function cederSuperAdmin(prevState: any, formData: FormData | { nombre: string; apellido: string; dni: string; email: string; passwordActual: string }) {
   const session = await auth();
 
   if (!session?.user || !session.user.roles?.includes('SUPER_ADMIN')) {
     return { success: false, error: 'No tienes permisos para esta acción' };
   }
 
-  const nombre = formData.get('nombre') as string;
-  const apellido = formData.get('apellido') as string;
-  const dni = formData.get('dni') as string;
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
-  const passwordConfirm = formData.get('passwordConfirm') as string;
+  // Soportar tanto FormData como objeto plano
+  const extractValue = (key: string): string => {
+    if (formData instanceof FormData) {
+      return formData.get(key) as string;
+    }
+    return formData[key as keyof typeof formData] as string;
+  };
 
-  if (!nombre || !apellido || !dni || !email || !password || !passwordConfirm) {
+  const nombre = extractValue('nombre');
+  const apellido = extractValue('apellido');
+  const dni = extractValue('dni');
+  const email = extractValue('email');
+  const passwordActual = extractValue('passwordActual');
+
+  if (!nombre || !apellido || !dni || !email || !passwordActual) {
     return { success: false, error: 'Todos los campos son obligatorios' };
-  }
-
-  if (password !== passwordConfirm) {
-    return { success: false, error: 'Las contraseñas no coinciden' };
-  }
-
-  if (password.length < 8) {
-    return { success: false, error: 'La contraseña debe tener al menos 8 caracteres' };
   }
 
   try {
@@ -46,6 +46,16 @@ export async function cederSuperAdmin(formData: FormData) {
       return { success: false, error: 'Usuario actual no encontrado' };
     }
 
+    // ✅ VALIDAR la contraseña actual del super admin
+    const isPasswordValid = await bcrypt.compare(
+      passwordActual,
+      superAdminActual.passwordHash || ''
+    );
+
+    if (!isPasswordValid) {
+      return { success: false, error: 'Contraseña del super admin actual incorrecta' };
+    }
+
     // Verificar que el nuevo super admin no exista ya
     const personaExistente = await db.persona.findUnique({
       where: { dni }
@@ -55,8 +65,9 @@ export async function cederSuperAdmin(formData: FormData) {
       return { success: false, error: `Ya existe una persona con DNI ${dni}` };
     }
 
-    // Crear la nueva persona y usuario
-    const hashedPassword = await hash(password, 10);
+    // ✅ Crear la nueva persona y usuario
+    // La contraseña inicial será el DNI del nuevo super admin
+    const hashedDni = await bcrypt.hash(dni, 10);
 
     const nuevoSuperAdmin = await db.persona.create({
       data: {
@@ -66,9 +77,9 @@ export async function cederSuperAdmin(formData: FormData) {
         email,
         usuario: {
           create: {
-            passwordHash: hashedPassword,
+            passwordHash: hashedDni,
             estado: true,
-            defaultPassword: false
+            defaultPassword: true // ✅ Esto hará que aparezca el modal de cambio de contraseña
           }
         }
       },
@@ -150,8 +161,12 @@ export async function desactivarSuperAdmin(idUsuarioTarget: number) {
       return { success: false, error: 'Usuario no encontrado' };
     }
 
-    const isSuperAdmin = usuarioTarget.roles.some(r => r.idRol === 
-      (await db.rol.findUnique({ where: { nombre: 'SUPER_ADMIN' } }))?.idRol);
+    // Obtener el rol SUPER_ADMIN
+    const rolSuperAdmin = await db.rol.findUnique({
+      where: { nombre: 'SUPER_ADMIN' }
+    });
+
+    const isSuperAdmin = usuarioTarget.roles.some(r => r.idRol === rolSuperAdmin?.idRol);
 
     if (!isSuperAdmin) {
       return { success: false, error: 'El usuario no es Super Admin' };

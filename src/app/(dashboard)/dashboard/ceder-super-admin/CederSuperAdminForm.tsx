@@ -1,8 +1,7 @@
 "use client";
 
 import { useActionState, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { cederSuperAdminANuevaPersona } from "@/lib/actions/super-admin-actions";
+import { cederSuperAdmin } from "@/lib/actions/super-admin-actions";
 import {
   User,
   Fingerprint,
@@ -11,42 +10,39 @@ import {
   Loader,
   Phone,
   Home,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CederSuperAdminForm() {
-  const router = useRouter();
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [dni, setDni] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
   const [direccion, setDireccion] = useState("");
+  const [passwordActual, setPasswordActual] = useState("");
+  const [showPasswordActual, setShowPasswordActual] = useState(false);
   const [accepted, setAccepted] = useState(false);
 
-  const [state, formAction, isPending] = useActionState(cederSuperAdminANuevaPersona, null);
+  const [state, formAction, isPending] = useActionState(cederSuperAdmin, null);
 
   useEffect(() => {
     if (state) {
       if (state.success) {
         toast.success("¡SUPER_ADMIN transferido!", {
-          description: state.message,
+          description: state.message || "Control cedido exitosamente. El nuevo super admin ya puede acceder al sistema.",
           duration: 5000,
         });
-
-        const timer = setTimeout(() => {
-          router.push("/logout");
-        }, 2000);
-
-        return () => clearTimeout(timer);
-      } else if (!state.success && state.message) {
+      } else if (state.error) {
         toast.error("Error al transferir", {
-          description: state.message,
+          description: state.error,
         });
       }
     }
-  }, [state, router]);
+  }, [state]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     if (!accepted) {
@@ -179,6 +175,53 @@ export default function CederSuperAdminForm() {
         </div>
       </div>
 
+      {/* Verificación de Identidad */}
+      <div>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+          <Fingerprint size={20} /> Verificación de Identidad
+        </h3>
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+            <Fingerprint size={16} /> Contraseña del Super Admin Actual <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <input
+              name="passwordActual"
+              type={showPasswordActual ? "text" : "password"}
+              required
+              value={passwordActual}
+              onChange={(e) => setPasswordActual(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-black focus:ring-2 focus:ring-blue-500 outline-none transition-all pr-12"
+              placeholder="Ingresa tu contraseña actual para confirmar"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPasswordActual(!showPasswordActual)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+            >
+              {showPasswordActual ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          <p className="text-xs text-slate-500">Se requiere para confirmar que eres el actual administrador</p>
+        </div>
+      </div>
+
+      {/* Información de Contraseña del Nuevo Super Admin */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+          <div>
+            <h4 className="font-semibold text-blue-900 mb-2">Contraseña del Nuevo Super Admin</h4>
+            <p className="text-sm text-blue-800 mb-2">
+              La contraseña inicial del nuevo administrador será automáticamente su <strong>DNI</strong>
+            </p>
+            <p className="text-sm text-blue-700">
+              Ejemplo: Si el DNI es <code className="bg-blue-100 px-2 py-1 rounded">12345678</code>, la contraseña inicial será <code className="bg-blue-100 px-2 py-1 rounded">12345678</code>
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Confirmación de irreversibilidad */}
       <div className="bg-red-50 border border-red-300 rounded-lg p-4 space-y-3">
         <div className="flex items-start gap-3">
@@ -187,7 +230,8 @@ export default function CederSuperAdminForm() {
             <h4 className="font-semibold text-red-900 mb-2">⚠️ ESTA ACCIÓN ES IRREVERSIBLE</h4>
             <ul className="text-sm text-red-800 space-y-1 list-disc list-inside">
               <li>Perderás acceso como SUPER_ADMIN inmediatamente</li>
-              <li>La nueva persona ingresará con su DNI y será el nuevo SUPER_ADMIN</li>
+              <li>La nueva persona ingresará con su DNI como contraseña temporal</li>
+              <li>Al primer ingreso, aparecerá un modal para cambiar su contraseña</li>
               <li>Solo el nuevo SUPER_ADMIN podrá ceder a otro</li>
               <li>Serás desconectado automáticamente</li>
             </ul>

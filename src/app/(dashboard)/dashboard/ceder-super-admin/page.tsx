@@ -71,7 +71,8 @@ export default async function CederSuperAdminPage() {
             <li>Se creará una nueva persona en el sistema como SUPER_ADMIN</li>
             <li>Perderás acceso administrativo completo</li>
             <li>Solo el nuevo SUPER_ADMIN podrá ceder a otro</li>
-            <li>El nuevo SUPER_ADMIN podrá iniciar sesión con su DNI inmediatamente</li>
+            <li>El nuevo SUPER_ADMIN podrá iniciar sesión con su DNI como contraseña inicial</li>
+            <li>Al primer ingreso, aparecerá un modal para cambiar su contraseña</li>
             <li>Tu sesión será cerrada automáticamente</li>
           </ul>
         </div>
@@ -86,8 +87,10 @@ export default async function CederSuperAdminPage() {
         <ul className="list-disc list-inside text-blue-800 space-y-1">
           <li>Todos los campos marcados con * son obligatorios</li>
           <li>La contraseña inicial del nuevo SUPER_ADMIN será su DNI</li>
-          <li>El nuevo SUPER_ADMIN podrá cambiar su contraseña tras iniciar sesión</li>
+          <li>Ejemplo: Si el DNI es 12345678, la contraseña inicial será 12345678</li>
+          <li>Al primer ingreso con su DNI, aparecerá un modal para cambiar la contraseña</li>
           <li>Se recomienda informar al nuevo SUPER_ADMIN sobre esta transferencia</li>
+          <li>Deberás ingresar tu contraseña actual para confirmar la transferencia</li>
         </ul>
       </div>
     </div>

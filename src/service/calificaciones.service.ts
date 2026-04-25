@@ -206,6 +206,7 @@ export async function getCalificacionesHijo(idAlumno: number, idCiclo: number) {
     select: {
       idNota: true,
       nota: true,
+      tipo: true,
       observacion: true,
       asignacion: {
         include: {

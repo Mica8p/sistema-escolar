@@ -56,7 +56,7 @@ export default function GestionSuperAdminModal() {
       <div className="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         
         {/* HEADER */}
-        <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-3xl">
+        <div className="sticky top-0 bg-linear-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-3xl">
           <h2 className="text-2xl font-black flex items-center gap-3">
             <Key size={28} />
             Gestión de Super Admin
@@ -158,27 +158,21 @@ export default function GestionSuperAdminModal() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-900 mb-2">Contraseña</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2">Contraseña del Super Admin Actual</label>
                 <input
-                  name="password"
+                  name="passwordActual"
                   type="password"
                   required
-                  minLength={8}
                   className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder="Ingresa tu contraseña actual para confirmar"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-slate-900 mb-2">Confirmar Contraseña</label>
-                <input
-                  name="passwordConfirm"
-                  type="password"
-                  required
-                  minLength={8}
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  placeholder="Confirma la contraseña"
-                />
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800 font-semibold mb-2">Contraseña del Nuevo Super Admin</p>
+                <p className="text-xs text-blue-700">
+                  La contraseña inicial será automáticamente el <strong>DNI</strong> del nuevo administrador.
+                </p>
               </div>
 
               <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded mt-6">
@@ -265,7 +259,7 @@ export default function GestionSuperAdminModal() {
             <div className="space-y-6">
               <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
                 <p className="text-red-900 font-bold flex items-start gap-2">
-                  <AlertTriangle size={20} className="flex-shrink-0 mt-0.5" />
+                  <AlertTriangle size={20} className="shrink-0 mt-0.5" />
                   ¿Desactivar este Super Admin?
                 </p>
                 <p className="text-red-800 text-sm mt-2">
