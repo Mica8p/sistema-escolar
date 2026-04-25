@@ -60,7 +60,6 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
 
       // Filtrado para DOCENTES en mensajes enviados
       if (isEnviados && rolPrincipal === "DOCENTE") {
-        const cursosIds = cursosAsignados.map(c => c.idCurso);
         if (targetFilter === "TODOS_FILTRO") {
           // Mostrar todos los enviados válidos
           matchesTarget = 
@@ -95,7 +94,7 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
 
       return matchesSearch && matchesTarget && matchesDate;
     });
-  }, [data, search, targetFilter, dateFilter, rolPrincipal, idsProfesoresHijos, isEnviados, cursosAsignados]);
+  }, [data, search, targetFilter, dateFilter, rolPrincipal, idsProfesoresHijos, isEnviados]);
 
   return (
     <div className="space-y-8">
