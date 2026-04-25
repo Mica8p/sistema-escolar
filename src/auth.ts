@@ -3,7 +3,7 @@ import { authConfig } from "./auth.config";
 import db from "@/lib/db";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { esDueñoTecnico, esBootstrap } from "@/lib/security";
+import { esDueñoTecnico } from "@/lib/security";
 
 export class AccountDisabledError extends Error {
   constructor(message = "Tu cuenta está deshabilitada.") {
@@ -63,15 +63,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // Filtrar roles: padres no pueden tener ADMIN
           const filteredRoles = rolesArray.filter((rol) => !(rolesArray.includes("PADRE") && rol === "ADMIN"));
 
-          // ⭐ BOOTSTRAP: Si DNI está en SUPER_ADMIN_BOOTSTRAP, otorgar SUPER_ADMIN
-          if (esBootstrap(usuario.persona.dni)) {
-            console.log(`[AUTH] 🚀 ${usuario.persona.dni} es bootstrap - Otorgando SUPER_ADMIN`);
-            if (!filteredRoles.includes('SUPER_ADMIN')) {
-              filteredRoles.push('SUPER_ADMIN');
-            }
-          }
-          // ⭐ SEGURIDAD: Si es propietario técnico, asegurar rol SUPER_ADMIN
-          else if (esDueñoTecnico(usuario.persona.email)) {
+          // ⭐ SEGURIDAD: Los roles ya vienen de la BD, solo mantener propietario técnico como fallback
+          if (esDueñoTecnico(usuario.persona.email)) {
             console.log(`[AUTH] 🔐 ${usuario.persona.email} es propietario técnico - Otorgando SUPER_ADMIN`);
             if (!filteredRoles.includes('SUPER_ADMIN')) {
               filteredRoles.push('SUPER_ADMIN');

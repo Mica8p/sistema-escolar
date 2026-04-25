@@ -10,8 +10,9 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("Sembrando base de datos...");
+  console.log("🌱 Iniciando seed...");
   try {
+    // 1. Crear roles
     const roles = ["SUPER_ADMIN", "ADMIN", "DOCENTE", "PADRE", "ALUMNO"];
     const rolesMap: Record<string, number> = {};
 
@@ -26,72 +27,74 @@ async function main() {
 
     console.log("✅ Roles creados:", Object.keys(rolesMap));
 
-    const pass = await bcrypt.hash("admin123", 10);
-    
-    // 1. Crear o actualizar persona
-    const p = await prisma.persona.upsert({
-      where: { dni: "39571184" },
-      update: {
-        nombre: "Gabriel",
-        apellido: "Timo",
-        telefono: "3813430992",
-        email: "gabitimo006@gmail.com",
-      },
-      create: {
-        nombre: "Gabriel",
-        apellido: "Timo",
-        dni: "39571184",
-        telefono: "3813430992",
-        email: "gabitimo006@gmail.com",
-      },
+    // 2. Crear super admin bootstrap
+    const DNI_BOOTSTRAP = '12345678';
+    const PASSWORD_BOOTSTRAP = '12345678';
+    const NOMBRE_BOOTSTRAP = 'Desarrollador';
+    const APELLIDO_BOOTSTRAP = 'Sistema';
+    const EMAIL_BOOTSTRAP = 'dev@sistema.local';
+
+    // Verificar si ya existe
+    const existingPersona = await prisma.persona.findUnique({
+      where: { dni: DNI_BOOTSTRAP },
+      include: { usuario: true }
     });
 
-    // 2. Crear o actualizar usuario
-    let usuario = await prisma.usuario.findUnique({
-      where: { idPersona: p.idPersona }
-    });
-
-    if (usuario) {
-      // Actualizar contraseña
-      usuario = await prisma.usuario.update({
-        where: { idPersona: p.idPersona },
+    if (!existingPersona) {
+      console.log(`\n📝 Creando super admin bootstrap...`);
+      
+      const hashedPassword = await bcrypt.hash(PASSWORD_BOOTSTRAP, 10);
+      
+      const persona = await prisma.persona.create({
         data: {
-          passwordHash: pass,
-          estado: true,
-          defaultPassword: false,
+          nombre: NOMBRE_BOOTSTRAP,
+          apellido: APELLIDO_BOOTSTRAP,
+          dni: DNI_BOOTSTRAP,
+          email: EMAIL_BOOTSTRAP,
+          usuario: {
+            create: {
+              passwordHash: hashedPassword,
+              estado: true,
+              defaultPassword: true
+            }
+          }
         },
+        include: { usuario: true }
       });
+
+      // Asignar rol SUPER_ADMIN
+      await prisma.usuarioRol.create({
+        data: {
+          idUsuario: persona.usuario!.idUsuario,
+          idRol: rolesMap['SUPER_ADMIN']
+        }
+      });
+
+      console.log(`✅ Super admin bootstrap creado exitosamente`);
+      console.log(`\n🔐 Datos de acceso:`);
+      console.log(`   DNI: ${DNI_BOOTSTRAP}`);
+      console.log(`   Contraseña: ${PASSWORD_BOOTSTRAP}`);
+      console.log(`   Email: ${EMAIL_BOOTSTRAP}`);
+      console.log(`\n📋 Instrucciones:`);
+      console.log(`   1. Inicia sesión con DNI: ${DNI_BOOTSTRAP}`);
+      console.log(`   2. Ve a Configuración > Gestión de Super Admin`);
+      console.log(`   3. Cede el control al dueño del sistema con sus datos`);
+      console.log(`\n⚠️  Una vez cedido, el desarrollador NO podrá volver a iniciar sesión`);
     } else {
-      // Crear usuario
-      usuario = await prisma.usuario.create({
-        data: {
-          idPersona: p.idPersona,
-          passwordHash: pass,
-          estado: true,
-          defaultPassword: false,
-        },
-      });
+      console.log(`\nℹ️  Super admin bootstrap ya existe con DNI: ${DNI_BOOTSTRAP}`);
+      console.log(`   Estado: ${existingPersona.usuario?.estado ? 'Activo' : 'Inactivo'}`);
+      console.log(`\n   Para recrearlo, debes:`);
+      console.log(`   1. Eliminar el usuario de la BD: DELETE FROM "USUARIO" WHERE "idPersona" = ${existingPersona.idPersona};`);
+      console.log(`   2. Eliminar la persona: DELETE FROM "PERSONA" WHERE "idPersona" = ${existingPersona.idPersona};`);
+      console.log(`   3. Ejecutar el seed nuevamente`);
     }
 
-    // 3. Eliminar todos los roles anteriores
-    await prisma.usuarioRol.deleteMany({
-      where: { idUsuario: usuario.idUsuario }
-    });
-
-    // 4. Asignar rol SUPER_ADMIN
-    await prisma.usuarioRol.create({
-      data: {
-        idUsuario: usuario.idUsuario,
-        idRol: rolesMap["SUPER_ADMIN"]
-      }
-    });
-
-    console.log("✅ Base de datos lista!");
-    console.log("📝 Admin: DNI 39571184 / contraseña: admin123");
-  } catch (e) {
-    console.error("❌ Error:", e);
-    process.exit(1);
+  } catch (error) {
+    console.error('❌ Error al ejecutar seed:', error);
+    throw error;
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
-main().finally(() => prisma.$disconnect());
+main();
