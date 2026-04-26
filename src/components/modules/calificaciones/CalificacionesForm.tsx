@@ -267,13 +267,80 @@ export default function CalificacionesTable({
               const aprobado = tieneNota && (valorNota ?? 0) >= 6;
               const tieneCambioLocal = cambios.has(m.idMatricula);
 
+              // ✅ Bloquear SOLO en instancias de recuperación (diciembre, febrero, julio)
+              const esInstanciaDeRecuperacion = ["DICIEMBRE", "FEBRERO", "JULIO_PREVIAS"].includes(nombrePeriodo);
+
               // Lógica de Promedio
               const n1 = getNotaTrimestre(m.idMatricula, "TRIMESTRE_1");
               const n2 = getNotaTrimestre(m.idMatricula, "TRIMESTRE_2");
               const n3 = getNotaTrimestre(m.idMatricula, "TRIMESTRE_3");
               const suma = n1 + n2 + n3;
               const promedioAnual = suma > 0 ? (suma / 3).toFixed(2) : null;
-              const esPromocionado = suma >= 18 && n1 >= 6 && n2 >= 6 && n3 >= 6;
+              
+              // ✅ Lógica de estado académico mejorada
+              let esPromocionado = false;
+              let estadoLabel = "A Diciembre 📝";
+              const promGeneral = Number(promedioAnual) || 0;
+              
+              if (esInstanciaDeRecuperacion) {
+                // Verificar si tiene derecho a estar en esta instancia
+                let tieneDerechoAEstarAqui = false;
+                
+                if (nombrePeriodo === "DICIEMBRE") {
+                  // Tiene derecho si promedio trimestral < 6
+                  tieneDerechoAEstarAqui = promGeneral < 6;
+                } else if (nombrePeriodo === "FEBRERO") {
+                  // Tiene derecho si desaprobó en diciembre
+                  const notaDiciembre = historialNotas.find((n: NotaWithPeriodo) =>
+                    n.idMatricula === m.idMatricula &&
+                    n.idAsignacion === idAsignacion &&
+                    n.periodo.nombre === "DICIEMBRE"
+                  );
+                  tieneDerechoAEstarAqui = notaDiciembre ? (notaDiciembre.nota < 6) : false;
+                } else if (nombrePeriodo === "JULIO_PREVIAS") {
+                  // Tiene derecho si desaprobó en febrero
+                  const notaFebrero = historialNotas.find((n: NotaWithPeriodo) =>
+                    n.idMatricula === m.idMatricula &&
+                    n.idAsignacion === idAsignacion &&
+                    n.periodo.nombre === "FEBRERO"
+                  );
+                  tieneDerechoAEstarAqui = notaFebrero ? (notaFebrero.nota < 6) : false;
+                }
+
+                // Si NO tiene derecho a estar, mostrar promocionado
+                if (!tieneDerechoAEstarAqui) {
+                  esPromocionado = true;
+                  estadoLabel = "Promocionado 🚀";
+                } else {
+                  // Si tiene derecho, verificar si ya tiene nota
+                  const notaActualRecuperacion = historialNotas.find((n: NotaWithPeriodo) =>
+                    n.idMatricula === m.idMatricula && n.idPeriodo === idPeriodo
+                  );
+                  
+                  if (notaActualRecuperacion) {
+                    if (notaActualRecuperacion.nota >= 6) {
+                      esPromocionado = true;
+                      estadoLabel = "Promocionado 🚀";
+                    } else {
+                      // Mostrar siguiente instancia según el período actual
+                      if (nombrePeriodo === "DICIEMBRE") estadoLabel = "A Febrero 📝";
+                      else if (nombrePeriodo === "FEBRERO") estadoLabel = "A Julio 📝";
+                      else if (nombrePeriodo === "JULIO_PREVIAS") estadoLabel = "Desaprobado ❌";
+                    }
+                  } else {
+                    // Sin nota aún, mostrar período actual
+                    estadoLabel = "A " + nombrePeriodo + " 📝";
+                  }
+                }
+              } else {
+                // En trimestres: si promedio >= 6 → Promocionado; si < 6 → A Diciembre
+                if (promGeneral >= 6) {
+                  esPromocionado = true;
+                  estadoLabel = "Promocionado 🚀";
+                } else {
+                  estadoLabel = "A Diciembre 📝";
+                }
+              }
 
               // Lógica de "Recuperado "
               const tieneRecuperatorioAprobado = historialNotas.some((n: NotaWithPeriodo) =>
@@ -283,7 +350,7 @@ export default function CalificacionesTable({
                 n.nota >= 6
               );
 
-              // Lógica de Bloqueo
+              // Lógica de Bloqueo - CORRECTA
               const notaParcialActual = historialNotas.find((n: NotaWithPeriodo) =>
                 n.idMatricula === m.idMatricula && n.idPeriodo === idPeriodo && n.tipo === "Parcial"
               );
@@ -292,7 +359,32 @@ export default function CalificacionesTable({
               const bloquearPorPromocion = esInstanciaDeCierre && esPromocionado;
               const bloquearRecuperatorio = tipo === "Recuperatorio" && (!tieneParcial || !parcialMenorA6);
 
-              const estaBloqueado = bloquearPorPromocion || bloquearRecuperatorio || periodoCerrado;
+              // ✅ Bloquear según la instancia de recuperación
+              let bloqueoPorRecuperacion = false;
+              
+              if (nombrePeriodo === "DICIEMBRE") {
+                // Bloquear DICIEMBRE si promedio trimestral >= 6
+                const promGeneral = Number(promedioAnual) || 0;
+                bloqueoPorRecuperacion = promGeneral >= 6;
+              } else if (nombrePeriodo === "FEBRERO") {
+                // Bloquear FEBRERO si aprobó en diciembre
+                const notaDiciembre = historialNotas.find((n: NotaWithPeriodo) =>
+                  n.idMatricula === m.idMatricula &&
+                  n.idAsignacion === idAsignacion &&
+                  n.periodo.nombre === "DICIEMBRE"
+                );
+                bloqueoPorRecuperacion = notaDiciembre ? (notaDiciembre.nota >= 6) : false;
+              } else if (nombrePeriodo === "JULIO_PREVIAS") {
+                // Bloquear JULIO si aprobó en febrero
+                const notaFebrero = historialNotas.find((n: NotaWithPeriodo) =>
+                  n.idMatricula === m.idMatricula &&
+                  n.idAsignacion === idAsignacion &&
+                  n.periodo.nombre === "FEBRERO"
+                );
+                bloqueoPorRecuperacion = notaFebrero ? (notaFebrero.nota >= 6) : false;
+              }
+
+              const estaBloqueado = bloquearPorPromocion || bloquearRecuperatorio || periodoCerrado || bloqueoPorRecuperacion;
               const isEditMode = (editando === m.idMatricula || !tieneNota) && !estaBloqueado;
 
               return (
@@ -316,7 +408,7 @@ export default function CalificacionesTable({
                       {estaBloqueado ? (
                         <div className="flex flex-col items-center">
                           <Lock size={12} className="text-slate-300" />
-                          <span className="text-[9px] font-black text-slate-400 uppercase">{bloquearRecuperatorio ? "Aprobado" : "Cerrado"}</span>
+                          <span className="text-[9px] font-black text-slate-400 uppercase">{bloqueoPorRecuperacion ? "Ya Aprobó" : (bloquearRecuperatorio ? "Aprobado" : "Cerrado")}</span>
                         </div>
                       ) : isEditMode && !readOnly ? (
                         <input
@@ -360,22 +452,22 @@ export default function CalificacionesTable({
                       />
                     ) : (
                         <div className="text-xs text-slate-500 italic max-w-50 truncate">
-                        {estaBloqueado ? (bloquearRecuperatorio ? "Aprobó instancia parcial." : "Periodo cerrado.") : (observacionActual || "Sin observaciones")}
+                        {estaBloqueado ? (bloqueoPorRecuperacion ? "Ya tiene nota aprobatoria." : (bloquearRecuperatorio ? "Aprobó instancia parcial." : "Periodo cerrado.")) : (observacionActual || "Sin observaciones")}
                       </div>
                     )}
                   </td>
 
-                  {/* 4. PROMEDIO */}
+                  {/* 4. PROMEDIO O NOTA DEL PERIODO */}
                   <td className="px-6 py-4 text-center bg-slate-50/30">
                     <div className="flex flex-col items-center">
                       <span className={`text-lg font-black ${esPromocionado ? 'text-emerald-600' : 'text-rose-600'}`}>
-                        {promedioAnual || "-"}
+                        {esInstanciaDeRecuperacion ? (valorNota || "-") : (promedioAnual || "-")}
                       </span>
-                      {promedioAnual && (
+                      {(esInstanciaDeRecuperacion ? valorNota : promedioAnual) && (
                         <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-full ${
                           esPromocionado ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
                         }`}>
-                          {esPromocionado ? "Promocionado 🚀" : "A Diciembre 📝"}
+                          {estadoLabel}
                         </span>
                       )}
                     </div>

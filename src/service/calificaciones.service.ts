@@ -152,7 +152,7 @@ export async function guardarNota(params: {
 }) {
   const periodo = await db.periodoAcademico.findUnique({
     where: { idPeriodo: params.idPeriodo },
-    select: { cerrado: true }
+    select: { cerrado: true, nombre: true }
   });
 
   if (periodo?.cerrado) {
@@ -167,6 +167,52 @@ export async function guardarNota(params: {
       idAsignacion: params.idAsignacion
     },
   });
+
+  // ✅ Validación de bloqueo según instancia de recuperación
+  if (periodo?.nombre === "DICIEMBRE") {
+    // Bloquear si promedio trimestral >= 6
+    const notasTrimestres = await db.nota.findMany({
+      where: {
+        idMatricula: params.idMatricula,
+        idAsignacion: params.idAsignacion,
+        periodo: { nombre: { in: ["TRIMESTRE_1", "TRIMESTRE_2", "TRIMESTRE_3"] } }
+      }
+    });
+    
+    const notas = notasTrimestres.map(n => Number(n.nota)).filter(n => n > 0);
+    if (notas.length > 0) {
+      const promedio = notas.reduce((a, b) => a + b, 0) / notas.length;
+      if (promedio >= 6) {
+        throw new Error('Operación no permitida: El alumno tiene promedio aprobatorio en trimestres.');
+      }
+    }
+  } else if (periodo?.nombre === "FEBRERO") {
+    // Bloquear si aprobó en diciembre
+    const notaDiciembre = await db.nota.findFirst({
+      where: {
+        idMatricula: params.idMatricula,
+        idAsignacion: params.idAsignacion,
+        periodo: { nombre: "DICIEMBRE" }
+      }
+    });
+    
+    if (notaDiciembre && notaDiciembre.nota >= 6) {
+      throw new Error('Operación no permitida: El alumno aprobó en diciembre.');
+    }
+  } else if (periodo?.nombre === "JULIO_PREVIAS") {
+    // Bloquear si aprobó en febrero
+    const notaFebrero = await db.nota.findFirst({
+      where: {
+        idMatricula: params.idMatricula,
+        idAsignacion: params.idAsignacion,
+        periodo: { nombre: "FEBRERO" }
+      }
+    });
+    
+    if (notaFebrero && notaFebrero.nota >= 6) {
+      throw new Error('Operación no permitida: El alumno aprobó en febrero.');
+    }
+  }
 
   const fechaRegistro = new Date();
 
