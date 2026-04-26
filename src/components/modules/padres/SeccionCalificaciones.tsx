@@ -48,7 +48,20 @@ export default function SeccionCalificaciones({ notas }: { notas: Nota[] }) {
             return acc;
           }, {});
 
-          const trimestresOrdenados = Object.keys(trimestresAgrupados).sort();
+          // Ordenar con el orden personalizado: Trimestres, Diciembre, Febrero, Julio
+          const ordenPersonalizado = [
+            "TRIMESTRE_1",
+            "TRIMESTRE_2",
+            "TRIMESTRE_3",
+            "DICIEMBRE",
+            "FEBRERO",
+            "JULIO_PREVIAS"
+          ];
+          const trimestresOrdenados = Object.keys(trimestresAgrupados).sort((a, b) => {
+            const indexA = ordenPersonalizado.indexOf(a);
+            const indexB = ordenPersonalizado.indexOf(b);
+            return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+          });
 
           return (
             <details key={materia} className="group bg-white border border-slate-200 rounded-3xl overflow-hidden transition-all shadow-sm">
