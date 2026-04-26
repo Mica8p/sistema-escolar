@@ -48,29 +48,6 @@ export default function FiltrosCalificaciones({
     <div className="p-4 space-y-4">
       <div>
         <label
-          htmlFor="curso"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Curso
-        </label>
-        <select
-          id="curso"
-          name="curso"
-          className="mt-1 block w-full pl-3 pr-10 py-2 bg-slate-50 border-2 border-slate-100 rounded-xl text-sm text-slate-700 font-bold outline-none focus:bg-white focus:border-indigo-500 transition-all"
-          onChange={(e) => handleFilterChange("curso", e.target.value)}
-          value={cursoKey || ""}
-        >
-          <option value="">-- Seleccione el curso --</option>
-          {cursos.map((curso) => (
-            <option key={curso.key} value={curso.key}>
-              {curso.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label
           htmlFor="turno"
           className="block text-sm font-medium text-gray-700"
         >
@@ -87,6 +64,29 @@ export default function FiltrosCalificaciones({
           {turnos.map((t) => (
             <option key={t} value={t}>
               {t}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label
+          htmlFor="curso"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Curso
+        </label>
+        <select
+          id="curso"
+          name="curso"
+          className="mt-1 block w-full pl-3 pr-10 py-2 bg-slate-50 border-2 border-slate-100 rounded-xl text-sm text-slate-700 font-bold outline-none focus:bg-white focus:border-indigo-500 transition-all"
+          onChange={(e) => handleFilterChange("curso", e.target.value)}
+          value={cursoKey || ""}
+        >
+          <option value="">-- Seleccione el curso --</option>
+          {cursos.map((curso) => (
+            <option key={curso.key} value={curso.key}>
+              {curso.label}
             </option>
           ))}
         </select>

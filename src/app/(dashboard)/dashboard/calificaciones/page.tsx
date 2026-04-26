@@ -9,7 +9,7 @@ import {
 } from "@/service/calificaciones.service";
 import CalificacionesTable from "@/components/modules/calificaciones/CalificacionesForm";
 import { getCicloActual } from "@/lib/ciclo-session";
-import { getCursos, getTurnos } from "@/service/curso.service";
+import { getTurnos } from "@/service/curso.service";
 import FiltrosCalificaciones from "@/components/modules/calificaciones/FiltrosCalificaciones";
 import PaginationControls from "@/components/shared/PaginationControls";
 
@@ -43,18 +43,17 @@ export default async function CalificacionesPage({
   const currentPage = Number(params.page || "1");
   const search = params.search;
 
-  const [cursos, turnos, asignaciones] = await Promise.all([
-    getCursos(),
+  const [turnos, asignaciones] = await Promise.all([
     getTurnos(),
     getAsignacionesParaUsuario({ isAdmin, idPersona, idCiclo, grado, seccion, turno }),
   ]);
 
-  // De-duplicate cursos for the filter dropdown
+  // Extract unique cursos from asignaciones (only show courses where the user has assignments)
   const uniqueCursosMap = new Map<string, { key: string; label: string }>();
-  cursos.forEach(curso => {
-    const key = `${curso.grado}-${curso.seccion}`;
+  asignaciones.forEach(asig => {
+    const key = `${asig.curso.grado}-${asig.curso.seccion}`;
     if (!uniqueCursosMap.has(key)) {
-      uniqueCursosMap.set(key, { key, label: `${curso.grado}° ${curso.seccion}` });
+      uniqueCursosMap.set(key, { key, label: `${asig.curso.grado}° ${asig.curso.seccion}` });
     }
   });
   const uniqueCursos = Array.from(uniqueCursosMap.values());

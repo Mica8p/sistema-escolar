@@ -28,94 +28,69 @@ export default function BoletinView({ matricula }: { matricula: Matricula }) {
   matricula.notas.forEach((n: Nota) => {
     const materiaNombre = n.asignacion.materia.nombre;
     if (!materiasMap.has(materiaNombre)) {
-      materiasMap.set(materiaNombre, { t1: 0, t2: 0, t3: 0, dic: 0, notas:[] });
+      materiasMap.set(materiaNombre, { t1: 0, t2: 0, t3: 0, dic: null, feb: null, jul: null, notas:[] });
     }
 
     const scores = materiasMap.get(materiaNombre);
     const periodo = n.periodo.nombre;
+    const nota = Number(n.nota);
 
-    if (periodo === "TRIMESTRE_1") scores.t1 = Math.max(scores.t1, Number(n.nota));
-    if (periodo === "TRIMESTRE_2") scores.t2 = Math.max(scores.t2, Number(n.nota));
-    if (periodo === "TRIMESTRE_3") scores.t3 = Math.max(scores.t3, Number(n.nota));
-    if (periodo === "DICIEMBRE") scores.dic = n.nota;
+    if (periodo === "TRIMESTRE_1") scores.t1 = Math.max(scores.t1, nota);
+    if (periodo === "TRIMESTRE_2") scores.t2 = Math.max(scores.t2, nota);
+    if (periodo === "TRIMESTRE_3") scores.t3 = Math.max(scores.t3, nota);
+    if (periodo === "DICIEMBRE") scores.dic = nota;
+    if (periodo === "FEBRERO") scores.feb = nota;
+    if (periodo === "JULIO_PREVIAS") scores.jul = nota;
     
-    scores.notas.push(n.nota);
+    scores.notas.push(nota);
   });
 
   // Determinar condición académica del alumno
   let materiasAprobadas = 0;
-  let materiasDesaprobadas = 0;
   let materiasDiciembre = 0;
 
   const materiasConEstado = Array.from(materiasMap.entries()).map(([materia, notas]) => {
     const suma = notas.t1 + notas.t2 + notas.t3;
     const promedio = suma > 0 ? (suma / 3) : 0;
     
-    // Si tiene nota de diciembre, usar esa
-    if (notas.dic > 0) {
-      const aprobado = notas.dic >= 6;
-      if (aprobado) materiasAprobadas++;
-      else materiasDesaprobadas++;
-      return {
-        materia,
-        t1: notas.t1,
-        t2: notas.t2,
-        t3: notas.t3,
-        dic: notas.dic,
-        promedio: notas.dic,
-        estado: aprobado ? 'APROBADA' : 'DESAPROBADA',
-        condicion: 'DICIEMBRE'
-      };
-    }
+    // Verificar condición de aprobación:
+    // APR si: promedio de trimestres >= 6 O cualquiera de dic/feb/jul >= 6
+    const promedioTrimestresOk = promedio >= 6;
+    const dicAprobado = notas.dic !== null && notas.dic !== undefined && notas.dic >= 6;
+    const febAprobado = notas.feb !== null && notas.feb !== undefined && notas.feb >= 6;
+    const julAprobado = notas.jul !== null && notas.jul !== undefined && notas.jul >= 6;
     
-    // Evaluar los 3 trimestres
-    const t1 = notas.t1 >= 6;
-    const t2 = notas.t2 >= 6;
-    const t3 = notas.t3 >= 6;
-    const promGeneralOk = promedio >= 6;
+    const esAprobado = promedioTrimestresOk || dicAprobado || febAprobado || julAprobado;
     
-    // Criterios de aprobación
-    if (t1 && t2 && t3 && promGeneralOk) {
+    if (esAprobado) {
       materiasAprobadas++;
       return {
         materia,
         t1: notas.t1,
         t2: notas.t2,
         t3: notas.t3,
-        dic: 0,
+        dic: notas.dic,
+        feb: notas.feb,
+        jul: notas.jul,
         promedio: parseFloat(promedio.toFixed(2)),
-        estado: 'APROBADA',
-        condicion: 'REGULAR'
+        estado: 'APR',
+        condicion: 'APROBADA'
       };
     }
     
-    // Si tiene 2 trimestres aprobados o promedio >= 6, va a diciembre
-    const trimestresAprobados = [t1, t2, t3].filter(Boolean).length;
-    if (trimestresAprobados >= 2 || promGeneralOk) {
-      materiasDiciembre++;
-      return {
-        materia,
-        t1: notas.t1,
-        t2: notas.t2,
-        t3: notas.t3,
-        dic: 0,
-        promedio: parseFloat(promedio.toFixed(2)),
-        estado: 'A_DICIEMBRE',
-        condicion: 'DICIEMBRE'
-      };
-    }
-    
-    // Si no aprueeba ni va a diciembre, desaprobado
-    materiasDesaprobadas++;
+    // Si no aprueba, va a diciembre
+    materiasDiciembre++;
     return {
       materia,
       t1: notas.t1,
       t2: notas.t2,
       t3: notas.t3,
-      dic: 0,
+      dic: notas.dic,
+      feb: notas.feb,
+      jul: notas.jul,
       promedio: parseFloat(promedio.toFixed(2)),
-      estado: 'DESAPROBADA',
-      condicion: 'LIBRE'
+      estado: 'A_DICIEMBRE',
+      condicion: 'DICIEMBRE'
     };
   });
 
@@ -198,8 +173,10 @@ export default function BoletinView({ matricula }: { matricula: Matricula }) {
                 <th className="py-1.5 text-center print:py-1">1T</th>
                 <th className="py-1.5 text-center print:py-1">2T</th>
                 <th className="py-1.5 text-center print:py-1">3T</th>
+                <th className="py-1.5 text-center print:py-1">Dic</th>
+                <th className="py-1.5 text-center print:py-1">Feb</th>
+                <th className="py-1.5 text-center print:py-1">Jul</th>
                 <th className="py-1.5 text-center bg-indigo-100 text-indigo-700 print:bg-indigo-50 print:py-1">Prom</th>
-                {materiasConEstado.some(m => m.dic > 0) && <th className="py-1.5 text-center print:py-1">Dic</th>}
                 <th className="py-1.5 text-center print:py-1">Estado</th>
               </tr>
             </thead>
@@ -211,17 +188,16 @@ export default function BoletinView({ matricula }: { matricula: Matricula }) {
                     <td className={`py-1.5 text-center font-bold print:py-1 ${Number(m.t1) >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.t1 || '-'}</td>
                     <td className={`py-1.5 text-center font-bold print:py-1 ${Number(m.t2) >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.t2 || '-'}</td>
                     <td className={`py-1.5 text-center font-bold print:py-1 ${Number(m.t3) >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.t3 || '-'}</td>
+                    <td className={`py-1.5 text-center font-bold print:py-1 ${Number(m.dic) >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.dic !== null && m.dic !== undefined ? m.dic : '-'}</td>
+                    <td className={`py-1.5 text-center font-bold print:py-1 ${Number(m.feb) >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.feb !== null && m.feb !== undefined ? m.feb : '-'}</td>
+                    <td className={`py-1.5 text-center font-bold print:py-1 ${Number(m.jul) >= 6 ? 'text-emerald-600 font-black' : 'text-slate-500'}`}>{m.jul !== null && m.jul !== undefined ? m.jul : '-'}</td>
                     <td className="py-1.5 text-center font-black text-indigo-600 bg-indigo-50/30 print:bg-indigo-50 print:py-1">{m.promedio > 0 ? m.promedio : '-'}</td>
-                    {materiasConEstado.some(mat => mat.dic > 0) && (
-                      <td className="py-1.5 text-center font-bold text-slate-500 print:py-1">{m.dic || '-'}</td>
-                    )}
                     <td className="py-1.5 text-center print:py-1">
                       <span className={`px-1.5 py-0.5 rounded text-[7px] font-black uppercase print:text-[6px] print:px-1 print:py-0.5 ${
-                        m.estado === 'APROBADA' ? 'bg-emerald-100 text-emerald-700' : 
-                        m.estado === 'A_DICIEMBRE' ? 'bg-amber-100 text-amber-700' : 
-                        'bg-rose-100 text-rose-700'
+                        m.estado === 'APR' ? 'bg-emerald-100 text-emerald-700' : 
+                        'bg-amber-100 text-amber-700'
                       }`}>
-                        {m.estado === 'A_DICIEMBRE' ? 'Dic' : m.estado === 'APROBADA' ? 'Apr' : 'Ds'}
+                        {m.estado === 'APR' ? 'APR' : 'Dic'}
                       </span>
                     </td>
                   </tr>
@@ -232,7 +208,7 @@ export default function BoletinView({ matricula }: { matricula: Matricula }) {
         </div>
 
         {/* RESUMEN ACADÉMICO */}
-        <div className="mt-3 grid grid-cols-4 gap-2 mb-3 print:gap-1.5 print:mt-2 print:mb-2">
+        <div className="mt-3 grid grid-cols-3 gap-2 mb-3 print:gap-1.5 print:mt-2 print:mb-2">
           <div className="bg-emerald-50 border border-emerald-200 p-2 rounded-lg flex flex-col items-center print:p-1.5">
             <span className="text-[7px] font-black text-emerald-600 uppercase tracking-tight">Aprobadas</span>
             <span className="text-lg font-black text-emerald-700 print:text-base">{materiasAprobadas}</span>
@@ -240,10 +216,6 @@ export default function BoletinView({ matricula }: { matricula: Matricula }) {
           <div className="bg-amber-50 border border-amber-200 p-2 rounded-lg flex flex-col items-center print:p-1.5">
             <span className="text-[7px] font-black text-amber-600 uppercase tracking-tight">Diciembre</span>
             <span className="text-lg font-black text-amber-700 print:text-base">{materiasDiciembre}</span>
-          </div>
-          <div className="bg-rose-50 border border-rose-200 p-2 rounded-lg flex flex-col items-center print:p-1.5">
-            <span className="text-[7px] font-black text-rose-600 uppercase tracking-tight">Desaprobadas</span>
-            <span className="text-lg font-black text-rose-700 print:text-base">{materiasDesaprobadas}</span>
           </div>
           <div className={`border p-2 rounded-lg flex flex-col items-center ${Number(porcentajeAsistencia) >= 80 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'} print:p-1.5`}>
             <span className={`text-[7px] font-black uppercase tracking-tight ${Number(porcentajeAsistencia) >= 80 ? 'text-blue-600' : 'text-orange-600'}`}>Asistencia</span>
