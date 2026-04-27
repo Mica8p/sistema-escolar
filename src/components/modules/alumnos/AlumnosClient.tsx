@@ -36,7 +36,7 @@ const StatusBadge = ({ estado }: { estado: EstadoAcademico }) => {
 export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatriculas[] }) {
   const [search, setSearch] = useState("");
   const [selectedCurso, setSelectedCurso] = useState<number | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<EstadoAcademico | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<EstadoAcademico>('Activo');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -73,19 +73,12 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
         nombreCompleto.includes(searchLower) ||
         alumno.persona.dni.includes(searchLower);
       
-      // Si hay curso seleccionado, filtrar por ese curso
+      // Si hay curso seleccionado, filtrar por ese curso y estado
       if (selectedCurso !== null) {
-        const matchesCurso = alumno.matriculas.some(m => m.curso.idCurso === selectedCurso);
-        
-        // Si también hay estado seleccionado, filtrar por ese estado también
-        if (selectedStatus !== null) {
-          const matchesStatus = alumno.matriculas.some(m => 
-            m.curso.idCurso === selectedCurso && m.estadoAcademico === selectedStatus
-          );
-          return matchesSearch && matchesStatus;
-        }
-        
-        return matchesSearch && matchesCurso;
+        const matchesCursoYEstado = alumno.matriculas.some(m => 
+          m.curso.idCurso === selectedCurso && m.estadoAcademico === selectedStatus
+        );
+        return matchesSearch && matchesCursoYEstado;
       }
       
       // Si no hay curso seleccionado, mostrar todos los alumnos filtrados por búsqueda
@@ -108,7 +101,7 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
               value={selectedCurso ?? ""}
               onChange={(e) => {
                 setSelectedCurso(e.target.value === "" ? null : Number(e.target.value));
-                setSelectedStatus(null); // Reset status cuando cambias de curso
+                setSelectedStatus('Activo'); // Resetear a Activo cuando cambias de curso
                 setCurrentPage(1);
               }}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
@@ -126,9 +119,9 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
           <div className="flex-1">
             <label className="block text-xs font-semibold text-slate-600 mb-2">Filtrar por Estado</label>
             <select
-              value={selectedStatus ?? ""}
+              value={selectedStatus}
               onChange={(e) => {
-                setSelectedStatus(e.target.value === "" ? null : (e.target.value as EstadoAcademico));
+                setSelectedStatus(e.target.value as EstadoAcademico);
                 setCurrentPage(1);
               }}
               disabled={selectedCurso === null}
@@ -137,7 +130,6 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
                 selectedCurso === null && "opacity-50 cursor-not-allowed bg-gray-100"
               )}
             >
-              <option value="">-- Todos los estados --</option>
               {statusOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
