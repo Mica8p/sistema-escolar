@@ -38,7 +38,14 @@ export default function SeccionCalificaciones({ notas }: { notas: Nota[] }) {
       <div className="space-y-4">
         {paginatedMaterias.map((materia) => {
           const notasMateria = materiasAgrupadas[materia];
-          const promedio = (notasMateria.reduce((s: number, n: Nota) => s + n.nota, 0) / notasMateria.length).toFixed(1);
+          
+          // Calcular promedio SOLO de trimestres regulares (1T, 2T, 3T)
+          const notasTrimestresRegulares = notasMateria.filter(n => 
+            n.periodo.nombre.includes("TRIMESTRE")
+          );
+          const promedio = notasTrimestresRegulares.length > 0
+            ? (notasTrimestresRegulares.reduce((s: number, n: Nota) => s + n.nota, 0) / notasTrimestresRegulares.length).toFixed(1)
+            : "0";
 
           // Agrupar por trimestre/período dentro de la materia
           const trimestresAgrupados = notasMateria.reduce((acc: Record<string, Nota[]>, curr) => {
@@ -63,6 +70,18 @@ export default function SeccionCalificaciones({ notas }: { notas: Nota[] }) {
             return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
           });
 
+          // Calcular promedio de trimestres regulares (1T, 2T, 3T)
+          const periodosEspeciales = ["DICIEMBRE", "FEBRERO", "JULIO_PREVIAS"];
+          const promedioTrimestres = Number(promedio);
+
+          // Filtrar trimestres: mostrar especiales solo si promedio de trimestres < 6
+          const trimestresAMostrar = trimestresOrdenados.filter((trimestre) => {
+            if (periodosEspeciales.includes(trimestre)) {
+              return promedioTrimestres < 6;
+            }
+            return true;
+          });
+
           return (
             <details key={materia} className="group bg-white border border-slate-200 rounded-3xl overflow-hidden transition-all shadow-sm">
               <summary className="flex justify-between items-center p-5 cursor-pointer list-none hover:bg-slate-50/50">
@@ -79,7 +98,7 @@ export default function SeccionCalificaciones({ notas }: { notas: Nota[] }) {
               </summary>
 
               <div className="p-5 pt-0 bg-slate-50/30 space-y-3">
-                {trimestresOrdenados.map((trimestre) => {
+                {trimestresAMostrar.map((trimestre) => {
                   const notasTrimestre = trimestresAgrupados[trimestre];
 
                   return (
