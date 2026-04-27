@@ -223,46 +223,38 @@ function ComunicadoRecibidoCard({ msg }: { msg: Comunicado }) {
   const isRead = msg.vistos.length > 0;
   return (
     <>
-      {!isRead && <AutoLectura id={msg.idComunicado} />}
-      <div className={`
-        relative bg-white p-6 rounded-[2.5rem] border transition-all duration-300
-        ${isRead
-          ? "border-slate-200 opacity-70 shadow-sm"
-          : "border-indigo-200 shadow-2xl shadow-indigo-100/40 ring-1 ring-indigo-50 hover:translate-x-2"}
-      `}>
-      <Link href={`/dashboard/comunicados/${msg.idComunicado}`} className="absolute inset-0 z-10 rounded-[2.5rem]" />
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center gap-4">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${isRead ? "bg-slate-100 text-slate-400" : "bg-indigo-600 text-white shadow-lg shadow-indigo-200"}`}>
-            <Megaphone size={22} />
-          </div>
-          <div className="relative z-20">
-            <h3 className={`font-black tracking-tight uppercase text-sm ${isRead ? "text-slate-700" : "text-slate-900"}`}>
-              {msg.titulo}
-            </h3>
-            <div className="flex items-center gap-3 mt-1">
-               <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-1">
-                 <User size={12} className="text-indigo-400" /> {msg.usuario?.persona?.nombre || 'Usuario desconocido'}
-               </p>
-               <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase ${isRead ? 'bg-slate-50 text-slate-700' : 'bg-indigo-50 text-indigo-600'}`}>
-                  {msg.target}
-               </span>
-            </div>
-          </div>
+      <Link 
+        href={`/dashboard/comunicados/${msg.idComunicado}`} 
+        className={`
+          flex items-center gap-4 p-5 rounded-[2rem] border transition-all duration-300 hover:scale-102 active:scale-98
+          ${isRead
+            ? "bg-slate-50 border-slate-200 opacity-70"
+            : "bg-white border-indigo-200 shadow-xl shadow-indigo-100/40 ring-1 ring-indigo-50"}
+        `}
+      >
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner flex-shrink-0 ${isRead ? "bg-slate-200 text-slate-400" : "bg-indigo-600 text-white shadow-lg shadow-indigo-200"}`}>
+          <Megaphone size={22} />
         </div>
-        <span className="text-[10px] font-black text-slate-700 relative z-20 italic">
-          {new Date(msg.fecha).toLocaleDateString()}
-        </span>
-      </div>
-      <p className="text-sm text-slate-700 line-clamp-2 relative z-20 mb-5 pl-16 font-medium leading-relaxed">
-        {msg.contenido}
-      </p>
-      <div className="flex justify-end border-t border-slate-50 pt-4 relative z-30">
-        {isRead && (
-          <span className="text-[9px] font-black text-slate-700 uppercase tracking-[0.2em] italic">✓ Visto</span>
-        )}
-      </div>
-      </div>
+        
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">De:</p>
+          <p className={`text-sm font-black truncate ${isRead ? "text-slate-600" : "text-slate-800"}`}>
+            {msg.usuario?.persona?.nombre || 'Usuario desconocido'}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <span className="text-[9px] font-black text-slate-400 italic whitespace-nowrap">
+            {new Date(msg.fecha).toLocaleDateString()}
+          </span>
+          {!isRead && (
+            <span className="w-3 h-3 rounded-full bg-indigo-600 shadow-md shadow-indigo-200 flex-shrink-0"></span>
+          )}
+          {isRead && (
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">✓</span>
+          )}
+        </div>
+      </Link>
     </>
   );
 }

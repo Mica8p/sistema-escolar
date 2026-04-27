@@ -2,13 +2,14 @@
 
 import { AsignacionAcademica, Turno } from "@prisma/client";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 
 interface FiltrosCalificacionesProps {
-  cursos: { key: string; label: string }[];
+  cursos: { key: string; label: string; turno: Turno }[];
   turnos: string[];
   asignaciones: (AsignacionAcademica & {
     materia: { nombre: string };
-    curso: { grado: string; seccion: string };
+    curso: { grado: string; seccion: string; turno: Turno };
   })[];
   cursoKey?: string;
   turno?: Turno;
@@ -26,6 +27,37 @@ export default function FiltrosCalificaciones({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // PASO 1: Filtrar cursos por turno seleccionado
+  const cursosFiltrados = useMemo(() => {
+    if (!turno) return [];
+    return cursos.filter((curso) => curso.turno === turno);
+  }, [cursos, turno]);
+
+  // PASO 2: Filtrar asignaciones por turno Y curso seleccionados
+  // IMPORTANTE: Solo mostrar materias cuando hay curso seleccionado
+  const asignacionesFiltradas = useMemo(() => {
+    // Si no hay curso, no hay materias disponibles
+    if (!cursoKey) return [];
+
+    let filtered = asignaciones;
+
+    // Filtrar por turno
+    if (turno) {
+      filtered = filtered.filter((asig) => asig.curso.turno === turno);
+    }
+
+    // Filtrar por curso específico
+    if (cursoKey) {
+      const [grado, seccion] = cursoKey.split("-");
+      filtered = filtered.filter(
+        (asig) =>
+          asig.curso.grado === grado && asig.curso.seccion === seccion
+      );
+    }
+
+    return filtered;
+  }, [asignaciones, turno, cursoKey]);
+
   const handleFilterChange = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams);
     if (value) {
@@ -38,7 +70,7 @@ export default function FiltrosCalificaciones({
       params.delete("asig");
       params.set("page", "1");
     }
-     if (key === "asig") {
+    if (key === "asig") {
       params.set("page", "1");
     }
     router.push(`?${params.toString()}`);
@@ -79,12 +111,13 @@ export default function FiltrosCalificaciones({
         <select
           id="curso"
           name="curso"
-          className="mt-1 block w-full pl-3 pr-10 py-2 bg-slate-50 border-2 border-slate-100 rounded-xl text-sm text-slate-700 font-bold outline-none focus:bg-white focus:border-indigo-500 transition-all"
+          disabled={!turno || cursosFiltrados.length === 0}
+          className="mt-1 block w-full pl-3 pr-10 py-2 bg-slate-50 border-2 border-slate-100 rounded-xl text-sm text-slate-700 font-bold outline-none focus:bg-white focus:border-indigo-500 transition-all disabled:bg-slate-200 disabled:cursor-not-allowed"
           onChange={(e) => handleFilterChange("curso", e.target.value)}
           value={cursoKey || ""}
         >
           <option value="">-- Seleccione el curso --</option>
-          {cursos.map((curso) => (
+          {cursosFiltrados.map((curso) => (
             <option key={curso.key} value={curso.key}>
               {curso.label}
             </option>
@@ -102,14 +135,14 @@ export default function FiltrosCalificaciones({
         <select
           id="asignacion"
           name="asignacion"
-          disabled={asignaciones.length === 0}
-          className="mt-1 block w-full pl-3 pr-10 py-2 bg-slate-50 border-2 border-slate-100 rounded-xl text-sm text-slate-700 font-bold outline-none focus:bg-white focus:border-indigo-500 transition-all disabled:bg-slate-200"
+          disabled={!cursoKey || asignacionesFiltradas.length === 0}
+          className="mt-1 block w-full pl-3 pr-10 py-2 bg-slate-50 border-2 border-slate-100 rounded-xl text-sm text-slate-700 font-bold outline-none focus:bg-white focus:border-indigo-500 transition-all disabled:bg-slate-200 disabled:cursor-not-allowed"
           onChange={(e) => handleFilterChange("asig", e.target.value)}
-          value={idAsignacion || ""}
+          value={idAsignacion ? String(idAsignacion) : ""}
         >
           <option value="">Seleccione una materia</option>
-          {asignaciones.map((asig) => (
-            <option key={asig.idAsignacion} value={asig.idAsignacion}>
+          {asignacionesFiltradas.map((asig) => (
+            <option key={asig.idAsignacion} value={String(asig.idAsignacion)}>
               {asig.materia.nombre} ({asig.curso.grado}° {asig.curso.seccion})
             </option>
           ))}

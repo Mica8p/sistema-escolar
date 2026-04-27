@@ -38,22 +38,21 @@ export default async function CalificacionesPage({
   const idPersona = session.user.idPersona ?? 0;
 
   const cursoKey = params.curso; // e.g., "2-B"
-  const [grado, seccion] = cursoKey ? cursoKey.split('-') : [undefined, undefined];
   const turno = params.turno as Turno | undefined;
   const currentPage = Number(params.page || "1");
   const search = params.search;
 
   const [turnos, asignaciones] = await Promise.all([
     getTurnos(),
-    getAsignacionesParaUsuario({ isAdmin, idPersona, idCiclo, grado, seccion, turno }),
+    getAsignacionesParaUsuario({ isAdmin, idPersona, idCiclo }),
   ]);
 
   // Extract unique cursos from asignaciones (only show courses where the user has assignments)
-  const uniqueCursosMap = new Map<string, { key: string; label: string }>();
+  const uniqueCursosMap = new Map<string, { key: string; label: string; turno: Turno }>();
   asignaciones.forEach(asig => {
     const key = `${asig.curso.grado}-${asig.curso.seccion}`;
     if (!uniqueCursosMap.has(key)) {
-      uniqueCursosMap.set(key, { key, label: `${asig.curso.grado}° ${asig.curso.seccion}` });
+      uniqueCursosMap.set(key, { key, label: `${asig.curso.grado}° ${asig.curso.seccion}`, turno: asig.curso.turno });
     }
   });
   const uniqueCursos = Array.from(uniqueCursosMap.values());
@@ -281,12 +280,16 @@ export default async function CalificacionesPage({
         </div>
 
         <div className="min-h-112.5 relative p-4">
-          {planilla ? (
+          {planilla && periodoElegido ? (
             <>
               <CalificacionesTable
                 idAsignacion={idAsignacion || 0}
                 idPeriodo={idPeriodo || 0}
-                periodoActual={periodoElegido!}
+                periodoActual={{
+                  idPeriodo: periodoElegido.idPeriodo,
+                  nombre: periodoElegido.nombre,
+                  cerrado: periodoElegido.cerrado
+                }}
                 tipo={tipoValido}
                 matriculas={planilla.matriculas}
                 notaByMatricula={new Map(Array.from(planilla.notaByMatricula.entries()))}

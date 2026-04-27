@@ -306,10 +306,95 @@ export async function validarNotasFaltantesPeriodo(idPeriodo: number) {
       include: { materia: true, profesor: { include: { persona: true } } }
     });
 
+    // Verificar si es período de recuperación
+    const esRecuperacion = ["DICIEMBRE", "FEBRERO", "JULIO_PREVIAS"].includes(periodo.nombre);
+
+    // Función para calcular promedio de trimestres
+    const getPromedioTrimestres = async (idMatricula: number): Promise<number> => {
+      const trimestres = ["TRIMESTRE_1", "TRIMESTRE_2", "TRIMESTRE_3"];
+      let suma = 0;
+      let count = 0;
+
+      for (const trimestre of trimestres) {
+        const periodoTrim = await db.periodoAcademico.findFirst({
+          where: {
+            idCiclo: periodo.idCiclo,
+            nombre: trimestre as never
+          }
+        });
+
+        if (periodoTrim) {
+          // Obtener nota parcial o recuperatorio del trimestre (máximo de ambos)
+          const notas = await db.nota.findMany({
+            where: {
+              idMatricula: idMatricula,
+              idPeriodo: periodoTrim.idPeriodo
+            }
+          });
+
+          const nota = Math.max(...notas.map(n => n.nota), 0);
+          suma += nota;
+          count++;
+        }
+      }
+
+      return count > 0 ? suma / count : 0;
+    };
+
+    // Función para verificar si alumno aprobó en período anterior de recuperación
+    const aprobóRecuperacionAnterior = async (idMatricula: number): Promise<boolean> => {
+      if (periodo.nombre === "FEBRERO") {
+        // Si estamos en FEBRERO, verificar si aprobó DICIEMBRE
+        const periododic = await db.periodoAcademico.findFirst({
+          where: { idCiclo: periodo.idCiclo, nombre: "DICIEMBRE" }
+        });
+        if (periododic) {
+          const nota = await db.nota.findFirst({
+            where: {
+              idMatricula,
+              idPeriodo: periododic.idPeriodo
+            }
+          });
+          return nota ? nota.nota >= 6 : false;
+        }
+      } else if (periodo.nombre === "JULIO_PREVIAS") {
+        // Si estamos en JULIO_PREVIAS, verificar si aprobó FEBRERO
+        const periodoFeb = await db.periodoAcademico.findFirst({
+          where: { idCiclo: periodo.idCiclo, nombre: "FEBRERO" }
+        });
+        if (periodoFeb) {
+          const nota = await db.nota.findFirst({
+            where: {
+              idMatricula,
+              idPeriodo: periodoFeb.idPeriodo
+            }
+          });
+          return nota ? nota.nota >= 6 : false;
+        }
+      }
+      return false;
+    };
+
     // Por cada combinación de matrícula x asignación, verificar si hay nota
     const notasFaltantes: Array<{ alumno: string; materia: string; profesor: string }> = [];
 
     for (const matricula of matriculas) {
+      // Si es período de recuperación, verificar si el alumno está promocionado
+      if (esRecuperacion) {
+        const promedio = await getPromedioTrimestres(matricula.idMatricula);
+        
+        // Caso 1: Si promedio >= 6 en trimestres, está promocionado → no necesita nota
+        if (promedio >= 6) {
+          continue;
+        }
+        
+        // Caso 2: Si ya aprobó en recuperación anterior, no necesita ir a la siguiente
+        const aprobóAnterior = await aprobóRecuperacionAnterior(matricula.idMatricula);
+        if (aprobóAnterior) {
+          continue;
+        }
+      }
+
       // Solo revisar asignaciones del curso del alumno
       const asignacionesCurso = asignaciones.filter(
         a => a.idCurso === matricula.idCurso

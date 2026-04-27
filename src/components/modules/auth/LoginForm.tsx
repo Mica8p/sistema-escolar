@@ -21,6 +21,7 @@ export default function LoginForm() {
             name="dni"
             type="text"
             required
+            autoComplete="off"
             placeholder="Ej: 12345678"
             className="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-slate-50 rounded-xl text-sm text-slate-700 font-bold outline-none focus:bg-white focus:border-indigo-500 transition-all"
           />
@@ -44,8 +45,9 @@ export default function LoginForm() {
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
             <input
               name="password"
-              type="text"
+              type="password"
               required
+              autoComplete="off"
               placeholder="••••••••"
               className={`password-input w-full pl-11 pr-11 py-3 bg-slate-50 border-2 border-slate-50 rounded-xl text-sm text-slate-700 font-bold outline-none focus:bg-white focus:border-indigo-500 transition-all shadow-inner ${!showPassword ? 'password-hidden' : ''}`}
             />

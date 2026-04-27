@@ -62,7 +62,9 @@ export async function guardarNotaAction(formData: FormData) {
 
     console.log("Nota guardada:", { idMatricula, idAsignacion, idPeriodo, tipo, nota, observacion });
 
-    revalidatePath("/dashboard/calificaciones");
+    // Revalidar la página de calificaciones y forzar revalidación del layout
+    revalidatePath("/dashboard/calificaciones", "page");
+    revalidatePath("/dashboard", "layout");
     return { ok: true };
   } catch (error) {
     return { ok: false, message: error instanceof Error ? error.message : "Error desconocido" };

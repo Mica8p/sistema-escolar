@@ -452,7 +452,7 @@ export default function CalificacionesTable({
                       />
                     ) : (
                         <div className="text-xs text-slate-500 italic max-w-50 truncate">
-                        {estaBloqueado ? (bloqueoPorRecuperacion ? "Ya tiene nota aprobatoria." : (bloquearRecuperatorio ? "Aprobó instancia parcial." : "Periodo cerrado.")) : (observacionActual || "Sin observaciones")}
+                        {estaBloqueado ? (bloqueoPorRecuperacion ? "Ya tiene nota aprobatoria." : (bloquearRecuperatorio ? "Aprobó instancia parcial." : (periodoCerrado ? "Periodo cerrado." : (bloquearPorPromocion ? "Alumno promocionado." : "Bloqueado")))) : (observacionActual || "Sin observaciones")}
                       </div>
                     )}
                   </td>
