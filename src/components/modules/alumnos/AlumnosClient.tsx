@@ -36,8 +36,16 @@ const StatusBadge = ({ estado }: { estado: EstadoAcademico }) => {
 export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatriculas[] }) {
   const [search, setSearch] = useState("");
   const [selectedCurso, setSelectedCurso] = useState<number | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<EstadoAcademico | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+
+  const statusOptions = [
+    { label: 'Activos', value: 'Activo' },
+    { label: 'Baja', value: 'Retirado' },
+    { label: 'Egresados', value: 'Egresado' },
+    { label: 'Suspendidos', value: 'Suspendido' },
+  ] as const;
 
   // Obtener lista única de cursos
   const cursosDisponibles = useMemo(() => {
@@ -56,11 +64,6 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
   }, [alumnos]);
 
   const filteredAlumnos = useMemo(() => {
-    // Si no hay curso seleccionado, no mostrar ningún alumno
-    if (selectedCurso === null) {
-      return [];
-    }
-    
     return alumnos.filter((alumno) => {
       const searchLower = search.toLowerCase();
       const nombreCompleto = `${alumno.persona.nombre} ${alumno.persona.apellido}`.toLowerCase();
@@ -70,12 +73,25 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
         nombreCompleto.includes(searchLower) ||
         alumno.persona.dni.includes(searchLower);
       
-      // Filtro de curso
-      const matchesCurso = alumno.matriculas.some(m => m.curso.idCurso === selectedCurso);
+      // Si hay curso seleccionado, filtrar por ese curso
+      if (selectedCurso !== null) {
+        const matchesCurso = alumno.matriculas.some(m => m.curso.idCurso === selectedCurso);
+        
+        // Si también hay estado seleccionado, filtrar por ese estado también
+        if (selectedStatus !== null) {
+          const matchesStatus = alumno.matriculas.some(m => 
+            m.curso.idCurso === selectedCurso && m.estadoAcademico === selectedStatus
+          );
+          return matchesSearch && matchesStatus;
+        }
+        
+        return matchesSearch && matchesCurso;
+      }
       
-      return matchesSearch && matchesCurso;
+      // Si no hay curso seleccionado, mostrar todos los alumnos filtrados por búsqueda
+      return matchesSearch;
     });
-  }, [search, selectedCurso, alumnos]);
+  }, [search, selectedCurso, selectedStatus, alumnos]);
 
   const totalPages = Math.ceil(filteredAlumnos.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -92,6 +108,7 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
               value={selectedCurso ?? ""}
               onChange={(e) => {
                 setSelectedCurso(e.target.value === "" ? null : Number(e.target.value));
+                setSelectedStatus(null); // Reset status cuando cambias de curso
                 setCurrentPage(1);
               }}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
@@ -100,6 +117,30 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
               {cursosDisponibles.map((curso) => (
                 <option key={curso.idCurso} value={curso.idCurso}>
                   {curso.grado}° &quot;{curso.seccion}&quot; - {curso.turno}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filtro por Estado - Habilitado solo si hay curso seleccionado */}
+          <div className="flex-1">
+            <label className="block text-xs font-semibold text-slate-600 mb-2">Filtrar por Estado</label>
+            <select
+              value={selectedStatus ?? ""}
+              onChange={(e) => {
+                setSelectedStatus(e.target.value === "" ? null : (e.target.value as EstadoAcademico));
+                setCurrentPage(1);
+              }}
+              disabled={selectedCurso === null}
+              className={cn(
+                "w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white",
+                selectedCurso === null && "opacity-50 cursor-not-allowed bg-gray-100"
+              )}
+            >
+              <option value="">-- Todos los estados --</option>
+              {statusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
@@ -201,9 +242,9 @@ export function AlumnosClient({ alumnos }: { alumnos: AlumnoWithPersonaAndMatric
               ) : (
                 <tr>
                   <td colSpan={6} className="p-10 text-center text-gray-400 italic">
-                    {selectedCurso === null 
-                      ? "Selecciona un curso en el filtro para ver los alumnos inscritos" 
-                      : "No hay alumnos que coincidan con los filtros seleccionados"}
+                    {search.length > 0
+                      ? "No hay alumnos que coincidan con la búsqueda"
+                      : "No hay alumnos para mostrar"}
                   </td>
                 </tr>
               )}

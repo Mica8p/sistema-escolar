@@ -3,40 +3,21 @@ import { GraduationCap } from "lucide-react";
 import { getCicloActual } from "@/lib/ciclo-session";
 import { CicloService } from "@/service/ciclo.service";
 import { InscripcionForm } from "@/components/modules/alumnos/InscripcionForm";
-import { EstadoAcademico } from "@prisma/client";
-import { StatusFilter } from "@/components/modules/alumnos/StatusFilter";
 import { AlumnosClient } from "@/components/modules/alumnos/AlumnosClient";
 
 export const dynamic = 'force-dynamic';
 
-export default async function AlumnosPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ estado?: string }>;
-}) {
-  const { estado } = await searchParams;
+export default async function AlumnosPage() {
   const cicloId = await getCicloActual();
 
-  const currentStatusParam = estado;
-  const validStatuses = Object.values(EstadoAcademico);
-
-  let statusToFilter: EstadoAcademico | undefined;
-
-  if (currentStatusParam === undefined) {
-    statusToFilter = EstadoAcademico.Activo;
-  } else if (validStatuses.includes(currentStatusParam as EstadoAcademico)) {
-    statusToFilter = currentStatusParam as EstadoAcademico;
-  }
-
   const [alumnos, personasSinInscribir, cursos, cicloActivo] = await Promise.all([
-    AlumnoService.getAll(cicloId, statusToFilter),
+    AlumnoService.getAll(cicloId), // Sin filtro de estado
     AlumnoService.getPersonasDisponibles(cicloId),
     AlumnoService.getCursosDisponibles(),
     CicloService.getActive(),
   ]);
 
   const puedeInscribir = cicloActivo?.idCiclo === cicloId;
-  const activeFilter = statusToFilter || EstadoAcademico.Activo;
 
 
   return (
@@ -54,8 +35,6 @@ export default async function AlumnosPage({
           <p className="text-sm">Cambiá el año en el selector superior para ver otros listados.</p>
         </div>
       )}
-
-      <StatusFilter currentStatus={activeFilter} />
 
       <AlumnosClient alumnos={alumnos} />
     </div>
