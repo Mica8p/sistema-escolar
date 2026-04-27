@@ -42,6 +42,7 @@ export default function AsistenciasHeader({ fechaISO, hoyISO, idAsignacion, nomb
           <input
             type="date"
             value={fechaISO}
+            max={hoyISO}
             className="text-sm font-bold text-slate-700 outline-none bg-transparent cursor-pointer"
             onChange={(e) => handleDateChange(e.target.value)}
           />

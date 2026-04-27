@@ -23,6 +23,13 @@ export async function guardarAsistenciaAction(formData: FormData) {
     const fecha = new Date(fechaStr + 'T12:00:00');
     fecha.setHours(0, 0, 0, 0);
 
+    // Validar que no sea una fecha futura
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    if (fecha > hoy) {
+      throw new Error("No se puede registrar asistencia en fechas futuras. Solo en días anteriores o el actual.");
+    }
+
     const idUsuarioCarga = session.user.idUsuario;
     if (!idUsuarioCarga) throw new Error("Usuario de carga no identificado");
 
