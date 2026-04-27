@@ -53,12 +53,40 @@ export default function BoletinView({ matricula }: { matricula: Matricula }) {
     const suma = notas.t1 + notas.t2 + notas.t3;
     const promedio = suma > 0 ? (suma / 3) : 0;
     
-    // Verificar condición de aprobación:
-    // APR si: promedio de trimestres >= 6 O cualquiera de dic/feb/jul >= 6
+    // Lógica de condición de aprobación y qué exámenes debería tener el alumno:
     const promedioTrimestresOk = promedio >= 6;
-    const dicAprobado = notas.dic !== null && notas.dic !== undefined && notas.dic >= 6;
-    const febAprobado = notas.feb !== null && notas.feb !== undefined && notas.feb >= 6;
-    const julAprobado = notas.jul !== null && notas.jul !== undefined && notas.jul >= 6;
+    
+    // Determinar si debería tener nota en diciembre
+    // Solo si el promedio de trimestres es menor a 6
+    let dicMostrar = promedioTrimestresOk ? null : notas.dic;
+    
+    // Determinar si debería tener nota en febrero
+    // Solo si diciembre no aprobó (< 6) o si diciembre es null
+    let febMostrar = null;
+    if (dicMostrar !== null && dicMostrar !== undefined) {
+      // Tiene nota en diciembre
+      febMostrar = dicMostrar < 6 ? notas.feb : null;
+    } else {
+      // No tiene nota en diciembre (aprobó con trimestres)
+      febMostrar = null;
+    }
+    
+    // Determinar si debería tener nota en julio
+    // Solo si febrero no aprobó (< 6) o si febrero es null
+    let julMostrar = null;
+    if (febMostrar !== null && febMostrar !== undefined) {
+      // Tiene nota en febrero
+      julMostrar = febMostrar < 6 ? notas.jul : null;
+    } else {
+      // No tiene nota en febrero
+      julMostrar = null;
+    }
+    
+    // Verificar condición de aprobación:
+    // APR si: promedio de trimestres >= 6 O cualquiera de dic/feb/jul >= 6 (mostrando solo los que debería tener)
+    const dicAprobado = dicMostrar !== null && dicMostrar !== undefined && dicMostrar >= 6;
+    const febAprobado = febMostrar !== null && febMostrar !== undefined && febMostrar >= 6;
+    const julAprobado = julMostrar !== null && julMostrar !== undefined && julMostrar >= 6;
     
     const esAprobado = promedioTrimestresOk || dicAprobado || febAprobado || julAprobado;
     
@@ -69,9 +97,9 @@ export default function BoletinView({ matricula }: { matricula: Matricula }) {
         t1: notas.t1,
         t2: notas.t2,
         t3: notas.t3,
-        dic: notas.dic,
-        feb: notas.feb,
-        jul: notas.jul,
+        dic: dicMostrar,
+        feb: febMostrar,
+        jul: julMostrar,
         promedio: parseFloat(promedio.toFixed(2)),
         estado: 'APR',
         condicion: 'APROBADA'
@@ -85,9 +113,9 @@ export default function BoletinView({ matricula }: { matricula: Matricula }) {
       t1: notas.t1,
       t2: notas.t2,
       t3: notas.t3,
-      dic: notas.dic,
-      feb: notas.feb,
-      jul: notas.jul,
+      dic: dicMostrar,
+      feb: febMostrar,
+      jul: julMostrar,
       promedio: parseFloat(promedio.toFixed(2)),
       estado: 'A_DICIEMBRE',
       condicion: 'DICIEMBRE'
