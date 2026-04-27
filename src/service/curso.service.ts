@@ -85,7 +85,7 @@ export const cursoService = {
       });
 
       if (matriculas.length > 0) {
-        throw new Error('No se puede eliminar este curso porque tiene alumnos matriculados. Elimine primero las matrículas.');
+        throw new Error('Este curso ya tiene alumnos matriculados y no puede ser eliminado.');
       }
 
       // Verificar si el curso tiene comunicados asociados
