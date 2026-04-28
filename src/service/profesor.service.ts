@@ -87,7 +87,7 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
       const nuevoFinMinutos = newHHFin * 60 + newMMFin;
       
       // 3a. Validar conflictos del profesor (no puede estar en otro curso a la misma hora)
-      const conflictoProfesor = await tx.horario.findFirst({
+      const horariosProfesor = await tx.horario.findMany({
         where: {
           asignacion: { 
             idProfesor: profesor.idProfesor,
@@ -98,8 +98,8 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
         },
       });
 
-      // Si encontramos horarios en ese día, verificar solapamiento
-      if (conflictoProfesor) {
+      // Verificar solapamiento con cada horario existente del profesor
+      for (const conflictoProfesor of horariosProfesor) {
         const [hh, mm] = conflictoProfesor.horaInicio.split(":").map(Number);
         const [hhFin, mmFin] = conflictoProfesor.horaFin.split(":").map(Number);
         const inicioMinutos = hh * 60 + mm;
@@ -116,7 +116,7 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
       }
 
       // 3b. Validar conflictos en el curso (otro profesor no puede tener clase en el mismo horario)
-      const conflictoCurso = await tx.horario.findFirst({
+      const horariosCurso = await tx.horario.findMany({
         where: {
           asignacion: {
             idCurso: idCurso,
@@ -138,7 +138,7 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
         }
       });
 
-      if (conflictoCurso) {
+      for (const conflictoCurso of horariosCurso) {
         const [hh, mm] = conflictoCurso.horaInicio.split(":").map(Number);
         const [hhFin, mmFin] = conflictoCurso.horaFin.split(":").map(Number);
         const inicioMinutos = hh * 60 + mm;
