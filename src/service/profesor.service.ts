@@ -70,11 +70,18 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
       create: { idPersona, fechaIngreso: new Date() }
     });
 
-    // 2. Validar que la materia no esté asignada a otro docente activo
-    const tronoOcupado = await tx.asignacionAcademica.findFirst({
+    // 2. Validar que la materia no esté asignada a OTRO docente activo
+    const asignacionExistente = await tx.asignacionAcademica.findFirst({
       where: { idMateria, idCurso, idCiclo, estado: true }
     });
-    if (tronoOcupado) throw new Error("Esta materia ya tiene un docente activo.");
+    
+    // Si existe una asignación de otro docente, rechazar
+    if (asignacionExistente && asignacionExistente.idProfesor !== profesor.idProfesor) {
+      throw new Error("Esta materia ya tiene un docente activo.");
+    }
+    
+    // Si existe una asignación del MISMO docente, usaremos su ID para actualizar
+    const idAsignacionExistente = asignacionExistente?.idAsignacion;
 
     // 3. Validar conflictos de horario del profesor y del curso
     for (const slot of slots) {
@@ -162,28 +169,26 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
       }
     }
 
-    // 4. Validar que no exista una asignación activa de esta materia+curso
-    const existeActiva = await tx.asignacionAcademica.findFirst({
-      where: {
-        idMateria,
-        idCurso,
-        idCiclo,
-        estado: true
-      },
-      include: { profesor: { include: { persona: true } } }
-    });
-
-    if (existeActiva) {
-      const nombreProfesor = existeActiva.profesor?.persona
-        ? `${existeActiva.profesor.persona.apellido} ${existeActiva.profesor.persona.nombre}`
-        : "otro docente";
-      throw new Error(`¡Cuidado! ${nombreProfesor} ya está activo en esta materia. Primero debés darle la baja.`);
-    }
-
-    // 5. Crear la asignación académica
-    const asignacion = await tx.asignacionAcademica.create({
-      data: {
-        idProfesor: profesor.idProfesor,
+    // 4. Crear o actualizar la asignación académica
+    let asignacion;
+    
+    if (idAsignacionExistente) {
+      // Si existe asignación del mismo docente, actualizar horarios
+      await tx.horario.deleteMany({
+        where: { idAsignacion: idAsignacionExistente }
+      });
+      
+      asignacion = await tx.asignacionAcademica.update({
+        where: { idAsignacion: idAsignacionExistente },
+        data: {
+          cargaHoraria: 4 * slots.length,
+        }
+      });
+    } else {
+      // Crear nueva asignación
+      asignacion = await tx.asignacionAcademica.create({
+        data: {
+          idProfesor: profesor.idProfesor,
           idMateria,
           idCurso,
           idCiclo: idCiclo,
@@ -191,21 +196,24 @@ async asignarProfesor(idPersona: number, idMateria: number, idCurso: number, idC
           estado: true
         }
       });
+    }
 
-      for (const slot of slots) {
-        const [horaInicio, horaFin] = slot.hora.split(" - ");
-        await tx.horario.create({
-          data: {
-            idAsignacion: asignacion.idAsignacion,
-            diaSemana: slot.dia as DiaSemana,
-            horaInicio,
-            horaFin,
-          }
-        });
-      }
-      return asignacion;
-    });
-  },
+    // 5. Crear los horarios (nuevos o reemplazados)
+    for (const slot of slots) {
+      const [horaInicio, horaFin] = slot.hora.split(" - ");
+      await tx.horario.create({
+        data: {
+          idAsignacion: asignacion.idAsignacion,
+          diaSemana: slot.dia as DiaSemana,
+          horaInicio,
+          horaFin,
+        }
+      });
+    }
+
+    return asignacion;
+  });
+},
 
 async eliminarAsignacion(idAsignacion: number) {
     return await db.asignacionAcademica.update({
