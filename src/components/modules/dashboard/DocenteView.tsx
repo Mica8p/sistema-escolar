@@ -133,7 +133,12 @@ export default async function DocenteView({ idProfesor, idUsuario, userName }: {
               <p className="font-bold text-lg mb-2"> ¡ATENCIÓN! Notas Pendientes por Cargar</p>
               {pendingNotifications.map((notif, index) => (
                 <div key={index} className="mb-4 last:mb-0">
-                  <p className="font-semibold">El período &quot;{notif.periodoNombre}&quot; cierra en {notif.diasFaltantes} día(s).</p>
+                  <p className="font-semibold">
+                    {notif.diasFaltantes < 0 
+                      ? `El período "${notif.periodoNombre}" VENCIO hace ${Math.abs(notif.diasFaltantes)} día(s).`
+                      : `El período "${notif.periodoNombre}" cierra en ${notif.diasFaltantes} día(s).`
+                    }
+                  </p>
                   <p className="text-sm">Debes cargar las notas de las siguientes asignaciones:</p>
                   <ul className="list-disc list-inside ml-4 text-sm">
                     {notif.asignacionesPendientes.map((asig, idx) => (

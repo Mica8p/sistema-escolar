@@ -481,8 +481,9 @@ export async function getDocenteDashboardPendingNotifications(idProfesor: number
       );
 
       // Mostrar notificaciones para períodos que cierran en los próximos 10 días
-      // diasFaltantes puede ser 0 (hoy), 1 (mañana), hasta 10 días
-      if (diasFaltantes < 0 || diasFaltantes > 10) {
+      // También mostrar para períodos vencidos si aún hay notas pendientes
+      // diasFaltantes puede ser negativo (vencido), 0 (hoy), 1 (mañana), hasta 10 días
+      if (diasFaltantes > 10) {
         continue;
       }
 
