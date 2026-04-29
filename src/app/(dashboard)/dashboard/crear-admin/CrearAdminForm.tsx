@@ -111,17 +111,7 @@ export default function CrearAdminForm({ personas }: Props) {
     <div className="space-y-6">
       {/* Selector de modo */}
       <div className="flex gap-4 border-b border-slate-200 pb-4">
-        <button
-          type="button"
-          onClick={() => setMode('new')}
-          className={`px-4 py-2 rounded-lg font-medium transition ${
-            mode === 'new'
-              ? 'bg-blue-600 text-white'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-          }`}
-        >
-          ➕ Crear Nuevo Admin
-        </button>
+        
         {personas.length > 0 && (
           <button
             type="button"

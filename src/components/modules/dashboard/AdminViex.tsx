@@ -79,7 +79,7 @@ export default async function AdminView({ idCiclo, userName, idUsuario }: { idCi
         {/* --- COLUMNA LATERAL --- */}
         <div className="space-y-8">
 
-          <Panel title="⚡ Acciones Rápidas">
+          <Panel title="Acciones Rápidas">
             <div className="flex flex-col gap-2 mt-4">
               <Link href="/dashboard/comunicados/nuevo" className="flex items-center justify-between p-4 bg-indigo-600 rounded-2xl text-white hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 group">
                 <span className="font-black text-[10px] uppercase tracking-widest">Crear Comunicado</span>
@@ -92,7 +92,7 @@ export default async function AdminView({ idCiclo, userName, idUsuario }: { idCi
             </div>
           </Panel>
 
-          <Panel title="� Comunicados Recibidos">
+          <Panel title=" Comunicados Recibidos">
             <div className="space-y-3 mt-4">
               {adminData?.comunicadosRecientes.length > 0 ? (
                 adminData.comunicadosRecientes.slice(0, 3).map((c: { idComunicado: number; titulo: string; fecha: string | Date; usuario: { persona: { nombre: string; apellido: string } }; vistos: { idComunicado: number; idUsuario: number }[] }) => (

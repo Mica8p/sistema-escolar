@@ -79,13 +79,7 @@ export default async function SuperAdminView({ userName, currentUserEmail }: Sup
           <p className="text-sm text-slate-600">Crear una nueva persona + admin en una operación</p>
         </Link>
 
-        <Link 
-          href="/dashboard/gestionar-admins"
-          className="p-4 bg-white border border-slate-200 rounded-lg hover:border-blue-400 hover:shadow-md transition"
-        >
-          <div className="font-semibold text-slate-900 mb-1">⚙️ Gestión Completa</div>
-          <p className="text-sm text-slate-600">Acceso a todas las opciones de administración avanzada</p>
-        </Link>
+        
       </div>
     </div>
   );

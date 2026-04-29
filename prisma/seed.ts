@@ -82,11 +82,46 @@ async function main() {
       console.log(`\n⚠️  Una vez cedido, el desarrollador NO podrá volver a iniciar sesión`);
     } else {
       console.log(`\nℹ️  Super admin bootstrap ya existe con DNI: ${DNI_BOOTSTRAP}`);
-      console.log(`   Estado: ${existingPersona.usuario?.estado ? 'Activo' : 'Inactivo'}`);
-      console.log(`\n   Para recrearlo, debes:`);
-      console.log(`   1. Eliminar el usuario de la BD: DELETE FROM "USUARIO" WHERE "idPersona" = ${existingPersona.idPersona};`);
-      console.log(`   2. Eliminar la persona: DELETE FROM "PERSONA" WHERE "idPersona" = ${existingPersona.idPersona};`);
-      console.log(`   3. Ejecutar el seed nuevamente`);
+      console.log(`   Estado anterior: ${existingPersona.usuario?.estado ? 'Activo' : 'Inactivo'}`);
+      
+      // Si está deshabilitado, reactivarlo y recrear el rol SUPER_ADMIN
+      if (!existingPersona.usuario?.estado) {
+        console.log(`\n🔄 Reactivando cuenta del desarrollador...`);
+        
+        // Actualizar contraseña y reactivar
+        const hashedPassword = await bcrypt.hash(PASSWORD_BOOTSTRAP, 10);
+        
+        await prisma.usuario.update({
+          where: { idUsuario: existingPersona.usuario!.idUsuario },
+          data: {
+            passwordHash: hashedPassword,
+            estado: true,
+            defaultPassword: true
+          }
+        });
+
+        // Eliminar roles anteriores si existen
+        await prisma.usuarioRol.deleteMany({
+          where: { idUsuario: existingPersona.usuario!.idUsuario }
+        });
+
+        // Asignar rol SUPER_ADMIN nuevamente
+        await prisma.usuarioRol.create({
+          data: {
+            idUsuario: existingPersona.usuario!.idUsuario,
+            idRol: rolesMap['SUPER_ADMIN']
+          }
+        });
+
+        console.log(`✅ Cuenta reactivada exitosamente`);
+        console.log(`\n🔐 Datos de acceso:`);
+        console.log(`   DNI: ${DNI_BOOTSTRAP}`);
+        console.log(`   Contraseña: ${PASSWORD_BOOTSTRAP}`);
+        console.log(`   Email: ${EMAIL_BOOTSTRAP}`);
+      } else {
+        console.log(`   Estado actual: Activo`);
+        console.log(`\n   La cuenta ya está activa y configurada`);
+      }
     }
 
   } catch (error) {

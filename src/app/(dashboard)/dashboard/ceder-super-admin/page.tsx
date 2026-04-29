@@ -63,7 +63,7 @@ export default async function CederSuperAdminPage() {
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
         <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
         <div className="text-sm text-amber-800">
-          <strong className="block mb-2">⚠️ ADVERTENCIA</strong>
+          <strong className="block mb-2"> ADVERTENCIA</strong>
           <p className="mb-2">
             Esta acción es irreversible. Al ceder el control:
           </p>

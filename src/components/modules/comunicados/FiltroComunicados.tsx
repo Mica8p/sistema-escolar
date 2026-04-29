@@ -48,8 +48,12 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
   const [search, setSearch] = useState("");
   const [targetFilter, setTargetFilter] = useState("TODOS_FILTRO");
   const [dateFilter, setDateFilter] = useState(() => {
+    // Obtener la fecha actual en la zona local sin conversión a UTC
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   });
   const [cursoFilter, setCursoFilter] = useState("");
 
@@ -95,8 +99,18 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
         matchesTarget = targetFilter === "TODOS_FILTRO" || item.target === targetFilter;
       }
 
-      const matchesDate =
-        !dateFilter || new Date(item.fecha).toLocaleDateString() === new Date(dateFilter + "T12:00:00").toLocaleDateString();
+      const matchesDate = !dateFilter || (() => {
+        // Comparar fechas sin depender de la zona horaria
+        const itemDate = new Date(item.fecha);
+        const filterDate = new Date(dateFilter + "T00:00:00");
+        
+        // Usar formato ISO para comparar fechas (YYYY-MM-DD)
+        const itemDateString = itemDate.getFullYear() + 
+          '-' + String(itemDate.getMonth() + 1).padStart(2, '0') + 
+          '-' + String(itemDate.getDate()).padStart(2, '0');
+        
+        return itemDateString === dateFilter;
+      })();
 
       return matchesSearch && matchesTarget && matchesDate;
     });
@@ -184,7 +198,10 @@ export default function FiltroComunicados({ data, isEnviados, rolPrincipal, idsP
               setSearch("");
               setTargetFilter("TODOS_FILTRO");
               const today = new Date();
-              setDateFilter(today.toISOString().split('T')[0]);
+              const year = today.getFullYear();
+              const month = String(today.getMonth() + 1).padStart(2, '0');
+              const day = String(today.getDate()).padStart(2, '0');
+              setDateFilter(`${year}-${month}-${day}`);
               setCursoFilter("");
             }}
             className="p-4 bg-rose-50 text-rose-500 rounded-3xl hover:bg-rose-100 hover:scale-110 active:scale-95 transition-all shadow-lg shadow-rose-100/50 flex items-center justify-center"
