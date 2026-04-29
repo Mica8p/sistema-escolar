@@ -42,24 +42,27 @@ export default async function AsistenciasReportePage({
 
   const cursos = Object.values(cursosAgrupados).map(c => ({ ...c, turnos: Array.from(c.turnos) }));
 
-  const idCurso = params.curso ? Number(params.curso) : (cursos[0]?.idCurso || 0);
-  const selectedCursoInfo = cursos.find(c => c.idCurso === idCurso);
+  // Solo usar valores por defecto si hay parámetros en URL
+  const idCurso = params.curso ? Number(params.curso) : 0;
+  const selectedCursoInfo = idCurso > 0 ? cursos.find(c => c.idCurso === idCurso) : null;
   
-  const turno = params.turno || (selectedCursoInfo?.turnos[0] || 'Mañana');
+  const turno = params.turno ? params.turno : ('Mañana' as Turno);
 
-  const materiasUnicas = asignaciones
-    .filter(a => a.curso.grado === selectedCursoInfo?.grado && a.curso.seccion === selectedCursoInfo?.seccion && a.curso.turno === turno)
-    .reduce((acc, a) => {
-      if (!acc.find(m => m.idMateria === a.materia.idMateria)) {
-        acc.push(a.materia);
-      }
-      return acc;
-    }, [] as Materia[]);
+  const materiasUnicas = selectedCursoInfo
+    ? asignaciones
+        .filter(a => a.curso.grado === selectedCursoInfo?.grado && a.curso.seccion === selectedCursoInfo?.seccion && a.curso.turno === turno)
+        .reduce((acc, a) => {
+          if (!acc.find(m => m.idMateria === a.materia.idMateria)) {
+            acc.push(a.materia);
+          }
+          return acc;
+        }, [] as Materia[])
+    : [];
 
-  const idMateria = params.mat ? Number(params.mat) : (materiasUnicas[0]?.idMateria || 0);
+  const idMateria = params.mat ? Number(params.mat) : 0;
 
-  // Obtener estadísticas de asistencia por materia
-  const estadisticas = idMateria > 0 
+  // Obtener estadísticas de asistencia por materia SOLO si hay selecciones completas
+  const estadisticas = idCurso > 0 && params.turno && idMateria > 0
     ? await getEstadisticasAsistenciasPorMateriaAction(idCurso, idMateria, idCiclo)
     : [];
 

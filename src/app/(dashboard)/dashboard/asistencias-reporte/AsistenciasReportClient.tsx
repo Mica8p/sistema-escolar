@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Materia, Turno } from '@prisma/client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 interface EstadisticaEstudiante {
   idMatricula: number;
@@ -44,30 +44,51 @@ export default function AsistenciasReportClient({
 
   const handleCursoChange = (newIdCurso: number) => {
     setLocalIdCurso(newIdCurso);
+    setLocalTurno('Mañana' as Turno); // Reset turno
+    setLocalIdMateria(0); // Reset materia
     const params = new URLSearchParams(searchParams);
-    params.set('curso', String(newIdCurso));
-    params.delete('turno');
-    params.delete('mat');
+    if (newIdCurso > 0) {
+      params.set('curso', String(newIdCurso));
+      params.delete('turno');
+      params.delete('mat');
+    } else {
+      params.delete('curso');
+      params.delete('turno');
+      params.delete('mat');
+    }
     router.push(`?${params.toString()}`);
   };
 
   const handleTurnoChange = (newTurno: Turno) => {
     setLocalTurno(newTurno);
+    setLocalIdMateria(0); // Reset materia
     const params = new URLSearchParams(searchParams);
-    params.set('turno', newTurno);
-    params.delete('mat');
+    if (newTurno) {
+      params.set('turno', newTurno);
+      params.delete('mat');
+    } else {
+      params.delete('turno');
+      params.delete('mat');
+    }
     router.push(`?${params.toString()}`);
   };
 
   const handleMateriaChange = (newIdMateria: number) => {
     setLocalIdMateria(newIdMateria);
     const params = new URLSearchParams(searchParams);
-    params.set('mat', String(newIdMateria));
+    if (newIdMateria > 0) {
+      params.set('mat', String(newIdMateria));
+    } else {
+      params.delete('mat');
+    }
     router.push(`?${params.toString()}`);
   };
 
-  const selectedCurso = cursos.find(c => c.idCurso === localIdCurso);
-  const selectedMateria = materiasUnicas.find(m => m.idMateria === localIdMateria);
+  const selectedCurso = useMemo(() => cursos.find(c => c.idCurso === localIdCurso), [cursos, localIdCurso]);
+  const selectedMateria = useMemo(() => materiasUnicas.find(m => m.idMateria === localIdMateria), [materiasUnicas, localIdMateria]);
+
+  // Validar si hay selecciones completas
+  const tieneSeleccionCompleta = localIdCurso > 0 && localTurno && localIdMateria > 0;
 
   const porcentajeAsistencia = estadisticas.length > 0
     ? (estadisticas.reduce((sum, e) => sum + (e.presentes + e.justificados), 0) / 
@@ -91,6 +112,7 @@ export default function AsistenciasReportClient({
             onChange={(e) => handleCursoChange(Number(e.target.value))}
             className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl p-2.5 text-sm font-bold text-slate-700 focus:border-blue-500 outline-none"
           >
+            <option value={0}>-- Selecciona un grado --</option>
             {cursos.map(c => (
               <option key={c.idCurso} value={c.idCurso}>
                 {c.grado}° {c.seccion}
@@ -105,8 +127,10 @@ export default function AsistenciasReportClient({
           <select
             value={localTurno}
             onChange={(e) => handleTurnoChange(e.target.value as Turno)}
-            className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl p-2.5 text-sm font-bold text-slate-700 focus:border-blue-500 outline-none"
+            disabled={!selectedCurso}
+            className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl p-2.5 text-sm font-bold text-slate-700 focus:border-blue-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
+            <option value="">-- Selecciona un turno --</option>
             {selectedCurso?.turnos.map(t => (
               <option key={t} value={t}>
                 {t}
@@ -121,8 +145,10 @@ export default function AsistenciasReportClient({
           <select
             value={localIdMateria}
             onChange={(e) => handleMateriaChange(Number(e.target.value))}
-            className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl p-2.5 text-sm font-bold text-slate-700 focus:border-blue-500 outline-none"
+            disabled={!selectedCurso || !localTurno}
+            className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl p-2.5 text-sm font-bold text-slate-700 focus:border-blue-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
+            <option value={0}>-- Selecciona una materia --</option>
             {materiasUnicas.map(m => (
               <option key={m.idMateria} value={m.idMateria}>
                 {m.nombre}
@@ -132,8 +158,17 @@ export default function AsistenciasReportClient({
         </div>
       </div>
 
+      {/* Mensaje cuando no hay selección completa */}
+      {!tieneSeleccionCompleta && (
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 text-center">
+          <p className="text-slate-600 font-bold">
+            Selecciona un grado, turno y materia para ver las estadísticas de asistencia
+          </p>
+        </div>
+      )}
+
       {/* Resumen */}
-      {selectedMateria && estadisticas.length > 0 && (
+      {tieneSeleccionCompleta && selectedMateria && estadisticas.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="bg-blue-50 rounded-2xl p-4 border-2 border-blue-100">
             <p className="text-[10px] font-black text-blue-400 uppercase">Estudiantes</p>
@@ -165,7 +200,7 @@ export default function AsistenciasReportClient({
       )}
 
       {/* Tabla de estudiantes */}
-      {selectedMateria && (
+      {tieneSeleccionCompleta && selectedMateria && (
         <div className="bg-white rounded-2xl border-2 border-slate-100 overflow-hidden">
           <div className="bg-linear-to-r from-slate-50 to-slate-100 p-4 border-b-2 border-slate-100">
             <h2 className="font-black text-slate-800 uppercase text-sm">
